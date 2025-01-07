@@ -1,5 +1,6 @@
-import { Button, FlatList, Text, View } from "react-native";
+import {Pressable, Button, FlatList, Text, View } from "react-native";
 import CheckboxWithText from '../components/Checkbox';
+import TaskCreateModal from '../components/TaskCreateModal';
 import TaskEditModal from '../components/TaskEditModal';
 import { useState } from "react";
 
@@ -8,8 +9,10 @@ export type checkboxText = {
   text: string;
   completed: boolean;
 }
+
 export default function Index() {
-  const [isModalVisible, setModalVisible] = useState(false);
+  const [isEditModalVisible, setEditModalVisible] = useState<checkboxText|null>(null);
+  const [isCreateModalVisible, setCreateModalVisible] = useState(false);
   const [tasks, setTasks] = useState<checkboxText[]>(
     [
       {id: 1, text: 'asdasdas', completed:false},
@@ -29,10 +32,16 @@ export default function Index() {
   const removeTask = (id: number) => {
     setTasks((prevTasks) => prevTasks.filter(task => task.id ===id));
   }
-  const editTask = (id: number) => {
-    //TODO open modal for text edit and give some options to manage this task (alarm)
+  const editTask = (editedTask: checkboxText) => {
+    console.log(editedTask);
+    const editedList = tasks.map(task => task.id === editedTask.id ? editedTask: task);
+    console.log(tasks);
+    console.log(editedList);
+    setTasks(tasks.map(task => task.id === editedTask.id ? editedTask: task));
+  }
+  const cleanEditTask = () => {
+    setEditModalVisible(null);
   };
-
   const selectTask = (id:number) => {
     //TODO open modal so you can select tasks to be removed
   }
@@ -47,21 +56,27 @@ export default function Index() {
     <FlatList
       data ={tasks}
     renderItem ={({item}) => (
-      <CheckboxWithText {...item} />
+      <Pressable onPress={() =>setEditModalVisible(item)}>
+        <CheckboxWithText {...item} />
+      </Pressable>
     )}
     />
 
       
+    <TaskCreateModal
+      visible={isCreateModalVisible}
+      onClose={() => setCreateModalVisible(false)}
+      onAccept={(a: string) => addTask(a)}
+    />
+
     <TaskEditModal
-    visible={isModalVisible}
-    onClose={() => setModalVisible(false)}
-    onAccept={(a: string) => addTask(a)}/>
+      onClose={() => cleanEditTask()}
+      onAccept={(task: checkboxText) => editTask(task)}
+      task ={isEditModalVisible}
+    />
     <View>
-      <Button title='Lisää Tehtävä' onPress={() => setModalVisible(true)} />
+      <Button title='Lisää Tehtävä' onPress={() => setCreateModalVisible(true)} />
     </View>
     </View>
   );
 }
-
-
-

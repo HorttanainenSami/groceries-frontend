@@ -2,38 +2,34 @@ import React, { useState } from 'react';
 import { Modal, View, Text, TextInput, Pressable, StyleSheet } from 'react-native';
 import IconButton from './IconButton';
 import {checkboxText } from '../app/index';
-type TaskEditModalProps = {
+type TaskCreateModalProps = {
+  visible: boolean,
   onClose: () => void,
-  onAccept: (a: checkboxText) => void,
-  task: checkboxText|null
+  onAccept: (a: string) => void,
 }
-const TaskEditModal = ({ onClose, onAccept, task }: TaskEditModalProps) => {
+const TaskCreateModal = ({ visible, onClose, onAccept }: TaskCreateModalProps) => {
   const [text, setText] = useState('');
+  
   const inputRef = React.useRef<TextInput| null>(null); 
 
   React.useEffect(()=> {
-    if(!task) return;
-
-      setText(task.text);
+    if(!visible) return;
       setTimeout(() => {
         if (inputRef.current) {
           inputRef.current.focus();
-          const length = task.text.length;
-          inputRef.current.setSelection(length, length );
         }
       }, 100);
-  },[task]);
-  
+  },[visible]);
+
   const handleAccept = () => {
     console.log('Accepted');
-    if(task){
-      onAccept({...task, text});
-    };
+    onAccept(text);
     onClose();
   };
 
   const handleDecline = () => {
     console.log('Declined');
+    setText('');
     onClose();
   };
 
@@ -41,7 +37,7 @@ const TaskEditModal = ({ onClose, onAccept, task }: TaskEditModalProps) => {
   return (
     <Modal
       transparent={true}
-      visible={!!task}
+      visible={visible}
       animationType="fade"
       onRequestClose={onClose}
     >
@@ -49,7 +45,7 @@ const TaskEditModal = ({ onClose, onAccept, task }: TaskEditModalProps) => {
         <View style={styles.modalContainer}>
           <View style ={styles.header}>
             <IconButton icon='arrow-back' onPress={handleDecline}/>
-            <Text style={styles.title}>Muokkaa tehtävää</Text>
+            <Text style={styles.title}>Uusi tehtävä</Text>
             <IconButton icon='checkmark' onPress={handleAccept}/>
           </View>
           <TextInput
@@ -116,4 +112,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default TaskEditModal;
+export default TaskCreateModal;
