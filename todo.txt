@@ -1,0 +1,4 @@
+tasks that are marked done, fall bottom of list, they will return to place if unmarked(?)
+add multiple lists
+add possibility to share with other person so both original and new user can modify list
+make notification when you user have shared list with you

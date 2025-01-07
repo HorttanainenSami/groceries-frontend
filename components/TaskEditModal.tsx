@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { Modal, View, Text, TextInput, Pressable, StyleSheet } from 'react-native';
 import IconButton from './IconButton';
+import {checkboxText } from '../app/index';
 type CustomModalProps = {
   visible: boolean,
   onClose: () => void,
+  onAccept: (a: string) => void
 }
-const CustomModal = ({ visible, onClose }: CustomModalProps) => {
+const TaskEditModal = ({ visible, onClose, onAccept }: CustomModalProps) => {
   const [text, setText] = useState('');
   
   const handleAddText = () => {
@@ -16,18 +18,16 @@ const CustomModal = ({ visible, onClose }: CustomModalProps) => {
 
   const handleAccept = () => {
     console.log('Accepted');
+    onAccept(text);
     onClose();
   };
 
   const handleDecline = () => {
     console.log('Declined');
+    setText('');
     onClose();
   };
 
-  const handleSetAlarm = () => {
-    console.log('Alarm Set');
-    onClose();
-  };
 
   return (
     <Modal
@@ -38,29 +38,27 @@ const CustomModal = ({ visible, onClose }: CustomModalProps) => {
     >
       <View style={styles.overlay}>
         <View style={styles.modalContainer}>
-          <View style ={styles.headerButtons}>
-            <IconButton icon='alert' onPress={handleAccept}/>
-            <IconButton icon='alert' onPress={handleAccept}/>
+          <View style ={styles.header}>
+            <IconButton icon='arrow-back' onPress={handleDecline}/>
+            <Text style={styles.title}>Uusi tehtävä</Text>
+            <IconButton icon='checkmark' onPress={handleAccept}/>
           </View>
-          <Text style={styles.title}>Uusi tehtävä</Text>
           <TextInput
             style={styles.input}
             placeholder="Enter text here..."
             value={text}
             onChangeText={setText}
           />
-          <Pressable style={styles.button} onPress={handleSetAlarm}>
-            <Text style={styles.buttonText}>Set Alarm</Text>
-          </Pressable>
         </View>
       </View>
     </Modal>
   );
 };
 const styles = StyleSheet.create({
-  headerButtons: {
+  header: {
     flexDirection:'row',
     justifyContent: 'space-between',
+    width: '100%',
   },
   overlay: {
     flex: 1,
@@ -108,4 +106,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CustomModal;
+export default TaskEditModal;

@@ -1,9 +1,9 @@
 import { Button, FlatList, Text, View } from "react-native";
 import CheckboxWithText from '../components/Checkbox';
-import CustomModal from '../components/CustomModal';
+import TaskEditModal from '../components/TaskEditModal';
 import { useState } from "react";
 
-type checkboxText = {
+export type checkboxText = {
   id: number;
   text: string;
   completed: boolean;
@@ -31,7 +31,6 @@ export default function Index() {
   }
   const editTask = (id: number) => {
     //TODO open modal for text edit and give some options to manage this task (alarm)
-    //
   };
 
   const selectTask = (id:number) => {
@@ -53,9 +52,12 @@ export default function Index() {
     />
 
       
-    <CustomModal visible={isModalVisible} onClose={() => setModalVisible(false)} />
+    <TaskEditModal
+    visible={isModalVisible}
+    onClose={() => setModalVisible(false)}
+    onAccept={(a: string) => addTask(a)}/>
     <View>
-      <Button title='Add Task' onPress={() => setModalVisible(true)} />
+      <Button title='Lisää Tehtävä' onPress={() => setModalVisible(true)} />
     </View>
     </View>
   );
