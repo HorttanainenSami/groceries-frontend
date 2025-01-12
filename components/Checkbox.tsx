@@ -1,18 +1,27 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { StyleSheet, View, Text, Pressable } from 'react-native';
 type CheckboxtWithText = {
-  checked? : boolean;
-  text: string;
+  isChecked : boolean;
+  toggle: () => void;
 };
-const CheckboxWithText = ({checked, text} : CheckboxtWithText) => {
-  const [isChecked, setIsChecked] = useState(checked??false);
+const Checkbox = ({isChecked, toggle } : CheckboxtWithText) => {
 
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', padding: 20 }}>
-      {/* Checkbox Pressable */}
       <Pressable
-        onPress={() => setIsChecked(!isChecked)} // Toggle state
-        style={{
+        onPress={toggle} 
+        style={[styles.checkbox, isChecked &&styles.checkboxActive] }
+      >
+        {isChecked && (
+          <Text style={styles.checkmark}>✓</Text> 
+        )}
+      </Pressable>
+    </View>
+  );
+};
+const styles = StyleSheet.create({
+  checkmark: { color: 'white', fontSize: 18 },
+  checkbox: {
           width: 24,
           height: 24,
           borderWidth: 2,
@@ -20,27 +29,11 @@ const CheckboxWithText = ({checked, text} : CheckboxtWithText) => {
           justifyContent: 'center',
           alignItems: 'center',
           marginRight: 10,
-          backgroundColor: isChecked ? '#4CAF50' : 'transparent',
-        }}
-      >
-        {isChecked && (
-          <Text style={{ color: 'white', fontSize: 18 }}>✓</Text> // Checkmark
-        )}
-      </Pressable>
+          backgroundColor: 'transparent'
+        },
+  checkboxActive: { backgroundColor: '#4CAF50'},
+  
+});
 
-      {/* Text with Overline when checked */}
-      <Text
-        style={{
-          fontSize: 18,
-          textDecorationLine: isChecked ? 'line-through' : 'none',
-          color: isChecked ? '#555' : '#000',
-        }}
-      >
-    {text}
-      </Text>
-    </View>
-  );
-};
-
-export default CheckboxWithText;
+export default Checkbox;
 
