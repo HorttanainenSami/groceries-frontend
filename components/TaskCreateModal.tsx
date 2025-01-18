@@ -24,13 +24,16 @@ const TaskCreateModal = ({ visible, onClose, onAccept }: TaskCreateModalProps) =
   const handleAccept = () => {
     console.log('Accepted');
     onAccept(text);
-    onClose();
+    close();
   };
 
-  const handleDecline = () => {
-    console.log('Declined');
+  const close = () => {
     setText('');
     onClose();
+  };
+  const handleDecline = () => {
+    console.log('Declined');
+    close();
   };
 
 
