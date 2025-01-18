@@ -16,6 +16,7 @@ interface IconButtonProps {
   iconColor?: string;
   iconSize?: number;
   textStyle?: StyleProp<TextStyle>;
+  disabled?: boolean;
 }
 
 const IconButton: React.FC<IconButtonProps> = ({
@@ -25,6 +26,7 @@ const IconButton: React.FC<IconButtonProps> = ({
   iconColor = "#fff",
   iconSize = 24,
   textStyle,
+  disabled,
 }) => {
   return (
     <Pressable
@@ -33,6 +35,7 @@ const IconButton: React.FC<IconButtonProps> = ({
         style,
         pressed && styles.pressed,
       ]}
+      disabled={disabled}
       onPress={onPress}
     >
       <Ionicons name={icon} size={iconSize} color='black' style={styles.icon} />

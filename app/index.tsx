@@ -1,8 +1,11 @@
 import { StyleSheet, Pressable, Button, FlatList, Text, View } from "react-native";
-import Checkbox from '../components/Checkbox';
-import TaskCreateModal from '../components/TaskCreateModal';
-import TaskEditModal from '../components/TaskEditModal';
+import Checkbox from '@/components/Checkbox';
+import TaskCreateModal from '@/components/TaskCreateModal';
+import TaskEditModal from '@/components/TaskEditModal';
 import { useEffect, useState } from "react";
+import { useRouter, useNavigation } from 'expo-router';
+import IconButton from "@/components/IconButton";
+import useStorage from '@/hooks/AsyncStorage';
 
 export type checkboxText = {
   id: number;
@@ -14,35 +17,29 @@ export type checkboxText = {
 }
 const date:Date = new Date();
 export default function Index() {
+  const router = useRouter();
+  const navigation = useNavigation();
   const [isEditModalVisible, setEditModalVisible] = useState<checkboxText|null>(null);
   const [isCreateModalVisible, setCreateModalVisible] = useState(false);
-  const [tasks, setTasks] = useState<checkboxText[]>(
-    [
-      {id: 1, text: 'asdasdas', completed:false, createdAt: date },
-      {id: 2, text: 'asdasdas', completed:true, createdAt: date}
-    ]);
+  const {tasks, editTasks, loading, getTasks, storeTasks} = useStorage();
+
 
   const toggleTask = (id: number) => {
-      console.log(tasks.map((task) => task.id === id ? {...task, checked: !task.completed}: task));
-    setTasks((prevTask) => 
-      prevTask.map((task) => task.id === id ? {...task, completed: !task.completed}: task)
-    );
+    const newTasks = tasks.map((task) => task.id === id ? {...task, completed: !task.completed}: task)
+    editTasks(newTasks);
+    ;
   };
-
-  useEffect(()=> console.log(tasks),[tasks[0].completed])
   const addTask = (newTaskText: string) => {
-    setTasks([
-    ...tasks, { id: Date.now(), completed:false, text: newTaskText, createdAt:new Date}]);
+    const initialTasks = [...tasks, { id: Date.now(), completed:false, text: newTaskText, createdAt:new Date}];
   }
   const removeTask = (id: number) => {
-    setTasks((prevTasks) => prevTasks.filter(task => task.id ===id));
+    const newTasks = tasks?.filter(task => task.id ===id);
+    editTasks(newTasks ? newTasks : []);
   }
   const editTask = (editedTask: checkboxText) => {
-    console.log(editedTask);
     const editedList = tasks.map(task => task.id === editedTask.id ? editedTask: task);
-    console.log(tasks);
-    console.log(editedList);
-    setTasks(tasks.map(task => task.id === editedTask.id ? editedTask: task));
+    editTasks(tasks.map(task => task.id === editedTask.id ? editedTask: task));
+    storeTasks(editedList);
   }
   const cleanEditTask = () => {
     setEditModalVisible(null);
@@ -52,17 +49,13 @@ export default function Index() {
   }
   return (
     <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
+      style={styles.container}
     >
     <FlatList
       data ={tasks}
-    renderItem ={({item}) => (
-      <View style={styles.container}>
-
+      refreshing={loading}
+      renderItem ={({item}) => (
+      <View style={styles.itemContainer}>
       <Checkbox
       isChecked={item.completed}
       toggle={() => toggleTask(item.id)}
@@ -71,7 +64,7 @@ export default function Index() {
         onPress={() =>setEditModalVisible(item)}
         onLongPress={() => selectTask(item.id)}>
         <Text
-          style={[styles.text, item.completed&&styles.textCheckboxActive]}
+          style={styles.text}
         >
         {item.text}
         </Text>
@@ -101,15 +94,39 @@ export default function Index() {
 }
 
 const styles = StyleSheet.create({
-  container:{  flexDirection: 'row', alignItems: 'center', padding: 20},
+  headerTitle: {
+    flexGrow: 2, 
+    fontSize: 24,
+  },
+  show: {
+    opacity: 100,
+  },
+  container: {
+    flex: 1,
+  },
+  itemContainer:{
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 56,
+    justifyContent: 'center'
+  },
   text: {
-          fontSize: 18,
-          textDecorationLine:'none',
-          color: '#000',
-        },
+    fontSize: 18,
+    textDecorationLine:'none',
+    color: '#000',
+  },
   textCheckboxActive: {
     textDecorationLine: 'line-through',
     color: '#555',
+  },
+  selectHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    opacity: 0,
   }
   
 });
+
+
+
