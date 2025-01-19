@@ -2,10 +2,11 @@ import { StyleSheet, Pressable, Button, FlatList, Text, View } from "react-nativ
 import Checkbox from '@/components/Checkbox';
 import TaskCreateModal from '@/components/TaskCreateModal';
 import TaskEditModal from '@/components/TaskEditModal';
-import { useEffect, useState } from "react";
+import { useLayoutEffect, useState } from "react";
 import { useRouter, useNavigation } from 'expo-router';
 import IconButton from "@/components/IconButton";
 import useStorage from '@/hooks/AsyncStorage';
+import { useTaskStorage } from "@/contexts/taskContext";
 
 export type checkboxText = {
   id: number;
@@ -21,8 +22,18 @@ export default function Index() {
   const navigation = useNavigation();
   const [isEditModalVisible, setEditModalVisible] = useState<checkboxText|null>(null);
   const [isCreateModalVisible, setCreateModalVisible] = useState(false);
-  const {tasks, editTasks, loading, getTasks, storeTasks} = useStorage();
-
+  const {tasks, editTasks, loading, refresh, storeTasks} = useTaskStorage();
+  
+/*
+  useLayoutEffect(() => {
+    // Reload tasks when the screen is focused
+    const unsubscribe = navigation.addListener('focus', () => {
+      console.log('loading again');
+      refresh();
+    });
+    return unsubscribe;
+  getTasks}, [navigation]);
+*/
 
   const toggleTask = (id: number) => {
     const newTasks = tasks.map((task) => task.id === id ? {...task, completed: !task.completed}: task)
@@ -31,6 +42,7 @@ export default function Index() {
   };
   const addTask = (newTaskText: string) => {
     const initialTasks = [...tasks, { id: Date.now(), completed:false, text: newTaskText, createdAt:new Date}];
+    editTasks(initialTasks);
   }
   const removeTask = (id: number) => {
     const newTasks = tasks?.filter(task => task.id ===id);
@@ -45,7 +57,11 @@ export default function Index() {
     setEditModalVisible(null);
   };
   const selectTask = (id:number) => {
-    //TODO open modal so you can select tasks to be removed
+    router.push({
+      pathname: '/selectTasks',
+      params : {
+        selectedId: id
+    }});
   }
   return (
     <View
@@ -62,9 +78,12 @@ export default function Index() {
       />
       <Pressable
         onPress={() =>setEditModalVisible(item)}
-        onLongPress={() => selectTask(item.id)}>
+        onLongPress={() => selectTask(item.id)}
+        style= {styles.textPressable}
+        >
+        
         <Text
-          style={styles.text}
+          style={[styles.text, item.completed&&styles.textCheckboxActive]}
         >
         {item.text}
         </Text>
@@ -108,7 +127,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     height: 56,
-    justifyContent: 'center'
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+  },
+  textPressable : {
+    flexGrow: 2
   },
   text: {
     fontSize: 18,

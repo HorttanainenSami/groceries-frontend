@@ -1,43 +1,28 @@
-import {useEffect, useState } from 'react';
+import {useEffect, useState, useContext } from 'react';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {checkboxText} from '@/app/index';
+import { TaskContext } from '@/contexts/taskContext';
 
 
 const useStorage = () => {
-  const [tasks, setTasks] = useState<checkboxText[]>([]);
-  let loading = false; 
-  useEffect(() => {
-    let mounted = true;
-    const fetchData = async () => {
-      try {
-        const data = await getTasks();
-        setTasks(data);
-      }catch(e) {
-        console.log(e);
-      }
-    }
-    fetchData();
-    return () => {
-      mounted = false;
-    };
-  },[])
+  let loading = true; 
   
-  const editTasks = (newTasks: checkboxText[]) => {
-    setTasks(newTasks);
-    storeTasks(newTasks);
+  const editTasksInStorage = (newTasks: checkboxText[]) => {
+    storeTasksInStorage(newTasks);
   };
-  const getTasks = async () => {
+  const getTasksFromStorage = async (): Promise<checkboxText[]> => {
     loading = true;
     try{
       const response = await AsyncStorage.getItem('tasks');
       return response ? JSON.parse(response):response;
     } catch (e) {
       console.log(e);
+      throw e;
     }finally {
     loading = false;
     }
   }
-  const storeTasks = async (value: checkboxText[]) => {
+  const storeTasksInStorage = async (value: checkboxText[]) => {
     try {
       await AsyncStorage.setItem('tasks',JSON.stringify(value));
     } catch (e) {
@@ -46,11 +31,10 @@ const useStorage = () => {
   }
 
   return {
-    tasks,
     loading,
-    getTasks,
-    storeTasks,
-    editTasks
+    getTasksFromStorage,
+    storeTasksInStorage,
+    editTasksInStorage
   };
 };
 
