@@ -5,9 +5,10 @@ import {checkboxText } from '../app/index';
 type TaskEditModalProps = {
   onClose: () => void,
   onAccept: (a: checkboxText) => void,
+  onDelete: (a: checkboxText) => void,
   task: checkboxText|null
 }
-const TaskEditModal = ({ onClose, onAccept, task }: TaskEditModalProps) => {
+const TaskEditModal = ({ onClose, onAccept, task, onDelete }: TaskEditModalProps) => {
   const [text, setText] = useState('');
   const inputRef = React.useRef<TextInput| null>(null); 
 
@@ -37,6 +38,12 @@ const TaskEditModal = ({ onClose, onAccept, task }: TaskEditModalProps) => {
     onClose();
   };
 
+  const handleDelete = () => {
+    console.log('Deleted');
+    if(task) onDelete(task);
+    onClose();
+  };
+
 
   return (
     <Modal
@@ -59,6 +66,7 @@ const TaskEditModal = ({ onClose, onAccept, task }: TaskEditModalProps) => {
             value={text}
             onChangeText={setText}
           />
+          <IconButton onPress={handleDelete} icon='trash' />
         </View>
       </View>
     </Modal>

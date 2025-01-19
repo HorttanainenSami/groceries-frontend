@@ -24,17 +24,6 @@ export default function Index() {
   const [isCreateModalVisible, setCreateModalVisible] = useState(false);
   const {tasks, editTasks, loading, refresh, storeTasks} = useTaskStorage();
   
-/*
-  useLayoutEffect(() => {
-    // Reload tasks when the screen is focused
-    const unsubscribe = navigation.addListener('focus', () => {
-      console.log('loading again');
-      refresh();
-    });
-    return unsubscribe;
-  getTasks}, [navigation]);
-*/
-
   const toggleTask = (id: number) => {
     const newTasks = tasks.map((task) => task.id === id ? {...task, completed: !task.completed}: task)
     editTasks(newTasks);
@@ -45,7 +34,7 @@ export default function Index() {
     editTasks(initialTasks);
   }
   const removeTask = (id: number) => {
-    const newTasks = tasks?.filter(task => task.id ===id);
+    const newTasks = tasks?.filter(task => task.id !==id);
     editTasks(newTasks ? newTasks : []);
   }
   const editTask = (editedTask: checkboxText) => {
@@ -103,6 +92,7 @@ export default function Index() {
     <TaskEditModal
       onClose={() => cleanEditTask()}
       onAccept={(task: checkboxText) => editTask(task)}
+      onDelete={(task:checkboxText) => removeTask(task.id)}
       task ={isEditModalVisible}
     />
     <View>
