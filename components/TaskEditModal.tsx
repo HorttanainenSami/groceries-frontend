@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Modal, View, Text, TextInput, Pressable, StyleSheet } from 'react-native';
 import IconButton from './IconButton';
-import {checkboxText } from '../app/index';
+import {checkboxText } from '../app/(app)/(tabs)/index';
 type TaskEditModalProps = {
   onClose: () => void,
   onAccept: (a: checkboxText) => void,
