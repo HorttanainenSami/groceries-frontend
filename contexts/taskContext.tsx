@@ -1,6 +1,5 @@
 import { useEffect, createContext,useState, useContext, Children, PropsWithChildren, SetStateAction } from 'react';
-import {Text} from 'react-native';
-import {checkboxText} from '@/app/index';
+import { checkboxText } from '@/types';
 import useStorage from '@/hooks/AsyncStorage';
 
 type TaskContextProps = {

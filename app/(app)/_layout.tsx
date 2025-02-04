@@ -7,15 +7,13 @@ export default function RootLayout() {
   const data = useAuth();
   useEffect(()=> {
     console.log(data);
-  },[]);
+  },[data.user]);
   if(!data?.user) return <Redirect href='/signin' />
   return (
-    <AuthContextProvider>
-      <TaskContextProvider>
-          <Stack>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          </Stack>
-      </TaskContextProvider>
-    </AuthContextProvider>
+    <TaskContextProvider>
+      <Stack>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      </Stack>
+    </TaskContextProvider>
   );
 }

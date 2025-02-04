@@ -1,9 +1,12 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { useAuth } from '@/contexts/AuthenticationContext';
+import { View, Text, StyleSheet, Button } from 'react-native';
 
 export default function Tab() {
+  const { user, logout } = useAuth();
   return (
     <View style={styles.container}>
-      <Text>Tab [Home|Settings]</Text>
+      <Text>user: {JSON.stringify(user||'undefined')}</Text>
+      <Button title='logout' onPress={() => logout()} />
     </View>
   );
 }

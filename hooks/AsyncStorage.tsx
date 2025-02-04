@@ -1,6 +1,6 @@
 import {useEffect, useState, useContext } from 'react';
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import {checkboxText} from '@/app/index';
+import {checkboxText} from '@/types';
 import { TaskContext } from '@/contexts/taskContext';
 
 
