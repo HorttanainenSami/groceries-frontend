@@ -1,3 +1,4 @@
+4.2.25 6h kirjautumis toiminnon luominen ja contextin hallinta
 26.1.25 2h kirjautumis näkymän ja formin luominen
 19.1.25 1h mahdollisuus valita tehtäviä jotta niitä voidaan poistaa useampi kuin yksi kerrallaan
 19.1.25 2h tiedon hallinta contextilla ja Asyncstoragen eriyttäminen hookkiin

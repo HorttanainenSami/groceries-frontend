@@ -12,11 +12,12 @@ import {z} from 'zod';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from "@hookform/resolvers/zod"
 import FormInput from "@/components/FormInput";
-const LoginSchema = z.object({
+
+export const LoginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(3, 'Password must be atleast 3 characters long'),
 });
-type LoginType = z.infer<typeof LoginSchema>;
+export type LoginType = z.infer<typeof LoginSchema>;
 export default function Index() {
   const router = useRouter();
   const navigation = useNavigation();
@@ -33,10 +34,15 @@ export default function Index() {
       password: '',
     }
   })
+  const {login, error} = useAuth();
 
-    const onSubmit= (data: LoginType) => {
-      console.log('submit', data);
-    };
+  const onSubmit= async(data: LoginType) => {
+    try{
+      const response = await login(data);
+      router.navigate('/');
+    }catch(e) {
+    }
+  };
   
   return (
       <View
@@ -57,8 +63,10 @@ export default function Index() {
         name='password'
         secureTextEntry={true}
         control={control}
+        autoCapitalize='none'
       />
     
+      {error &&<Text>{error}</Text>}
       <Button title='Login' onPress={handleSubmit(onSubmit)}/>
       <Button title='Register a new account' onPress={() =>{}}/>
 
