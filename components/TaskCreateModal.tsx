@@ -9,8 +9,16 @@ type TaskCreateModalProps = {
 }
 const TaskCreateModal = ({ visible, onClose, onAccept }: TaskCreateModalProps) => {
   const [text, setText] = useState('');
-  
+  const inputRef = React.useRef<TextInput| null>(null); 
 
+  React.useEffect(()=> {
+    if(!visible) return;
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      }, 100);
+  },[visible]);
 
   const handleAccept = () => {
     console.log('Accepted');
@@ -43,8 +51,8 @@ const TaskCreateModal = ({ visible, onClose, onAccept }: TaskCreateModalProps) =
             <IconButton icon='checkmark' onPress={handleAccept}/>
           </View>
           <TextInput
+            ref={inputRef}
             style={styles.input}
-            autoFocus={true}
             placeholder="Enter text here..."
             value={text}
             onChangeText={setText}
