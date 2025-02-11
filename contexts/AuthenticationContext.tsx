@@ -4,19 +4,19 @@ import { LoginType } from '@/app/signin';
 import useStorage from '@/hooks/AsyncStorage'
 import { ErrorResponse, ErrorResponseSchema, loginResponse } from '../types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAlert } from '@/contexts/AlertContext';
 
 type authContextProps = {
   user: loginResponse|undefined,
   login: (credentials: LoginType) => Promise<boolean>,
   logout: () => void,
-  error: string|undefined,
 };
-export const AuthContext = createContext<authContextProps>({error: undefined, logout: () => {}, user: undefined, login: (credential:LoginType) => new Promise((res, rej) => res(true))});
+export const AuthContext = createContext<authContextProps>({logout: () => {}, user: undefined, login: (credential:LoginType) => new Promise((res, rej) => res(true))});
 
 
 export const AuthContextProvider = ({children} : React.PropsWithChildren) => {
+  const { addAlert } = useAlert();
   const [user, setUser] = useState<loginResponse>();
-  const [error, setError] = useState<string>();
   const {getUserFromStorage, storeUserInStorage, removeUserFromStorage}= useStorage();
 
   useLayoutEffect(() => {
@@ -36,9 +36,11 @@ export const AuthContextProvider = ({children} : React.PropsWithChildren) => {
     }catch(e){
       const parsedError = ErrorResponseSchema.safeParse(e);
       if(parsedError.success) {
-        setError(parsedError.data.error);
+        console.log('parsed error');
+        addAlert({message: parsedError.data.error, type: 'error'} );
       } else {
-        setError('error occurred');
+        console.log('error occurred');
+        addAlert({message: 'error occurred', type: 'error'});
       }
       throw e;
     }
@@ -49,7 +51,7 @@ export const AuthContextProvider = ({children} : React.PropsWithChildren) => {
   };
 
   return (
-    <AuthContext.Provider value={{error: error, user:user, login:login, logout:logout}}>
+    <AuthContext.Provider value={{user:user, login:login, logout:logout}}>
       {children}
     </AuthContext.Provider>
   );

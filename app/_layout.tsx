@@ -1,16 +1,17 @@
 import { Slot } from "expo-router";
 import { useEffect} from 'react';
 import { TaskContextProvider} from '@/contexts/taskContext';
-import { AuthContextProvider, useAuth} from '@/contexts/AuthenticationContext';
+import AlertStack from '@/components/Alert/AlertStack';
+import { AuthContextProvider} from '@/contexts/AuthenticationContext';
+import { AlertContextProvider} from '@/contexts/AlertContext';
 
 export default function RootLayout() {
-  const data = useAuth();
-  useEffect(()=> {
-    console.log(data);
-  },[]);
   return (
-    <AuthContextProvider>
-      <Slot />
-    </AuthContextProvider>
+      <AlertContextProvider>
+        <AuthContextProvider>
+          <Slot />
+          <AlertStack />
+        </AuthContextProvider>
+      </AlertContextProvider>
   );
 }

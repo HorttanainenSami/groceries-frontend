@@ -34,7 +34,7 @@ export default function Index() {
       password: '',
     }
   })
-  const {login, error} = useAuth();
+  const {login } = useAuth();
 
   const onSubmit= async(data: LoginType) => {
     try{
@@ -66,7 +66,6 @@ export default function Index() {
         autoCapitalize='none'
       />
     
-      {error &&<Text>{error}</Text>}
       <Button title='Login' onPress={handleSubmit(onSubmit)}/>
       <Button title='Register a new account' onPress={() =>{}}/>
 
