@@ -6,11 +6,10 @@ import TaskEditModal from '@/components/TaskEditModal';
 import { useEffect, useState } from "react";
 import { useRouter, useNavigation, useLocalSearchParams } from 'expo-router';
 import { useTaskStorage } from "@/contexts/taskContext";
+import { TaskType } from '@/types';
 
-export type selectedTasks = {
-  id: number;
-  selected: boolean;
-  text: string;
+type selectedTask = TaskType & {
+  selected: boolean 
 }
 type localParams = {
   id: number
@@ -20,19 +19,20 @@ export default function selectTaks() {
   const navigation = useNavigation();
   const router = useRouter();
   const params = useLocalSearchParams();
-  const [selectedTasks, setSelectedTasks] = useState<selectedTasks[]>([]);
-  const {tasks, editTasks, loading, refresh, storeTasks} = useTaskStorage();
+  const [selectedTasks, setSelectedTasks] = useState<selectedTask[]>([]);
+  const {tasks, removeTask, loading } = useTaskStorage();
   const [allToggled, setAllToggled] = useState(false);
 
   useEffect(() => {
     if(!tasks) return;
-      const s = tasks.map(s => (  {id:s.id, text: s.text, selected:s.id === Number(params.selectedId) ? true: false}));
-      setSelectedTasks(s)
+      const initialSelectedTasks = tasks.map(task => (  {...task, selected:task.id === Number(params.selectedId) ? true: false}));
+      setSelectedTasks(initialSelectedTasks)
   },[tasks]);
 
   useEffect(() => {
     navigation.setOptions({animation: 'none', title: 'Valitse toiminto'})
   },[navigation]);
+
 
   const toggleTask = (id: number) => {
     setSelectedTasks(prev => prev.map((task) => task.id === id ? {...task, selected: !task.selected}: task));
@@ -40,9 +40,8 @@ export default function selectTaks() {
 
   const removeToggled = async () => {
     //TODO push modal to confirm if you want to remove selected items if seleted more than 1
-    const removableTasks = selectedTasks.filter(task => task.selected).map(task => task.id);
-    const editedTasks = tasks.filter(task => !removableTasks.includes(task.id));
-    await editTasks(editedTasks);
+    const removableTasks: number[] = selectedTasks.filter(task => !!task.selected).map(task => task.id);
+    await removeTask(removableTasks); 
     router.back();
   };
   return (

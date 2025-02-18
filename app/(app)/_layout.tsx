@@ -5,9 +5,6 @@ import { AuthContextProvider, useAuth} from '@/contexts/AuthenticationContext';
 
 export default function RootLayout() {
   const data = useAuth();
-  useEffect(()=> {
-    console.log(data);
-  },[data.user]);
   if(!data?.user) return <Redirect href='/signin' />
   return (
     <TaskContextProvider>

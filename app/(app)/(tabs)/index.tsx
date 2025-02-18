@@ -2,107 +2,69 @@ import { StyleSheet, Pressable, Button, FlatList, Text, View } from "react-nativ
 import Checkbox from '@/components/Checkbox';
 import TaskCreateModal from '@/components/TaskCreateModal';
 import TaskEditModal from '@/components/TaskEditModal';
-import { useLayoutEffect, useState } from "react";
+import { useEffect, useState }  from "react";
 import { useRouter, useNavigation } from 'expo-router';
 import IconButton from "@/components/IconButton";
-import useStorage from '@/hooks/AsyncStorage';
-import { useTaskStorage } from "@/contexts/taskContext";
+import { getTaskRelations, createTasksRelations } from "@/service/LocalDatabase";
+import { TaskRelationsType} from '@/types';
 
-export type checkboxText = {
-  id: number;
-  text: string;
-  completed: boolean;
-  createdAt: Date;
-  checkedAt?: Date;
-  checkedBy?: string;
-}
 const date:Date = new Date();
 export default function Index() {
   const router = useRouter();
   const navigation = useNavigation();
-  const [isEditModalVisible, setEditModalVisible] = useState<checkboxText|null>(null);
-  const [isCreateModalVisible, setCreateModalVisible] = useState(false);
-  const {tasks, editTasks, loading, refresh, storeTasks} = useTaskStorage();
+  const [tasks, setTasks] = useState<TaskRelationsType[]>();
+
+  useEffect(() => {
+    const fetchTasks = async () => {
+      const result = await getTaskRelations(); 
+      setTasks(result);
+    }
+    fetchTasks();
+  },[]);
   
-  const toggleTask = (id: number) => {
-    const newTasks = tasks.map((task) => task.id === id ? {...task, completed: !task.completed}: task)
-    editTasks(newTasks);
-    ;
+  const addTasks = async () => {
+    await createTasksRelations({name: 'new Tasks'}); 
+    const result = await getTaskRelations(); 
+    setTasks(result);
   };
-  const addTask = (newTaskText: string) => {
-    const initialTasks = [...tasks, { id: Date.now(), completed:false, text: newTaskText, createdAt:new Date}];
-    editTasks(initialTasks);
-  }
-  const removeTask = (id: number) => {
-    const newTasks = tasks?.filter(task => task.id !==id);
-    editTasks(newTasks ? newTasks : []);
-  }
-  const editTask = (editedTask: checkboxText) => {
-    const editedList = tasks.map(task => task.id === editedTask.id ? editedTask: task);
-    editTasks(tasks.map(task => task.id === editedTask.id ? editedTask: task));
-    storeTasks(editedList);
-  }
-  const cleanEditTask = () => {
-    setEditModalVisible(null);
-  };
-  const selectTask = (id:number) => {
-    router.push({
-      pathname: '/selectTasks',
-      params : {
-        selectedId: id
-    }});
-  }
+
   return (
     <View
       style={styles.container}
     >
     <FlatList
-      data ={tasks}
-      refreshing={loading}
-      renderItem ={({item}) => (
-      <View style={styles.itemContainer}>
-      <Checkbox
-      isChecked={item.completed}
-      toggle={() => toggleTask(item.id)}
-      />
-      <Pressable
-        onPress={() =>setEditModalVisible(item)}
-        onLongPress={() => selectTask(item.id)}
-        style= {styles.textPressable}
-        >
-        
-        <Text
-          style={[styles.text, item.completed&&styles.textCheckboxActive]}
-        >
-        {item.text}
-        </Text>
-      </Pressable>
-      </View>
-
-    )}
-    />
-
-      
-    <TaskCreateModal
-      visible={isCreateModalVisible}
-      onClose={() => setCreateModalVisible(false)}
-      onAccept={(a: string) => addTask(a)}
-    />
-
-    <TaskEditModal
-      onClose={() => cleanEditTask()}
-      onAccept={(task: checkboxText) => editTask(task)}
-      onDelete={(task:checkboxText) => removeTask(task.id)}
-      task ={isEditModalVisible}
+    data={tasks}
+    renderItem={({item, index}) => <TaskListItem {...item} /> }
     />
     <View>
-      <Button title='Lisää Tehtävä' onPress={() => setCreateModalVisible(true)} />
+      <Button title='Lisää Tehtävä' onPress={() => addTasks()} />
     </View>
     </View>
   );
 }
 
+const TaskListItem = ( {id, name, shared, created_at } :TaskRelationsType) => {
+  const route = useRouter(); 
+  return (
+    <Pressable onPress={() => route.push(`/tasksRelations/${id}`)}>
+
+
+    <View style={styles.taskListItem}>
+      <Text>{id}</Text>
+      <Text>{name}</Text>
+      <Text>{shared}</Text>
+      <Text>{created_at}</Text>
+    </View>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
+  taskListItem:{
+    flexDirection: 'row', 
+    justifyContent: 'space-between',
+    padding: 16,
+  },
   headerTitle: {
     flexGrow: 2, 
     fontSize: 24,

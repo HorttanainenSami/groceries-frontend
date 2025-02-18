@@ -2,16 +2,15 @@ import { TextInput, StyleSheet, Pressable, Button, FlatList, Text, View } from "
 import Checkbox from '@/components/Checkbox';
 import TaskCreateModal from '@/components/TaskCreateModal';
 import TaskEditModal from '@/components/TaskEditModal';
-import { useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { useRouter, useNavigation } from 'expo-router';
 import IconButton from "@/components/IconButton";
-import useStorage from '@/hooks/AsyncStorage';
-import { useTaskStorage } from "@/contexts/taskContext";
 import { useAuth } from "@/contexts/AuthenticationContext";
 import {z} from 'zod';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from "@hookform/resolvers/zod"
 import FormInput from "@/components/FormInput";
+import { useSQLiteContext } from "expo-sqlite";
 
 export const LoginSchema = z.object({
   email: z.string().email(),
@@ -22,6 +21,8 @@ export default function Index() {
   const router = useRouter();
   const navigation = useNavigation();
   const data  = useAuth();
+  const db = useSQLiteContext();
+
   const {
     register,
     handleSubmit,
