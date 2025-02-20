@@ -1,7 +1,7 @@
 import axios, { AxiosResponse, AxiosError } from 'axios';
 import Constants from "expo-constants";
 import { ErrorResponseSchema, LoginResponseSchema, loginResponse} from '../types';
-import { LoginType } from '@/app/signin';
+import { LoginType, RegisterType } from '@/types';
 
 const uri = `http:${Constants.experienceUrl.split(':')[1]}:3003`;
 
@@ -26,7 +26,6 @@ const api = axios.create({ baseURL : uri});
   }
 );
 
-
 export const loginAPI = async (credentials : LoginType)  => {
     console.log(credentials);
     const response = await api.post(uri+'/login', credentials);
@@ -36,3 +35,9 @@ export const loginAPI = async (credentials : LoginType)  => {
     throw new Error('Something went wrong with response');
 };
 
+export const signupAPI = async (credentials: RegisterType) => {
+    console.log(credentials);
+    const response = await api.post(uri+'/signup', credentials);
+    const parsedResponse = LoginResponseSchema.safeParse(response.data);
+    if(parsedResponse.success) return parsedResponse.data;
+};

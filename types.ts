@@ -23,6 +23,12 @@ export const TaskSchema = z.object({
 })
 export type TaskType = z.infer<typeof TaskSchema>;
 
+export const LoginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(3, 'Password must be atleast 3 characters long'),
+});
+export type LoginType = z.infer<typeof LoginSchema>;
+
 export const TaskRelationsSchema = z.object({
   id: z.number(),
   name: z.string(),
@@ -32,3 +38,10 @@ export const TaskRelationsSchema = z.object({
 export type TaskRelationsType = z.infer<typeof TaskRelationsSchema>;
 
 export type editTaskProps = Pick<TaskType, 'id'|'text'>;
+
+export const RegisterSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(3, 'Password must be atleast 3 characters long'),
+  confirm: z.string(),
+}).refine(({password, confirm}) => password ===confirm, { message: 'Passwords must match', path:['confirm'] });
+export type RegisterType = z.infer<typeof RegisterSchema>;

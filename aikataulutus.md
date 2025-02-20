@@ -1,3 +1,4 @@
+20.2.25 2h käyttäjän rekistöröinti sivusto, formi ja yhteys backendiin 
 18.2.25 10h sqliten käyttöönotto ja applikaation sisäisen tallennuksen siirtäminen siihen
 4.2.25 2h Alert komponentin, alert stackin ja contextin luominen
 4.2.25 6h kirjautumis toiminnon luominen ja contextin hallinta

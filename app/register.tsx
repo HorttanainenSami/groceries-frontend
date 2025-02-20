@@ -11,12 +11,12 @@ import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from "@hookform/resolvers/zod"
 import FormInput from "@/components/FormInput";
 import { useSQLiteContext } from "expo-sqlite";
-import { LoginType, LoginSchema } from '@/types';
+import { RegisterType, RegisterSchema } from '@/types';
 
 export default function Index() {
   const router = useRouter();
   const navigation = useNavigation();
-  const data  = useAuth();
+  const {signup}  = useAuth();
   const db = useSQLiteContext();
 
   const {
@@ -24,19 +24,18 @@ export default function Index() {
     handleSubmit,
     control,
     formState: { errors },
-  } = useForm<LoginType>({
-    resolver: zodResolver(LoginSchema),
+  } = useForm<RegisterType>({
+    resolver: zodResolver(RegisterSchema),
     defaultValues: {
       email: '',
       password: '',
     }
   })
-  const {login } = useAuth();
 
-  const onSubmit= async(data: LoginType) => {
+  const onSubmit= async(credentials: RegisterType) => {
     try{
-      const response = await login(data);
-      router.navigate('/');
+      const response = await signup(credentials);
+      router.navigate('/signin');
     }catch(e) {
     }
   };
@@ -45,8 +44,8 @@ export default function Index() {
       <View
         style={styles.container}
       >
-      <Text> Login view </Text>
-      <FormInput<LoginType>
+      <Text> Register view </Text>
+      <FormInput<RegisterType>
         name='email'
         keyboardType='email-address'
         control={control}
@@ -54,7 +53,7 @@ export default function Index() {
         placeholder='email'
     
       />
-      <FormInput<LoginType>
+      <FormInput<RegisterType>
         placeholder='password'
         textContentType='password'
         name='password'
@@ -62,11 +61,20 @@ export default function Index() {
         control={control}
         autoCapitalize='none'
       />
+      <FormInput<RegisterType>
+        placeholder='password'
+        textContentType='password'
+        name='confirm'
+        secureTextEntry={true}
+        control={control}
+        autoCapitalize='none'
+      />
     
-      <Button title='Login' onPress={handleSubmit( (data) => {
-      Keyboard.dismiss();
-      onSubmit(data)})}/>
-      <Button title='Register a new account' onPress={() =>{router.navigate('/register')}}/>
+      <Button title='Register' onPress={handleSubmit((data)=> {
+        Keyboard.dismiss();
+        onSubmit(data)
+        })}/>
+      <Button title='Allready have a account?' onPress={() =>{router.navigate('/signin')}}/>
 
       </View>
   );
@@ -116,6 +124,4 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 15,
   },
-  
 });
-

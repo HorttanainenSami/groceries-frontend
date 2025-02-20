@@ -1,6 +1,6 @@
 import {useLayoutEffect, useContext, createContext, useState} from 'react';
-import {loginAPI} from '@/service/database';
-import { LoginType } from '@/app/signin';
+import {loginAPI, signupAPI} from '@/service/database';
+import { LoginType, RegisterType } from '@/types';
 import useStorage from '@/hooks/AsyncStorage'
 import { ErrorResponse, ErrorResponseSchema, loginResponse } from '../types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -8,10 +8,17 @@ import { useAlert } from '@/contexts/AlertContext';
 
 type authContextProps = {
   user: loginResponse|undefined,
-  login: (credentials: LoginType) => Promise<boolean>,
+  login: (credentials: LoginType) => void,
   logout: () => void,
+  signup: (credentials: RegisterType) => void,
 };
-export const AuthContext = createContext<authContextProps>({logout: () => {}, user: undefined, login: (credential:LoginType) => new Promise((res, rej) => res(true))});
+export const AuthContext = createContext<authContextProps>(
+  {
+    logout: () => {},
+    user: undefined,
+    login: () => {},
+    signup: () => {}
+  });
 
 
 export const AuthContextProvider = ({children} : React.PropsWithChildren) => {
@@ -50,8 +57,25 @@ export const AuthContextProvider = ({children} : React.PropsWithChildren) => {
     removeUserFromStorage();
   };
 
+  const signup = async ( credentials: RegisterType) => {
+    try{
+      const response = await signupAPI(credentials);
+      return true;
+    }catch(e){
+      const parsedError = ErrorResponseSchema.safeParse(e);
+      if(parsedError.success) {
+        console.log('parsed error');
+        addAlert({message: parsedError.data.error, type: 'error'} );
+      } else {
+        console.log('error occurred');
+        addAlert({message: 'error occurred', type: 'error'});
+      }
+      throw e;
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{user:user, login:login, logout:logout}}>
+    <AuthContext.Provider value={{user:user, login:login, logout:logout, signup}}>
       {children}
     </AuthContext.Provider>
   );
