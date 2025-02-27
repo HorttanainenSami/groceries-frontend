@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Modal, View, Text, TextInput, Pressable, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Pressable, StyleSheet } from 'react-native';
 import IconButton from './IconButton';
+import Modal from './Modal';
 
 type TaskCreateModalProps = {
   visible: boolean,
@@ -21,76 +22,32 @@ const TaskCreateModal = ({ visible, onClose, onAccept }: TaskCreateModalProps) =
   },[visible]);
 
   const handleAccept = () => {
-    console.log('Accepted');
     onAccept(text);
-    close();
   };
 
-  const close = () => {
+  const handleClose = () => {
     setText('');
     onClose();
   };
-  const handleDecline = () => {
-    console.log('Declined');
-    close();
-  };
-
 
   return (
     <Modal
-      transparent={true}
       visible={visible}
-      animationType="fade"
-      onRequestClose={onClose}
+      onClose={handleClose} 
+      onAccept={handleAccept}
+      title='Uusi tehtävä'
     >
-      <View style={styles.overlay}>
-        <View style={styles.modalContainer}>
-          <View style ={styles.header}>
-            <IconButton icon='arrow-back' onPress={handleDecline}/>
-            <Text style={styles.title}>Uusi tehtävä</Text>
-            <IconButton icon='checkmark' onPress={handleAccept}/>
-          </View>
-          <TextInput
-            ref={inputRef}
-            style={styles.input}
-            placeholder="Enter text here..."
-            value={text}
-            onChangeText={setText}
-          />
-        </View>
-      </View>
+        <TextInput
+          ref={inputRef}
+          style={styles.input}
+          placeholder="Enter text here..."
+          value={text}
+          onChangeText={setText}
+        />
     </Modal>
   );
 };
 const styles = StyleSheet.create({
-  header: {
-    flexDirection:'row',
-    justifyContent: 'space-between',
-    width: '100%',
-  },
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContainer: {
-    width: '100%',
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 20,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 15,
-  },
   input: {
     width: '100%',
     borderWidth: 1,
@@ -98,19 +55,6 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     padding: 10,
     marginBottom: 15,
-  },
-  button: {
-    backgroundColor: '#6200ee',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
-    marginTop: 10,
-    width: '100%',
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
   },
 });
 

@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { Modal, View, Text, TextInput, Pressable, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Pressable, StyleSheet } from 'react-native';
 import IconButton from './IconButton';
 import {TaskType} from '../types';
+import Modal from './Modal';
+
 type TaskEditModalProps = {
   onClose: () => void,
   onAccept: (a: TaskType) => void,
@@ -25,82 +27,43 @@ const TaskEditModal = ({ onClose, onAccept, task, onDelete }: TaskEditModalProps
       }, 100);
   },[task]);
   
+  const handleClose = () => {
+    setText('');
+    onClose();
+  }
   const handleAccept = () => {
-    console.log('Accepted');
     if(task){
       onAccept({...task, text});
     };
-    onClose();
-  };
-
-  const handleDecline = () => {
-    console.log('Declined');
-    onClose();
   };
 
   const handleDelete = () => {
     console.log('Deleted');
     if(task) onDelete(task);
-    onClose();
+    handleClose();
   };
 
 
   return (
     <Modal
-      transparent={true}
       visible={!!task}
-      animationType="fade"
-      onRequestClose={onClose}
+      onClose={handleClose}
+      onAccept={handleAccept}
+      title='Muokkaa tehtävää'
     >
-      <View style={styles.overlay}>
-        <View style={styles.modalContainer}>
-          <View style ={styles.header}>
-            <IconButton icon='arrow-back' onPress={handleDecline}/>
-            <Text style={styles.title}>Muokkaa tehtävää</Text>
-            <IconButton icon='checkmark' onPress={handleAccept}/>
-          </View>
-          <TextInput
-            ref={inputRef}
-            style={styles.input}
-            placeholder="Enter text here..."
-            value={text}
-            onChangeText={setText}
-          />
-          <IconButton onPress={handleDelete} icon='trash' />
-        </View>
-      </View>
+      <TextInput
+        ref={inputRef}
+        style={styles.input}
+        placeholder="Enter text here..."
+        value={text}
+        onChangeText={setText}
+      />
+      <IconButton onPress={handleDelete} icon='trash' />
     </Modal>
   );
 };
+
 const styles = StyleSheet.create({
-  header: {
-    flexDirection:'row',
-    justifyContent: 'space-between',
-    width: '100%',
-  },
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContainer: {
-    width: '100%',
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 20,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 15,
-  },
   input: {
     width: '100%',
     borderWidth: 1,
@@ -108,19 +71,6 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     padding: 10,
     marginBottom: 15,
-  },
-  button: {
-    backgroundColor: '#6200ee',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
-    marginTop: 10,
-    width: '100%',
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
   },
 });
 
