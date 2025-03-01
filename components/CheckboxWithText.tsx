@@ -2,34 +2,38 @@ import React, { useState } from 'react';
 import { StyleSheet, View, Text, Pressable } from 'react-native';
 import Checkbox from './Checkbox';
 type CheckboxWithTextProps = {
-  checked? : boolean;
+  checked : boolean;
   text: string;
-  onTextPress: void;
+  onToggle: () => void,
 };
-const CheckboxWithText = ({checked, text, onTextPress} : CheckboxWithTextProps) => {
-  const [isChecked, setIsChecked] = useState(checked??false);
-
+const CheckboxWithText = ({checked, text, onToggle } : CheckboxWithTextProps) => {
+  const handleToggle = () => {
+    onToggle();
+  };
   return (
-    <View style={styles.container}>
+    <Pressable onPress={handleToggle} style={styles.container}>
       <Checkbox
-      isChecked={isChecked}
-      toggle={() => setIsChecked(!isChecked)}
+      isChecked={checked}
+      toggle={handleToggle}
       />
       <Text
-        style={[styles.text, isChecked&&styles.textCheckboxActive]}
+        style={[styles.text, checked&&styles.textCheckboxActive]}
       >
     {text}
       </Text>
-    </View>
+    </Pressable>
   );
 };
 const styles = StyleSheet.create({
-  container:{  flexDirection: 'row', alignItems: 'center', padding: 20},
+  container:{
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   text: {
-          fontSize: 18,
-          textDecorationLine:'none',
-          color: '#000',
-        },
+    fontSize: 18,
+    textDecorationLine:'none',
+    color: '#000',
+  },
   textCheckboxActive: {
     textDecorationLine: 'line-through',
     color: '#555',

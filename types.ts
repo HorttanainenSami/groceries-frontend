@@ -45,3 +45,8 @@ export const RegisterSchema = z.object({
   confirm: z.string(),
 }).refine(({password, confirm}) => password ===confirm, { message: 'Passwords must match', path:['confirm'] });
 export type RegisterType = z.infer<typeof RegisterSchema>;
+export const SearchUsersSchema =  z.object({
+  name: z.string(),
+  id: z.number(),
+})
+export type SearchUsersType = z.infer<typeof SearchUsersSchema>;
