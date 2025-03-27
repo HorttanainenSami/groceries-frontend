@@ -9,7 +9,7 @@ const AlertStack = () => {
   useEffect(() => console.log(alerts.map(a => a.message)),[alerts]);
   return (
     <View>
-        {alerts.map(a => <Alert {...a} />)}
+        {alerts.map(a => <Alert key={a.id} {...a} />)}
     </View>
   );
 };
