@@ -1,7 +1,7 @@
 import {useState} from 'react';
 
 
-export default function useToggleList<T extends {id: number}>(): [T[], (item:T|undefined) => void]{
+export default function useToggleList<T extends {id: string}>(): [T[], (item:T|undefined) => void]{
   const [selectedItems, setSelectedItems] = useState<T[]>([]);
   
   const handleToggle = (item: T|undefined) => {

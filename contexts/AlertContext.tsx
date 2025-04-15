@@ -13,13 +13,13 @@ export type AlertType = z.infer<typeof alertSchema>;
 const addAlertPropsSchema = z.object({
   message: z.string(),
   type: z.enum(['error', 'warn', 'success', 'info']), 
-  timer: z.number().min(1).max(60).optional(),
+  timer: z.number().min(1000).max(10000).optional(),
 });
 export type addAlertProps = z.infer<typeof addAlertPropsSchema>;
 
 interface AlertContextType {
   alerts: AlertType[];
-  addAlert: (_0arg:addAlertProps) => void;
+  addAlert: (alertProps: addAlertProps) => void;
   removeAlert: (id: string) => void;
 }
 
@@ -36,7 +36,7 @@ export const useAlert = (): AlertContextType => {
 export const AlertContextProvider = ({ children }: React.PropsWithChildren) => {
   const [alerts, setAlerts] = useState<AlertType[]>([]);
 
-  const addAlert = ({message, type, timer=10000 }: addAlertProps) => {
+  const addAlert = ({ message, type, timer = 10000 }: addAlertProps) => {
     const id = Date.now().toString();
     const newAlert = { id, message, type, timer };
 

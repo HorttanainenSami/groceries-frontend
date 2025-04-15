@@ -1,10 +1,12 @@
 import {useLayoutEffect, useContext, createContext, useState} from 'react';
-import {loginAPI, signupAPI} from '@/service/database';
 import { LoginType, RegisterType } from '@/types';
 import useStorage from '@/hooks/AsyncStorage'
-import { ErrorResponse, ErrorResponseSchema, loginResponse } from '../types';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ErrorResponseSchema, loginResponse } from '../types';
 import { useAlert } from '@/contexts/AlertContext';
+import { loginAPI, signupAPI } from '@/service/database';
+import { isAxiosError, AxiosError } from 'axios';
+import { getAxiosInstance } from '@/service/AxiosInstance';
+
 
 type authContextProps = {
   user: loginResponse|undefined,
@@ -23,8 +25,39 @@ export const AuthContext = createContext<authContextProps>(
 
 export const AuthContextProvider = ({children} : React.PropsWithChildren) => {
   const { addAlert } = useAlert();
+
   const [user, setUser] = useState<loginResponse>();
   const {getUserFromStorage, storeUserInStorage, removeUserFromStorage}= useStorage();
+
+  useLayoutEffect(() => { 
+    const tokenBearer = getAxiosInstance().interceptors.request.use(
+    (config) => {
+        if(user) {
+          config.headers['Authorization'] = `Bearer ${user.token}`;
+        }
+        return config;
+      },
+      (error) => {
+        return Promise.reject(error);
+      }
+    );
+    const expiredJwtToken = getAxiosInstance().interceptors.response.use(
+      (response) => response,
+      (error: AxiosError) => {
+        console.log('error', error);
+        if (error.response?.status === 401) {
+          console.warn("Unauthorized! Logging out...");
+          logout();
+        }
+        return Promise.reject(error);
+      })
+
+    return () => {
+      getAxiosInstance().interceptors.request.eject(tokenBearer);
+      getAxiosInstance().interceptors.request.eject(expiredJwtToken);
+    }
+}, [user]);  
+
 
   useLayoutEffect(() => {
     const fetchUser = async () => {
@@ -37,19 +70,25 @@ export const AuthContextProvider = ({children} : React.PropsWithChildren) => {
   const login = async ( credentials: LoginType) => {
     try{
       const response = await loginAPI(credentials);
+      console.log(response);
       setUser(response)
       storeUserInStorage(response);
       return true;
     }catch(e){
-      const parsedError = ErrorResponseSchema.safeParse(e);
-      if(parsedError.success) {
-        console.log('parsed error');
-        addAlert({message: parsedError.data.error, type: 'error'} );
-      } else {
-        console.log('error occurred');
-        addAlert({message: 'error occurred', type: 'error'});
+      if(isAxiosError(e)) {
+        console.log('axios error');
+        addAlert({message: e.response?.data.error||'', type: 'error'});
+      }else{
+        const parsedError = ErrorResponseSchema.safeParse(e);
+        if(parsedError.success) {
+          console.log('parsed error');
+          addAlert({message: parsedError.data.error, type: 'error'} );
+        } else {
+          console.log('error occurred');
+          addAlert({message: 'An unexpected error occurred', type: 'error'});
+        }
+        throw e;
       }
-      throw e;
     }
   };
   const logout = () => {
@@ -59,19 +98,24 @@ export const AuthContextProvider = ({children} : React.PropsWithChildren) => {
 
   const signup = async ( credentials: RegisterType) => {
     try{
-      const response = await signupAPI(credentials);
+      await signupAPI(credentials);
       return true;
     }catch(e){
-      const parsedError = ErrorResponseSchema.safeParse(e);
-      if(parsedError.success) {
-        console.log('parsed error');
-        addAlert({message: parsedError.data.error, type: 'error'} );
-      } else {
-        console.log('error occurred');
-        addAlert({message: 'error occurred', type: 'error'});
-      }
-      throw e;
-    }
+      if(isAxiosError(e)) {
+        console.log('axios error');
+        addAlert({message: e.response?.data.error||'', type: 'error'});
+        }else{
+          const parsedError = ErrorResponseSchema.safeParse(e);
+          if(parsedError.success) {
+            console.log('parsed error');
+            addAlert({message: parsedError.data.error, type: 'error'} );
+          } else {
+            console.log('error occurred');
+            addAlert({message: 'An unexpected error occurred', type: 'error'});
+          }
+          throw e;
+        } 
+  }
   };
 
   return (

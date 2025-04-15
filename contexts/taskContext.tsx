@@ -1,15 +1,16 @@
-import { useRef, useEffect, createContext,useState, useContext, Children, PropsWithChildren, SetStateAction } from 'react';
-import { TaskType } from '@/types';
-import useTasks from '@/contexts/useTasks'
+import { useRef, createContext, useContext, PropsWithChildren, useState } from 'react';
+import { ServerTaskRelationSchema, BaseTaskRelationsType, LocalTaskRelationSchema, TaskType } from '@/types';
+import useLocalTasks from '@/contexts/useLocalTasks'
+import useServerTasks from './useServerTasks';
 
 type TaskContextProps = {
   tasks: TaskType[],
   editTask: (newTask: TaskType) => void,
   storeTask: (newTask: Omit<TaskType, 'id'>) => void,
   refresh: () => void,
-  changeRelationId: (id: number) => void,
-  toggleTask : (id:number) => void,
-  removeTask : (ids:number|number[]) => void,
+  changeRelationContext: (relation: BaseTaskRelationsType) => void,
+  toggleTask : (id:string) => void,
+  removeTask : (ids:string|string[]) => void,
   loading: boolean,
  }
 export const TaskContext = createContext<TaskContextProps>({
@@ -18,7 +19,7 @@ export const TaskContext = createContext<TaskContextProps>({
    storeTask : () => {},
    toggleTask : () => {},
    refresh : () => {},
-   changeRelationId : () => {},
+   changeRelationContext : () => {},
    removeTask : () => {},
    loading: true,
   });
@@ -26,36 +27,64 @@ export const TaskContext = createContext<TaskContextProps>({
 export const useTaskStorage = () => useContext(TaskContext);
 
 export const TaskContextProvider = ({children} : PropsWithChildren) => {
-  const [listOfTasks, setListOfTasks] = useState<TaskType[]>([]);
   const loading  = useRef<boolean>(true);
-  const {toggleTaskInDb,changeRelation, refresh, removeTaskFromDb, tasks, addTaskToDb, setTasks, editTaskToDb} = useTasks();
+  const [relation, setRelation] = useState<BaseTaskRelationsType|null>(null);
+  const localTasks = useLocalTasks();
+  const serverTasks = useServerTasks();
+  const taskManager = (relations: BaseTaskRelationsType) => relations.relation_location === 'Local' ? localTasks : serverTasks;
 
-
+  const tasks = () => {
+    if(relation === null) return [];
+    return taskManager(relation).tasks;
+  }  
+  const refresh = () => {
+    if(relation === null) return {};
+    return taskManager(relation).refresh();
+  }  
   const editTask = async (newTasks: TaskType) => {
-    await editTaskToDb({id:newTasks.id, text: newTasks.text});
-    await refresh();
+    if(relation === null) return;
+    
+      await taskManager(relation).editTaskToDb({id:newTasks.id, text: newTasks.text});
+      await taskManager(relation).refresh();
+    
+  };
+    const storeTask = async (newTasks: Omit<TaskType, 'id'>) =>{
+    if(relation === null) return;
+
+    console.log('newTasks', newTasks);
+    await taskManager(relation).addTaskToDb(newTasks);
   }
-  const storeTask = async (newTasks: Omit<TaskType, 'id'>) =>{
-    await addTaskToDb(newTasks);
-    await refresh();
+  const toggleTask = async (id: string) =>{
+    if(relation === null) return;
+    
+    await taskManager(relation).toggleTaskInDb(id);
+    await taskManager(relation).refresh();
   }
-  const toggleTask = async (id: number) =>{
-    await toggleTaskInDb(id);
-    await refresh();
+  const removeTask = async (ids: string|string[]) =>{
+    if(relation === null) return;
+    await taskManager(relation).removeTaskFromDb(ids);
   }
-  const removeTask = async (ids: number|number[]) =>{
-    await removeTaskFromDb(ids);
-    await refresh();
-  }
-  const changeRelationId = async (id:number) => {
+  const changeRelationContext = async (relation:BaseTaskRelationsType) => {
+    if(relation === null) return;
     loading.current = true;
-    await changeRelation(id);
-    await refresh();
+    setRelation(relation);
+    if (relation.relation_location === 'Local') {
+      const parsedRelation = LocalTaskRelationSchema.parse(relation);
+      localTasks.changeRelation(parsedRelation);
+    }else if(relation.relation_location === 'Server'){
+      const parsedRelation = ServerTaskRelationSchema.parse(relation);
+      serverTasks.changeRelation(parsedRelation);
+    }else {
+      console.log('relation doenst have location');
+      loading.current = false;
+      return;
+    }
+    await taskManager(relation).refresh();
     loading.current=false;
   };
 
   return(
-    <TaskContext.Provider value={{ removeTask, changeRelationId, loading: loading.current, toggleTask, tasks, editTask, storeTask, refresh}} >
+    <TaskContext.Provider value={{ removeTask, changeRelationContext, loading: loading.current, toggleTask, tasks:tasks(), editTask, storeTask, refresh}} >
       {children}
     </TaskContext.Provider>
   );

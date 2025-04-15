@@ -1,4 +1,7 @@
 ## TODO
+* Fix that you cannot share relations with yourself
+* sse for relations updating
+
 * tasks that are shared are pushed to server
 * tasks that are marked done, fall bottom of list, they will return to place if unmarked(?)
 * add multiple lists

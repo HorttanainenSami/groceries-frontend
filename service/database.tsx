@@ -1,87 +1,116 @@
-import axios, { AxiosResponse, AxiosError } from 'axios';
-import Constants from "expo-constants";
-import { TaskRelationsType, ErrorResponseSchema, LoginResponseSchema, loginResponse} from '../types';
-import { SearchUsersSchema, SearchUsersType, LoginType, RegisterType } from '@/types';
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { LoginResponseSchema, ErrorResponseSchema, PushRelationToServerResponse, RelationFromServerSchema, ServerTaskRelationType, BaseTaskRelationsWithTasksType, BaseTaskType, BaseTaskSchema, ServerTaskRelationsWithTasksType, ServerTaskRelationsWithTasksSchema, BaseTaskRelationsWithTasksSchema, BaseTaskSchemaFromServer, TaskType } from '@/types';
+import { SearchUserSchema, SearchUserType, LoginType, RegisterType } from '@/types';
+import Constants from 'expo-constants';
+import { getAxiosInstance } from '@/service/AxiosInstance';
 
 const uri = `http:${Constants.experienceUrl.split(':')[1]}:3003`;
 
-const getToken = async (): Promise<string|null> => {
 
-  const user = await AsyncStorage.getItem('user');
-  if(user) return LoginResponseSchema.parse(JSON.parse(user)).token;
-  return null
-}
-const api = axios.create({ baseURL : uri});
-//TODO use this interceptor to throw custom errors to determine if server is thrown error or is it axios error
-//
+export const loginAPI = async (credentials: LoginType) => {
+  try {
 
-api.interceptors.request.use(async request => {
-  const accessToken = await getToken();
-  if (accessToken) {
-    request.headers['Authorization'] = `Bearer ${accessToken}`;
+    console.log(credentials);
+    const url = uri + '/login';
+    const response = await getAxiosInstance().post(url, credentials);
+    console.log('response ', response);
+    const parsedResponse = LoginResponseSchema.safeParse(response.data);
+    if (parsedResponse.success) return parsedResponse.data;
+    throw new Error('Something went wrong with response');
   }
-  return request;
-}, error => {
-  return Promise.reject(error);
-});
-
-api.interceptors.response.use(
-  (response) => response,
-  (error: AxiosError) => {
-    if (error.response) {
-      const parse = ErrorResponseSchema.passthrough().safeParse(error.response.data);
-      if (error.response.status === 401&& !error.request['_url'].includes('login')){
-        console.warn("Unauthorized! Redirecting to login...");
-      }else if(parse.success){
-        return Promise.reject(parse.data); 
-      }
-    } else if (error.request) {
-      console.error("Network error: No response received");
-    } else if(axios.isAxiosError(error)) {
-      console.error("Axios error:", error.message);
+  catch (e) {
+    console.log('loginAPI catch', e);
+    const parsedError = ErrorResponseSchema.safeParse(e);
+    if (parsedError.success) {
+      console.log('parsed error');
     }
-    return Promise.reject(error);
+    else {
+      console.log('error occurred', parsedError.data);
     }
-);
-
-export const loginAPI = async (credentials : LoginType)  => {
-  console.log(credentials);
-  const url = uri+'/login';
-  console.log(url);
-  const response = await api.post(url,  credentials);
-  const parsedResponse = LoginResponseSchema.safeParse(response.data);
-  if(parsedResponse.success) return parsedResponse.data;
-
-  throw new Error('Something went wrong with response');
+    throw e;
+  }
 };
 
 export const signupAPI = async (credentials: RegisterType) => {
-    console.log(credentials);
-    const response = await api.post(uri+'/signup', credentials);
-    const parsedResponse = LoginResponseSchema.safeParse(response.data);
-    if(parsedResponse.success) return parsedResponse.data;
+  console.log(credentials);
+  const response = await getAxiosInstance().post(uri + '/signup', credentials);
+  const parsedResponse = LoginResponseSchema.safeParse(response.data);
+  if (parsedResponse.success) return parsedResponse.data;
 };
 
-export const getFriends = async () => {
 
+const buildQueryString = (baseUrl: string, params: Record<string, string | undefined>): string => {
+  const query = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined) {
+      query.append(key, value);
+    }
+  });
+
+  return `${baseUrl}?${query.toString()}`;
 };
 
-export const searchUsers= async (searchParams: string): Promise<SearchUsersType[]> => {
-  const getUrl = uri+`/user/search?name=${searchParams.toLocaleLowerCase()}`;
-  console.log('searching for people from server, ',getUrl);
-  const response = await api.get(getUrl);
-  console.log('asdasd');
-  console.log(response.data);
-  const parsedResponse = SearchUsersSchema.array().parse(response.data);
+export const searchUsers = async (searchParams: string, friends?: boolean): Promise<SearchUserType[]> => {
+  const baseUrl = uri + `/user/search`;
+  const url = buildQueryString(baseUrl, { name: searchParams, friends: friends ? 'true' : undefined });
+  console.log('url', url);
+  const response = await getAxiosInstance().get(url);
+  const parsedResponse = SearchUserSchema.array().parse(response.data);
   return parsedResponse;
-
 };
+
 type shareListWithUsersProps = {
-  users: SearchUsersType[],
-  selectedRelations: TaskRelationsType[],
+  user: SearchUserType;
+  relationsToShare: BaseTaskRelationsWithTasksType[];
+};
+export const shareListWithUser = async ({ user, relationsToShare }: shareListWithUsersProps) => {
+  const postUrl = uri + `/relations/share`;
+  const response = await getAxiosInstance().post(postUrl, {
+    user_shared_with: user,
+    task_relations: relationsToShare,
+  });
+  if(response.status === 200){
+    const parsedData = PushRelationToServerResponse.parse(response.data);
+    return parsedData;
+  }
+};
+
+export const getServerRelations = async (): Promise<ServerTaskRelationType[]> => {
+  const getUrl = uri + '/relations';
+  console.log('connecting to server relations', getUrl);
+  const response = await getAxiosInstance().get(getUrl);
+  const parsedResponse = RelationFromServerSchema.array().parse(response.data);
+  console.log(JSON.stringify(parsedResponse, null, 2));
+  return parsedResponse;
+};
+
+export const getServerTasksByRelationId = async (relationId: string): Promise<ServerTaskRelationsWithTasksType> => {
+  const getUrl = uri + `/relations/${relationId}`;
+  console.log('connecting to server tasks', getUrl);
+  const response = await getAxiosInstance().get(getUrl);
+  const initialData = {shared: 1, ...response.data};
+  const parsedResponse = ServerTaskRelationsWithTasksSchema.parse(initialData);
+  return parsedResponse;
 }
-export const shareListWithUser = async ({users, selectedRelations }: shareListWithUsersProps) => {
-  //TODO
-  console.log('share with ', users, selectedRelations);
+export const createTaskForServerRelation = async (relationId: string, task: Omit<BaseTaskType, 'id'>) => {
+  const postUrl = uri + `/relations/${relationId}/tasks`;
+  const response = await getAxiosInstance().post(postUrl, task);
+  const parsedResponse = BaseTaskSchemaFromServer.parse(response.data);
+  console.log(parsedResponse)
+  return parsedResponse;
+}
+export const editTaskFromServerRelation = async (relationId: string, task: Partial<BaseTaskType>) => {
+  const {id, ...rest } = task;
+  const postUrl = uri + `/relations/${relationId}/tasks/${id}`;
+  const response = await getAxiosInstance().patch(postUrl, rest);
+  const parsedResponse = BaseTaskSchemaFromServer.parse(response.data) as TaskType;
+  console.log(parsedResponse);
+  return parsedResponse;
+}
+
+export const removeTaskFromServerRelation = async (relationId: string, taskId: string) => {
+  const postUrl = uri + `/relations/${relationId}/tasks/${taskId}`;
+  const response = await getAxiosInstance().delete(postUrl);
+  const parsedResponse = BaseTaskSchemaFromServer.parse(response.data) as TaskType;
+  return parsedResponse;
 }

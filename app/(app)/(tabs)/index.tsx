@@ -1,23 +1,23 @@
 import { StyleSheet, Pressable, Button, FlatList, Text, View } from "react-native";
-import TaskCreateModal from '@/components/TaskCreateModal';
-import TaskEditModal from '@/components/TaskEditModal';
 import { useEffect, useState }  from "react";
 import { useRouter, useNavigation } from 'expo-router';
 import IconButton from "@/components/IconButton";
-import { getTaskRelations, createTasksRelations } from "@/service/LocalDatabase";
-import { SearchUsersType, TaskRelationsType} from '@/types';
+import {  getTasksById } from "@/service/LocalDatabase";
+import { SearchUserType, BaseTaskRelationsType} from '@/types';
 import ShareRelationsWithUser from "@/components/ShareRelationsWithUsersModal";
 import CheckboxWithText from "@/components/CheckboxWithText";
 import useToggleList from "@/hooks/useToggleList";
-import { shareListWithUser } from '@/service/database';
+import { useAlert } from "@/contexts/AlertContext";
+import { useRelationContext } from "@/contexts/RelationContext";
 
-const date:Date = new Date();
 export default function Index() {
-  const router = useRouter();
   const navigation = useNavigation();
-  const [tasks, setTasks] = useState<TaskRelationsType[]>();
-  const [selectedRelations, toggleSelected] = useToggleList<TaskRelationsType>();
+  const [selectedRelations, toggleSelected] = useToggleList<BaseTaskRelationsType>();
   const [friendsModalVisible, setFriendsModalVisible] = useState(false);
+  const {addAlert } = useAlert();
+  const { refresh, relations, loading, shareRelation, addRelationLocal} = useRelationContext();
+
+  
   useEffect(() => {
     if(selectedRelations.length!==0){
       navigation.setOptions(
@@ -29,23 +29,33 @@ export default function Index() {
     return () => navigation.setOptions({'title': 'Ruokalista', 'headerLeft': undefined, 'tabBarStyle': undefined});
   },[selectedRelations]);
   useEffect(() => {
-    const fetchTasks = async () => {
-      const result = await getTaskRelations(); 
-      setTasks(result);
-    }
-    fetchTasks();
+    refresh();
   },[]);
-  const shareRelationsWithUsers = async (users: SearchUsersType[]) => {
-    //TODO
-    console.log(users);
-    const response = await shareListWithUser({users, selectedRelations});
-
+  
+  const shareRelationsWithUsers = async (user: SearchUserType) => {
+    try{
+      console.log(user);
+      // get tasks of selected relations
+      const relationsWithTasks = await Promise.all(
+        selectedRelations.map(async (relation) => ({...relation, tasks: await getTasksById(relation.id)}) )
+      );
+      console.log('things to share' , JSON.stringify(relationsWithTasks, null, 2));
+      shareRelation({user, relations: relationsWithTasks});
+      
+    }catch(e){
+      if(e instanceof Error){
+        console.log('error occurred', e);
+        addAlert({message: e.message, type: 'error'});
+      }
+    }
+    setFriendsModalVisible(false);
+    toggleSelected(undefined);
   }
+
+
   
   const addTasks = async () => {
-    await createTasksRelations({name: 'new Tasks'}); 
-    const result = await getTaskRelations(); 
-    setTasks(result);
+    await addRelationLocal('new relation');
   };
   if(selectedRelations.length!==0){
     return(
@@ -53,7 +63,8 @@ export default function Index() {
         style={styles.container}
       >
       <FlatList
-      data={tasks}
+      data={relations}
+      refreshing={loading}
       renderItem={({item, index}) =>(
         <SelectModeTaskListItem {...item}
         isChecked={!!selectedRelations?.find(i => i.id ===item.id)}
@@ -73,7 +84,7 @@ export default function Index() {
       style={styles.container}
     >
     <FlatList
-    data={tasks}
+    data={relations}
     renderItem={({item, index}) =>(
       <TaskListItem {...item} onLongPress={() => toggleSelected(item)}/> 
     )}
@@ -84,7 +95,7 @@ export default function Index() {
     </View>
   );
 };
-type TaskListItemProps = TaskRelationsType & {onLongPress : (id:number) => void};
+type TaskListItemProps = BaseTaskRelationsType & {onLongPress : (id:string) => void};
 
 const TaskListItem = ( {onLongPress, ...task } :TaskListItemProps) => {
  const { id, name, shared, created_at} = task;
@@ -101,13 +112,12 @@ const TaskListItem = ( {onLongPress, ...task } :TaskListItemProps) => {
     </Pressable>
   );
 }
-type SelectModeTaskListItemProps = TaskRelationsType & {
+type SelectModeTaskListItemProps = BaseTaskRelationsType & {
   isChecked: boolean,
   toggle: () => void
 }
 const SelectModeTaskListItem = ({isChecked, toggle, ...task} : SelectModeTaskListItemProps) => {
  const { id, name, shared, created_at} = task;
-  const route = useRouter(); 
   return (
     <View style={styles.taskListItem}>
       <CheckboxWithText 

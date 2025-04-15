@@ -1,3 +1,4 @@
+15.4.25 16h Task managerin luominen jolla hallitaan lokaaleja ja serveriltä tulleita listoja. Listan siirtäminen serverille ja sen jakaminen toisen käyttäjän kanssa. Serverillä olevan listan manipuoliminen.
 1.3.25 4h useToggleListin luominen, tokenin lisääminen api pyyntöihin, CheckboxWithText komponentin refaktorointi, listan jakaminen toisen käyttäjän kanssa toimintojen luominen
 27.2.25 1h Modalin refaktorointi
 20.2.25 2h käyttäjän rekistöröinti sivusto, formi ja yhteys backendiin 

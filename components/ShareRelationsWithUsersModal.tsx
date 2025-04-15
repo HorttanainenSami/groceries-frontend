@@ -3,36 +3,54 @@ import { TouchableOpacity, View, Text, TextInput, Pressable, StyleSheet, Button,
 import Modal from './Modal';
 import { searchUsers } from '@/service/database';
 import CheckboxWithText from './CheckboxWithText';
-import { SearchUsersType } from '@/types';
-import useToggleList from '@/hooks/useToggleList';
+import { SearchUserType } from '@/types';
+import { useAlert } from '@/contexts/AlertContext';
 
 type ShareRelationsWithUsersModalProps = {
   visible: boolean,
   onClose: () => void,
-  onAccept: (users: SearchUsersType[]) => void,
+  onAccept: (user: SearchUserType) => void,
 };
 const ShareRelationsWithUsersModal = ({onAccept, visible, onClose}: ShareRelationsWithUsersModalProps) => {
 
-  const [users, setUsers] = useState<SearchUsersType[]>([]);
-  const [selectedItems, handleToggle] = useToggleList<SearchUsersType>();
+  const [users, setUsers] = useState<SearchUserType[]>([]);
+  const [selectedUser, setSelectedUser] = useState<SearchUserType>();
+  const alert = useAlert();
 
   const [query, setQuery] = useState('');
   const [tab, setTab] = useState<"all" | "friends">("friends");
 
-
   useEffect(() => {
     const getUsers= setTimeout( async () => {
+      try{
+        if(tab === "friends") {
+          const response = await searchUsers(query, true);
+          console.log(JSON.stringify(response,null, 2 ));
+          setUsers(response);
+          return;
+        } 
         const response = await searchUsers(query);
+        console.log(JSON.stringify(response,null, 2 ));
         setUsers(response);
+    } catch(e){
+      alert.addAlert({
+        message: e instanceof Error ? e.message : 'An unknown error occurred',
+        type: 'error',
+      });
+    }
       },500);
     return () => clearTimeout(getUsers);
-  },[query]);
+  },[query, tab]);
+
+  const handleAccept = () => {
+    if(selectedUser) onAccept(selectedUser); 
+  }; 
 
   return (
     <Modal
       visible={visible}
       onClose={onClose}
-      onAccept={() => onAccept(selectedItems)}
+      onAccept={handleAccept}
       title='Kutsu käyttäjä listaan'
     >
       <View style={styles.modalContainer}>
@@ -52,23 +70,23 @@ const ShareRelationsWithUsersModal = ({onAccept, visible, onClose}: ShareRelatio
           onChangeText={setQuery}
         />
 
-      <UsersList users={users} selectedUsers={selectedItems} handleToggle={handleToggle}/>
+      <UsersList users={users} selectedUser={selectedUser} handleToggle={setSelectedUser}/>
       </View>
     </Modal>
   );
 
     }
 type UsersListProps = {
-  users: SearchUsersType[],
-  handleToggle: (user: SearchUsersType) => void,
-  selectedUsers: SearchUsersType[],
+  users: SearchUserType[],
+  handleToggle: (user: SearchUserType) => void,
+  selectedUser: SearchUserType|undefined,
 }
-const UsersList = ({users, handleToggle, selectedUsers} :UsersListProps) => {
+const UsersList = ({users, handleToggle, selectedUser} :UsersListProps) => {
   return (
     <View>
       <FlatList 
         data={users}
-        renderItem={ ({item, index}) => ( <CheckboxWithText checked={!!selectedUsers.find(i => i.id===item.id)} onToggle={() => handleToggle(item)} text={item.name} />) }
+        renderItem={ ({item, index}) => ( <CheckboxWithText checked={item.id === selectedUser?.id} onToggle={() => handleToggle(item)} text={item.name} />) }
       />
     </View>
   );

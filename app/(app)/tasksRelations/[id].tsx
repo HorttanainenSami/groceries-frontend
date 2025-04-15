@@ -4,29 +4,41 @@ import TaskCreateModal from '@/components/TaskCreateModal';
 import TaskEditModal from '@/components/TaskEditModal';
 import { useLayoutEffect, useState } from "react";
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import IconButton from "@/components/IconButton";
 import { useTaskStorage } from "@/contexts/taskContext";
 import { TaskType } from '@/types';
-import { createTasks, getTasksById } from "@/service/LocalDatabase";
 import { getSQLiteTimestamp } from "@/utils/utils";
+import { useRelationContext } from "@/contexts/RelationContext";
+import { useAlert } from "@/contexts/AlertContext";
 
 const date:Date = new Date();
 export default function Index() {
   const router = useRouter();
   const [isEditModalVisible, setEditModalVisible] = useState<TaskType|null>(null);
   const [isCreateModalVisible, setCreateModalVisible] = useState(false);
-  const { id } = useLocalSearchParams();
-  const {removeTask, toggleTask, changeRelationId, tasks, editTask, loading, refresh, storeTask} = useTaskStorage();
+  const params = useLocalSearchParams();
+  const id = String(params.id);
+  const {removeTask, toggleTask, changeRelationContext, tasks, editTask, loading, storeTask} = useTaskStorage();
+  const {relations} = useRelationContext();
+  const {addAlert} = useAlert();
 
   useLayoutEffect(() => {
-   changeRelationId(Number(id)); 
+    const initialRelation = relations.find((i) => i.id === id);
+
+    console.log('relation', initialRelation);
+    if(!initialRelation){
+      addAlert({type: 'error', message: 'Relation not found'});
+      return;
+    }
+   changeRelationContext(initialRelation); 
   },[id]);
 
   const addTask = async (newTaskText: string) => {
     const initialTasks = {
       text: newTaskText,
       created_at:getSQLiteTimestamp(),
-      task_relations_id:Number(id)
+      task_relations_id:id,
+      completed_by: null,
+      completed_at: null,
     };
     await storeTask(initialTasks);
   }
@@ -34,7 +46,7 @@ export default function Index() {
     setEditModalVisible(null);
   };
   //TODO
-  const selectTask = (id:number) => {
+  const selectTask = (id:string) => {
     router.push({
       pathname: '/selectTasks',
       params : {
@@ -48,28 +60,27 @@ export default function Index() {
     <Text>{id} </Text>
     <FlatList
       data={tasks}
-      refreshing={loading}
       renderItem ={({item}) => (
-      <View style={styles.itemContainer}>
-      <Checkbox
-      isChecked={!!item?.completed_at}
-      toggle={() => toggleTask(item.id)}
-      />
-      <Pressable
-        onPress={() =>setEditModalVisible(item)}
-        onLongPress={() => selectTask(item.id)}
-        style= {styles.textPressable}
-        >
-        
-        <Text
-          style={[styles.text, !!item?.completed_at&&styles.textCheckboxActive]}
-        >
-        {item?.text}
-        </Text>
-      </Pressable>
-      </View>
+        <View style={styles.itemContainer}>
+        <Checkbox
+        isChecked={!!item?.completed_at}
+        toggle={() => toggleTask(item.id)}
+        />
+        <Pressable
+          onPress={() =>setEditModalVisible(item)}
+          onLongPress={() => selectTask(item.id)}
+          style= {styles.textPressable}
+          >
+          
+          <Text
+            style={[styles.text, !!item?.completed_at&&styles.textCheckboxActive]}
+          >
+          {item?.text}
+          </Text>
+        </Pressable>
+        </View>
 
-    )}
+      )}
     />
     <TaskCreateModal
       visible={isCreateModalVisible}

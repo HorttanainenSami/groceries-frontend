@@ -1,16 +1,18 @@
 import { Stack, Redirect } from "expo-router";
-import { useEffect} from 'react';
 import { TaskContextProvider} from '@/contexts/taskContext';
-import { AuthContextProvider, useAuth} from '@/contexts/AuthenticationContext';
+import { useAuth} from '@/contexts/AuthenticationContext';
+import { RelationProvider } from "@/contexts/RelationContext";
 
 export default function RootLayout() {
   const data = useAuth();
   if(!data?.user) return <Redirect href='/signin' />
   return (
-    <TaskContextProvider>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      </Stack>
-    </TaskContextProvider>
+    <RelationProvider>
+      <TaskContextProvider>
+        <Stack>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        </Stack>
+      </TaskContextProvider>
+    </RelationProvider>
   );
 }
