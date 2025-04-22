@@ -1,3 +1,4 @@
+22.4.25 1h Korjaa Taskmanageria jotta serverille siirretty lista poistuu lokaalista muistista ja se päivitetään taskmanageriin
 15.4.25 16h Task managerin luominen jolla hallitaan lokaaleja ja serveriltä tulleita listoja. Listan siirtäminen serverille ja sen jakaminen toisen käyttäjän kanssa. Serverillä olevan listan manipuoliminen.
 1.3.25 4h useToggleListin luominen, tokenin lisääminen api pyyntöihin, CheckboxWithText komponentin refaktorointi, listan jakaminen toisen käyttäjän kanssa toimintojen luominen
 27.2.25 1h Modalin refaktorointi

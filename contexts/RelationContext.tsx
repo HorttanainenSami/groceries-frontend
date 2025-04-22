@@ -1,6 +1,6 @@
 
 import { getServerRelations, shareListWithUser } from '@/service/database';
-import { createTasksRelations, getTaskRelations } from '@/service/LocalDatabase';
+import { createTasksRelations, deleteRelationsWithTasks, getTaskRelations } from '@/service/LocalDatabase';
 import { BaseTaskRelationsType, BaseTaskRelationsWithTasksType, SearchUserType } from '@/types';
 import React, {createContext} from 'react';
 
@@ -54,6 +54,14 @@ export const RelationProvider = ({children}: React.PropsWithChildren) => {
     const response= await shareListWithUser({user, relationsToShare: relations});
     console.log('response' , response);
     // delete current data from local database and replace it with data from server
+	if(!response) return;
+	const deleteLocalRelationsIds = relations.map((relations) => relations.id);
+	const deleteRelationsPromises = deleteLocalRelationsIds.map(id => deleteRelationsWithTasks(id));
+	const promises = await Promise.all(deleteRelationsPromises);
+	console.log('delete these', deleteLocalRelationsIds, promises)
+	console.log('add these', response)
+	setRelations((prev) => prev.filter((relations) => !deleteLocalRelationsIds.includes(relations.id)))
+	setRelations((prev) => [...prev, ...response]);
 	}
   return(
     <RelationContext.Provider value={{relations, loading, refresh, shareRelation,addRelationLocal}}>

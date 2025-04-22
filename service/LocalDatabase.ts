@@ -63,10 +63,10 @@ export const getTaskRelations = async (): Promise<LocalTaskRelationType[]> => {
   return result;
 };
 
-export const replaceWithTaskRelationsFromServer = async (local_id: string): Promise<LocalTaskRelationType[]> => {
+export const deleteRelationsWithTasks = async (local_id: string): Promise<string> => {
   const db = await getDatabaseSingleton();
-  const result = await db.getAllAsync<LocalTaskRelationType>('DELETE FROM task_relations WHERE id=?;', local_id);
-  return result;
+  await db.runAsync('DELETE FROM task_relations WHERE id=?;', [local_id]);
+  return local_id;
 };
 
 export type createTaskType = {

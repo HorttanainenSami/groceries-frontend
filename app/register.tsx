@@ -1,23 +1,14 @@
-import { TextInput, Keyboard, StyleSheet, Pressable, Button, FlatList, Text, View } from "react-native";
-import Checkbox from '@/components/Checkbox';
-import TaskCreateModal from '@/components/TaskCreateModal';
-import TaskEditModal from '@/components/TaskEditModal';
-import { useEffect, useLayoutEffect, useState } from "react";
-import { useRouter, useNavigation } from 'expo-router';
-import IconButton from "@/components/IconButton";
+import {  Keyboard, StyleSheet,  Button,  Text, View } from "react-native";
+import { useRouter } from 'expo-router';
 import { useAuth } from "@/contexts/AuthenticationContext";
-import {z} from 'zod';
-import { Controller, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from "@hookform/resolvers/zod"
 import FormInput from "@/components/FormInput";
-import { useSQLiteContext } from "expo-sqlite";
 import { RegisterType, RegisterSchema } from '@/types';
 
 export default function Index() {
   const router = useRouter();
-  const navigation = useNavigation();
   const {signup}  = useAuth();
-  const db = useSQLiteContext();
 
   const {
     register,
@@ -51,6 +42,13 @@ export default function Index() {
         control={control}
         textContentType='emailAddress'
         placeholder='email'
+    
+      />
+      <FormInput<RegisterType>
+        name='name'
+        control={control}
+        textContentType='name'
+        placeholder='name'
     
       />
       <FormInput<RegisterType>

@@ -31,7 +31,7 @@ export const loginAPI = async (credentials: LoginType) => {
 };
 
 export const signupAPI = async (credentials: RegisterType) => {
-  console.log(credentials);
+  console.log('credentials: ',credentials);
   const response = await getAxiosInstance().post(uri + '/signup', credentials);
   const parsedResponse = LoginResponseSchema.safeParse(response.data);
   if (parsedResponse.success) return parsedResponse.data;
@@ -70,8 +70,8 @@ export const shareListWithUser = async ({ user, relationsToShare }: shareListWit
     task_relations: relationsToShare,
   });
   if(response.status === 200){
-    const parsedData = PushRelationToServerResponse.parse(response.data);
-    return parsedData;
+    const parsedData = ServerTaskRelationsWithTasksSchema.array().parse(response.data);
+    return parsedData.map(({tasks, ...rest}) => ({...rest}));
   }
 };
 

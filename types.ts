@@ -83,10 +83,10 @@ export const LocalTaskRelationsWithTasks = BaseTaskRelationsWithTasksSchema.exte
   relation_location: z.literal('Local').default('Local'),
 });
 export type LocalTaskRelationsWithTasksType = z.infer<typeof LocalTaskRelationsWithTasks>;
-export const ServerTaskRelationsWithTasksSchema = BaseTaskRelationsSchema.extend({
+export const ServerTaskRelationsWithTasksSchema = BaseTaskRelationsSchema.omit({shared: true}).extend({
   relation_location: z.literal('Server').default('Server'),
   tasks: z.array(ServerTaskSchema),
-});
+}).transform((data) => ({...data, shared: 1}));
 export type ServerTaskRelationsWithTasksType = z.infer<typeof ServerTaskRelationsWithTasksSchema>;
 export type LocalRelationsWithTasksType = z.infer<typeof LocalTaskRelationsWithTasks>;
 
@@ -103,9 +103,15 @@ export type editTaskProps = Pick<TaskType, 'id'|'text'>;
 
 export const RegisterSchema = z.object({
   email: z.string().email(),
+  name: z.string(),
   password: z.string().min(3, 'Password must be atleast 3 characters long'),
   confirm: z.string(),
-}).refine(({password, confirm}) => password ===confirm, { message: 'Passwords must match', path:['confirm'] });
+}).refine(({password, confirm}) => password ===confirm, { message: 'Passwords must match', path:['confirm'] })
+.transform((data) => ({
+  ...data,
+  name: data.name.toLocaleLowerCase(),
+  email: data.email.toLocaleLowerCase(),
+}));
 
 export type RegisterType = z.infer<typeof RegisterSchema>;
 export const SearchUserSchema =  z.object({
