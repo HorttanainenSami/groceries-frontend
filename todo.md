@@ -10,10 +10,10 @@
 * possibility to store recipes and that way to bring ingredients to our task list if you are using task list as groceries list
 
 ## IN-PROGRESS
-* Push to docker
 * Deploy to server
 
 ### DONE
+* ~~Push to docker~~
 * ~~tasks are permanently stored to phone~~
 * ~~make floating alert that can carry messages for user~~
 * ~~tasks that are shared are pushed to server~~

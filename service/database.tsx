@@ -3,7 +3,7 @@ import { SearchUserSchema, SearchUserType, LoginType, RegisterType } from '@/typ
 import Constants from 'expo-constants';
 import { getAxiosInstance } from '@/service/AxiosInstance';
 
-const uri = `http:${Constants.experienceUrl.split(':')[1]}:3003`;
+const uri = `http:${Constants.experienceUrl.split(':')[1]}:8000`;
 
 
 export const loginAPI = async (credentials: LoginType) => {
