@@ -94,7 +94,7 @@ export const getServerTasksByRelationId = async (relationId: string): Promise<Se
 }
 export const createTaskForServerRelation = async (relationId: string, task: Omit<BaseTaskType, 'id'>) => {
   const postUrl = uri + `/relations/${relationId}/tasks`;
-  const response = await getAxiosInstance().post(postUrl, task);
+  const response = await getAxiosInstance().post(postUrl, {task});
   const parsedResponse = BaseTaskSchemaFromServer.parse(response.data);
   console.log(parsedResponse)
   return parsedResponse;
