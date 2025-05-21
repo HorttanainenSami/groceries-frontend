@@ -37,7 +37,7 @@ export const AlertContextProvider = ({ children }: React.PropsWithChildren) => {
   const [alerts, setAlerts] = useState<AlertType[]>([]);
 
   const addAlert = ({ message, type, timer = 10000 }: addAlertProps) => {
-    const id = Date.now().toString();
+    const id = Date.now().toString()+Math.random().toString(36).substring(2, 15);
     const newAlert = { id, message, type, timer };
 
     const parsedAlert = alertSchema.parse(newAlert);
