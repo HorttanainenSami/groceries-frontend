@@ -1,11 +1,11 @@
-import { Stack, Redirect } from "expo-router";
-import { TaskContextProvider} from '@/contexts/taskContext';
-import { useAuth} from '@/contexts/AuthenticationContext';
-import { RelationProvider } from "@/contexts/RelationContext";
+import { Stack, Redirect } from 'expo-router';
+import { TaskContextProvider } from '@/contexts/taskContext';
+import { useAuth } from '@/contexts/AuthenticationContext';
+import { RelationProvider } from '@/contexts/RelationContext';
 
 export default function RootLayout() {
   const data = useAuth();
-  if(!data?.user) return <Redirect href='/signin' />
+  if (!data?.user) return <Redirect href="/signin" />;
   return (
     <RelationProvider>
       <TaskContextProvider>

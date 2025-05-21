@@ -5,8 +5,8 @@ export default function Tab() {
   const { user, logout } = useAuth();
   return (
     <View style={styles.container}>
-      <Text>user: {JSON.stringify(user||'undefined')}</Text>
-      <Button title='logout' onPress={() => logout()} />
+      <Text>user: {JSON.stringify(user || 'undefined')}</Text>
+      <Button title="logout" onPress={() => logout()} />
     </View>
   );
 }

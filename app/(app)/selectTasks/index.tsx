@@ -1,87 +1,83 @@
-import { StyleSheet, Pressable, Button, FlatList, Text, View } from "react-native";
+import {
+  StyleSheet,
+  Pressable,
+  FlatList,
+  Text,
+  View,
+} from 'react-native';
 import Checkbox from '@/components/Checkbox';
 import IconButton from '@/components/IconButton';
-import TaskCreateModal from '@/components/TaskCreateModal';
-import TaskEditModal from '@/components/TaskEditModal';
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 import { useRouter, useNavigation, useLocalSearchParams } from 'expo-router';
-import { useTaskStorage } from "@/contexts/taskContext";
+import { useTaskStorage } from '@/contexts/taskContext';
 import { TaskType } from '@/types';
 
 type selectedTask = TaskType & {
-  selected: boolean 
-}
-type localParams = {
-  id: number
+  selected: boolean;
 };
-const date:Date = new Date();
+const date: Date = new Date();
 export default function selectTaks() {
   const navigation = useNavigation();
   const router = useRouter();
   const params = useLocalSearchParams();
   const [selectedTasks, setSelectedTasks] = useState<selectedTask[]>([]);
-  const {tasks, removeTask, loading } = useTaskStorage();
+  const { tasks, removeTask, loading } = useTaskStorage();
   const [allToggled, setAllToggled] = useState(false);
 
   useEffect(() => {
-    if(!tasks) return;
-      const initialSelectedTasks = tasks.map(task => (  {...task, selected:task.id === Number(params.selectedId) ? true: false}));
-      setSelectedTasks(initialSelectedTasks)
-  },[tasks]);
+    if (!tasks) return;
+    const initialSelectedTasks = tasks.map((task) => ({
+      ...task,
+      selected: task.id === params.selectedId ? true : false,
+    }));
+    setSelectedTasks(initialSelectedTasks);
+  }, [tasks]);
 
   useEffect(() => {
-    navigation.setOptions({animation: 'none', title: 'Valitse toiminto'})
-  },[navigation]);
+    navigation.setOptions({ animation: 'none', title: 'Valitse toiminto' });
+  }, [navigation]);
 
-
-  const toggleTask = (id: number) => {
-    setSelectedTasks(prev => prev.map((task) => task.id === id ? {...task, selected: !task.selected}: task));
+  const toggleTask = (id: string) => {
+    setSelectedTasks((prev) =>
+      prev.map((task) =>
+        task.id === id ? { ...task, selected: !task.selected } : task
+      )
+    );
   };
 
   const removeToggled = async () => {
     //TODO push modal to confirm if you want to remove selected items if seleted more than 1
-    const removableTasks: number[] = selectedTasks.filter(task => !!task.selected).map(task => task.id);
-    await removeTask(removableTasks); 
+    const removableTasks: string[] = selectedTasks
+      .filter((task) => !!task.selected)
+      .map((task) => task.id);
+    await removeTask(removableTasks);
     router.back();
   };
   return (
-    <View
-      style={styles.container}
-    >
-    <FlatList
-      data ={selectedTasks}
-      refreshing={loading}
-      renderItem ={({item}) => (
-        <Pressable
-          onPress={() =>toggleTask(item.id)}
-        >
-        <View style={styles.itemContainer}>
-          <Text
-            style={styles.text}
-          >
-          {item.text}
-          </Text>
-          <Checkbox
-          isChecked={item.selected}
-          toggle={() => toggleTask(item.id)}
-          />
-        </View>
-        </Pressable>
-
-      )}
+    <View style={styles.container}>
+      <FlatList
+        data={selectedTasks}
+        refreshing={loading}
+        renderItem={({ item }) => (
+          <Pressable onPress={() => toggleTask(item.id)}>
+            <View style={styles.itemContainer}>
+              <Text style={styles.text}>{item.text}</Text>
+              <Checkbox
+                isChecked={item.selected}
+                toggle={() => toggleTask(item.id)}
+              />
+            </View>
+          </Pressable>
+        )}
       />
-      <IconButton onPress={removeToggled} icon='trash' />
+      <IconButton onPress={removeToggled} icon="trash" />
     </View>
   );
-  return(
-    <View>
-      {selectedTasks?.length}
-    </View>
-  )
+  return <View>{selectedTasks?.length}</View>;
 }
 const styles = StyleSheet.create({
   headerTitle: {
-    flexGrow: 2, 
+    flexGrow: 2,
     fontSize: 24,
   },
   show: {
@@ -91,7 +87,7 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
   },
-  itemContainer:{
+  itemContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     height: 56,
@@ -100,7 +96,7 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 18,
-    textDecorationLine:'none',
+    textDecorationLine: 'none',
     color: '#000',
     flexGrow: 2,
   },
@@ -113,5 +109,5 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     opacity: 0,
-  }
+  },
 });

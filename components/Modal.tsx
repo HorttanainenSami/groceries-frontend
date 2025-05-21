@@ -1,39 +1,46 @@
-import React, { useState } from 'react';
-import { Modal, View, Text, TextInput, Pressable, StyleSheet } from 'react-native';
+import React from 'react';
+import {
+  Modal,
+  View,
+  Text,
+  StyleSheet,
+} from 'react-native';
 import IconButton from './IconButton';
 
-export type ModalProps = React.PropsWithChildren &{
-  visible: boolean,
-  onClose: () => void,
-  onAccept: () => void,
-  title: string,
-}
+export type ModalProps = React.PropsWithChildren & {
+  visible: boolean;
+  onClose: () => void;
+  onAccept: () => void;
+  title: string;
+};
 
-const TaskCreateModal = ({children,title, visible, onClose, onAccept }: ModalProps) => {
-
-
+const TaskCreateModal = ({
+  children,
+  title,
+  visible,
+  onClose,
+  onAccept,
+}: ModalProps) => {
   const handleAccept = () => {
     onAccept();
     handleClose();
   };
   const handleClose = () => {
     onClose();
-  }
+  };
 
   return (
     <Modal
       transparent={true}
       visible={visible}
       animationType="fade"
-      onRequestClose={onClose}
-    >
+      onRequestClose={onClose}>
       <View style={styles.overlay}>
         <View style={styles.modalContainer}>
-          <View style ={styles.header}>
-            <IconButton icon='arrow-back' onPress={handleClose}/>
+          <View style={styles.header}>
+            <IconButton icon="arrow-back" onPress={handleClose} />
             <Text style={styles.title}>{title}</Text>
-            <IconButton icon='checkmark' onPress={handleAccept}/>
-    
+            <IconButton icon="checkmark" onPress={handleAccept} />
           </View>
 
           {children}
@@ -44,7 +51,7 @@ const TaskCreateModal = ({children,title, visible, onClose, onAccept }: ModalPro
 };
 const styles = StyleSheet.create({
   header: {
-    flexDirection:'row',
+    flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
   },

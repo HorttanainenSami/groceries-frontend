@@ -1,8 +1,20 @@
-import { UseControllerProps, useController, FieldValues, FieldPath, RegisterOptions, Control, FieldPathValue } from 'react-hook-form';
-import { Text, View,  TextInput, StyleSheet, TextInputProps } from 'react-native';
+import {
+  UseControllerProps,
+  useController,
+  FieldValues,
+} from 'react-hook-form';
+import {
+  Text,
+  View,
+  TextInput,
+  StyleSheet,
+  TextInputProps,
+} from 'react-native';
 
-export type RHFTextInputProps<TFieldValues extends FieldValues> = UseControllerProps<TFieldValues>;
-export type FormInputProps<TFieldValues extends FieldValues> = TextInputProps & RHFTextInputProps<TFieldValues>;
+export type RHFTextInputProps<TFieldValues extends FieldValues> =
+  UseControllerProps<TFieldValues>;
+export type FormInputProps<TFieldValues extends FieldValues> = TextInputProps &
+  RHFTextInputProps<TFieldValues>;
 
 function FormInput<TFieldValues extends FieldValues>({
   name,
@@ -13,33 +25,26 @@ function FormInput<TFieldValues extends FieldValues>({
   ...rest
 }: FormInputProps<TFieldValues>) {
   const {
-    field: {value, onChange},
-    fieldState: { invalid, isTouched, isDirty, error  },
-    formState: { touchedFields, dirtyFields, }
+    field: { value, onChange },
+    fieldState: { error },
   } = useController({
     name,
     control,
     rules: { required: true },
   });
 
-
-
-
   return (
-    <View >
+    <View>
       <TextInput
         {...rest}
         style={[styles.input, error && styles.error]}
         value={value}
-        onChangeText={value =>onChange(value)}
+        onChangeText={(value) => onChange(value)}
       />
       <Text style={styles.errorText}> {error?.message} </Text>
     </View>
   );
-
-
-
-};
+}
 const styles = StyleSheet.create({
   input: {
     width: '100%',
@@ -48,18 +53,16 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     padding: 10,
   },
-  error : {
-    borderColor: 'red'
+  error: {
+    borderColor: 'red',
   },
   errorText: {
-    color:'red',
+    color: 'red',
     opacity: 100,
   },
   errorTextErrorOccurred: {
-    opacity: 0
-  }
-  
+    opacity: 0,
+  },
 });
-
 
 export default FormInput;

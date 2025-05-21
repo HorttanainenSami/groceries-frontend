@@ -1,25 +1,28 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Pressable, StyleSheet } from 'react-native';
-import IconButton from './IconButton';
+import { TextInput, StyleSheet } from 'react-native';
 import Modal from './Modal';
 
 type TaskCreateModalProps = {
-  visible: boolean,
-  onClose: () => void,
-  onAccept: (a: string) => void,
-}
-const TaskCreateModal = ({ visible, onClose, onAccept }: TaskCreateModalProps) => {
+  visible: boolean;
+  onClose: () => void;
+  onAccept: (a: string) => void;
+};
+const TaskCreateModal = ({
+  visible,
+  onClose,
+  onAccept,
+}: TaskCreateModalProps) => {
   const [text, setText] = useState('');
-  const inputRef = React.useRef<TextInput| null>(null); 
+  const inputRef = React.useRef<TextInput | null>(null);
 
-  React.useEffect(()=> {
-    if(!visible) return;
-      setTimeout(() => {
-        if (inputRef.current) {
-          inputRef.current.focus();
-        }
-      }, 100);
-  },[visible]);
+  React.useEffect(() => {
+    if (!visible) return;
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, 100);
+  }, [visible]);
 
   const handleAccept = () => {
     onAccept(text);
@@ -33,17 +36,16 @@ const TaskCreateModal = ({ visible, onClose, onAccept }: TaskCreateModalProps) =
   return (
     <Modal
       visible={visible}
-      onClose={handleClose} 
+      onClose={handleClose}
       onAccept={handleAccept}
-      title='Uusi tehtävä'
-    >
-        <TextInput
-          ref={inputRef}
-          style={styles.input}
-          placeholder="Enter text here..."
-          value={text}
-          onChangeText={setText}
-        />
+      title="Uusi tehtävä">
+      <TextInput
+        ref={inputRef}
+        style={styles.input}
+        placeholder="Enter text here..."
+        value={text}
+        onChangeText={setText}
+      />
     </Modal>
   );
 };

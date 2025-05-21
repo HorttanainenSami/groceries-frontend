@@ -1,10 +1,26 @@
-import { LoginResponseSchema, ErrorResponseSchema,  RelationFromServerSchema, ServerTaskRelationType, BaseTaskRelationsWithTasksType, BaseTaskType, ServerTaskRelationsWithTasksType, ServerTaskRelationsWithTasksSchema, BaseTaskSchemaFromServer, TaskType, BaseTaskRelationsSchema } from '@/types';
-import { SearchUserSchema, SearchUserType, LoginType, RegisterType } from '@/types';
+import {
+  LoginResponseSchema,
+  ErrorResponseSchema,
+  RelationFromServerSchema,
+  ServerTaskRelationType,
+  BaseTaskRelationsWithTasksType,
+  BaseTaskType,
+  ServerTaskRelationsWithTasksType,
+  ServerTaskRelationsWithTasksSchema,
+  BaseTaskSchemaFromServer,
+  TaskType,
+  BaseTaskRelationsSchema,
+} from '@/types';
+import {
+  SearchUserSchema,
+  SearchUserType,
+  LoginType,
+  RegisterType,
+} from '@/types';
 import Constants from 'expo-constants';
 import { getAxiosInstance } from '@/service/AxiosInstance';
 
 const uri = `http:${Constants.experienceUrl.split(':')[1]}:3003`;
-
 
 export const loginAPI = async (credentials: LoginType) => {
   try {
@@ -15,14 +31,12 @@ export const loginAPI = async (credentials: LoginType) => {
     const parsedResponse = LoginResponseSchema.safeParse(response.data);
     if (parsedResponse.success) return parsedResponse.data;
     throw new Error('Something went wrong with response');
-  }
-  catch (e) {
+  } catch (e) {
     console.log('loginAPI catch', e);
     const parsedError = ErrorResponseSchema.safeParse(e);
     if (parsedError.success) {
       console.log('parsed error');
-    }
-    else {
+    } else {
       console.log('error occurred', parsedError.data);
     }
     throw e;
@@ -30,14 +44,16 @@ export const loginAPI = async (credentials: LoginType) => {
 };
 
 export const signupAPI = async (credentials: RegisterType) => {
-  console.log('credentials: ',credentials);
+  console.log('credentials: ', credentials);
   const response = await getAxiosInstance().post(uri + '/signup', credentials);
   const parsedResponse = LoginResponseSchema.safeParse(response.data);
   if (parsedResponse.success) return parsedResponse.data;
 };
 
-
-const buildQueryString = (baseUrl: string, params: Record<string, string | undefined>): string => {
+const buildQueryString = (
+  baseUrl: string,
+  params: Record<string, string | undefined>
+): string => {
   const query = new URLSearchParams();
 
   Object.entries(params).forEach(([key, value]) => {
@@ -49,9 +65,15 @@ const buildQueryString = (baseUrl: string, params: Record<string, string | undef
   return `${baseUrl}?${query.toString()}`;
 };
 
-export const searchUsers = async (searchParams: string, friends?: boolean): Promise<SearchUserType[]> => {
+export const searchUsers = async (
+  searchParams: string,
+  friends?: boolean
+): Promise<SearchUserType[]> => {
   const baseUrl = uri + `/user/search`;
-  const url = buildQueryString(baseUrl, { name: searchParams, friends: friends ? 'true' : undefined });
+  const url = buildQueryString(baseUrl, {
+    name: searchParams,
+    friends: friends ? 'true' : undefined,
+  });
   console.log('url', url);
   const response = await getAxiosInstance().get(url);
   const parsedResponse = SearchUserSchema.array().parse(response.data);
@@ -62,22 +84,29 @@ type shareListWithUsersProps = {
   user: SearchUserType;
   relationsToShare: BaseTaskRelationsWithTasksType[];
 };
-export const shareListWithUser = async ({ user, relationsToShare }: shareListWithUsersProps) => {
+export const shareListWithUser = async ({
+  user,
+  relationsToShare,
+}: shareListWithUsersProps) => {
   const postUrl = uri + `/relations/share`;
   const response = await getAxiosInstance().post(postUrl, {
     user_shared_with: user.id,
     task_relations: relationsToShare,
   });
-  if(response.status === 200){
+  if (response.status === 200) {
     console.log('response', response.data);
-    const parsedData = BaseTaskRelationsSchema.omit({shared: true}).array().parse(response.data);
+    const parsedData = BaseTaskRelationsSchema.omit({ shared: true })
+      .array()
+      .parse(response.data);
     return parsedData;
-  }else{
+  } else {
     throw new Error('Something went wrong with response', response.data);
   }
 };
 
-export const getServerRelations = async (): Promise<ServerTaskRelationType[]> => {
+export const getServerRelations = async (): Promise<
+  ServerTaskRelationType[]
+> => {
   const getUrl = uri + '/relations';
   console.log('connecting to server relations', getUrl);
   const response = await getAxiosInstance().get(getUrl);
@@ -86,41 +115,58 @@ export const getServerRelations = async (): Promise<ServerTaskRelationType[]> =>
   return parsedResponse;
 };
 
-export const getServerTasksByRelationId = async (relationId: string): Promise<ServerTaskRelationsWithTasksType> => {
+export const getServerTasksByRelationId = async (
+  relationId: string
+): Promise<ServerTaskRelationsWithTasksType> => {
   const getUrl = uri + `/relations/${relationId}`;
   console.log('connecting to server tasks', getUrl);
   const response = await getAxiosInstance().get(getUrl);
-  const initialData = {shared: 1, ...response.data};
+  const initialData = { shared: 1, ...response.data };
   const parsedResponse = ServerTaskRelationsWithTasksSchema.parse(initialData);
   return parsedResponse;
-}
-export const createTaskForServerRelation = async (relationId: string, task: Omit<BaseTaskType, 'id'>) => {
+};
+export const createTaskForServerRelation = async (
+  relationId: string,
+  task: Omit<BaseTaskType, 'id'>
+) => {
   const postUrl = uri + `/relations/${relationId}/tasks`;
-  const response = await getAxiosInstance().post(postUrl, {task});
+  const response = await getAxiosInstance().post(postUrl, { task });
   const parsedResponse = BaseTaskSchemaFromServer.parse(response.data);
-  console.log(parsedResponse)
-  return parsedResponse;
-}
-export const editTaskFromServerRelation = async (relationId: string, task: Partial<BaseTaskType>) => {
-  const {id, ...rest } = task;
-  const postUrl = uri + `/relations/${relationId}/tasks/${id}`;
-  const response = await getAxiosInstance().patch(postUrl, rest);
-  const parsedResponse = BaseTaskSchemaFromServer.parse(response.data) as TaskType;
   console.log(parsedResponse);
   return parsedResponse;
-}
+};
+export const editTaskFromServerRelation = async (
+  relationId: string,
+  task: Partial<BaseTaskType>
+) => {
+  const { id, ...rest } = task;
+  const postUrl = uri + `/relations/${relationId}/tasks/${id}`;
+  const response = await getAxiosInstance().patch(postUrl, rest);
+  const parsedResponse = BaseTaskSchemaFromServer.parse(
+    response.data
+  ) as TaskType;
+  console.log(parsedResponse);
+  return parsedResponse;
+};
 
-export const removeTaskFromServerRelation = async (relationId: string, taskId: string) => {
+export const removeTaskFromServerRelation = async (
+  relationId: string,
+  taskId: string
+) => {
   const postUrl = uri + `/relations/${relationId}/tasks/${taskId}`;
   const response = await getAxiosInstance().delete(postUrl);
-  const parsedResponse = BaseTaskSchemaFromServer.parse(response.data) as TaskType;
+  const parsedResponse = BaseTaskSchemaFromServer.parse(
+    response.data
+  ) as TaskType;
   return parsedResponse;
-}
-export const removeRelationFromServer= async (relationId: string): Promise<[boolean, string]> => {
+};
+export const removeRelationFromServer = async (
+  relationId: string
+): Promise<[boolean, string]> => {
   const postUrl = uri + `/relations/${relationId}`;
   const response = await getAxiosInstance().delete(postUrl);
-  if(response.status=== 200){
+  if (response.status === 200) {
     return [true, relationId];
   }
- return [false, relationId];
-}
+  return [false, relationId];
+};

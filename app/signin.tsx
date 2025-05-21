@@ -1,14 +1,13 @@
-import { Keyboard, StyleSheet, Button, Text, View } from "react-native";
+import { Keyboard, StyleSheet, Button, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuth } from "@/contexts/AuthenticationContext";
+import { useAuth } from '@/contexts/AuthenticationContext';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from "@hookform/resolvers/zod"
-import FormInput from "@/components/FormInput";
+import { zodResolver } from '@hookform/resolvers/zod';
+import FormInput from '@/components/FormInput';
 import { LoginType, LoginSchema } from '@/types';
 
 export default function Index() {
   const router = useRouter();
-  const data  = useAuth();
 
   const {
     register,
@@ -20,51 +19,56 @@ export default function Index() {
     defaultValues: {
       email: '',
       password: '',
-    }
-  })
-  const {login } = useAuth();
+    },
+  });
+  const { login } = useAuth();
 
-  const onSubmit= async(data: LoginType) => {
-    try{
+  const onSubmit = async (data: LoginType) => {
+    try {
       const response = await login(data);
       router.navigate('/');
-    }catch(e) {
-    }
+    } catch (e) {}
   };
-  
+
   return (
-      <View
-        style={styles.container}
-      >
+    <View style={styles.container}>
       <Text> Login view </Text>
       <FormInput<LoginType>
-        name='email'
-        keyboardType='email-address'
+        name="email"
+        keyboardType="email-address"
         control={control}
-        textContentType='emailAddress'
-        placeholder='email'
+        textContentType="emailAddress"
+        placeholder="email"
       />
       <FormInput<LoginType>
-        placeholder='password'
-        textContentType='password'
-        name='password'
+        placeholder="password"
+        textContentType="password"
+        name="password"
         secureTextEntry={true}
         control={control}
-        autoCapitalize='none'
+        autoCapitalize="none"
       />
-    
-      <Button title='Login' onPress={handleSubmit( (data) => {
-      Keyboard.dismiss();
-      onSubmit(data)})}/>
-      <Button title='Register a new account' onPress={() =>{router.navigate('/register')}}/>
 
-      </View>
+      <Button
+        title="Login"
+        onPress={handleSubmit((data) => {
+          Keyboard.dismiss();
+          onSubmit(data);
+        })}
+      />
+      <Button
+        title="Register a new account"
+        onPress={() => {
+          router.navigate('/register');
+        }}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   headerTitle: {
-    flexGrow: 2, 
+    flexGrow: 2,
     fontSize: 24,
   },
   show: {
@@ -73,19 +77,19 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  itemContainer:{
+  itemContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     height: 56,
     justifyContent: 'space-between',
     paddingHorizontal: 16,
   },
-  textPressable : {
-    flexGrow: 2
+  textPressable: {
+    flexGrow: 2,
   },
   text: {
     fontSize: 18,
-    textDecorationLine:'none',
+    textDecorationLine: 'none',
     color: '#000',
   },
   textCheckboxActive: {
@@ -106,6 +110,4 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 15,
   },
-  
 });
-

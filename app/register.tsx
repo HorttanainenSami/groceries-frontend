@@ -1,17 +1,16 @@
-import {  Keyboard, StyleSheet,  Button,  Text, View } from "react-native";
+import { Keyboard, StyleSheet, Button, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuth } from "@/contexts/AuthenticationContext";
+import { useAuth } from '@/contexts/AuthenticationContext';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from "@hookform/resolvers/zod"
-import FormInput from "@/components/FormInput";
+import { zodResolver } from '@hookform/resolvers/zod';
+import FormInput from '@/components/FormInput';
 import { RegisterType, RegisterSchema } from '@/types';
 
 export default function Index() {
   const router = useRouter();
-  const {signup}  = useAuth();
+  const { signup } = useAuth();
 
   const {
-    register,
     handleSubmit,
     control,
     formState: { errors },
@@ -20,67 +19,69 @@ export default function Index() {
     defaultValues: {
       email: '',
       password: '',
-    }
-  })
+    },
+  });
 
-  const onSubmit= async(credentials: RegisterType) => {
-    try{
+  const onSubmit = async (credentials: RegisterType) => {
+    try {
       const response = await signup(credentials);
       router.navigate('/signin');
-    }catch(e) {
-    }
+    } catch (e) {}
   };
-  
+
   return (
-      <View
-        style={styles.container}
-      >
+    <View style={styles.container}>
       <Text> Register view </Text>
       <FormInput<RegisterType>
-        name='email'
-        keyboardType='email-address'
+        name="email"
+        keyboardType="email-address"
         control={control}
-        textContentType='emailAddress'
-        placeholder='email'
-    
+        textContentType="emailAddress"
+        placeholder="email"
       />
       <FormInput<RegisterType>
-        name='name'
+        name="name"
         control={control}
-        textContentType='name'
-        placeholder='name'
-    
+        textContentType="name"
+        placeholder="name"
       />
       <FormInput<RegisterType>
-        placeholder='password'
-        textContentType='password'
-        name='password'
+        placeholder="password"
+        textContentType="password"
+        name="password"
         secureTextEntry={true}
         control={control}
-        autoCapitalize='none'
+        autoCapitalize="none"
       />
       <FormInput<RegisterType>
-        placeholder='password'
-        textContentType='password'
-        name='confirm'
+        placeholder="password"
+        textContentType="password"
+        name="confirm"
         secureTextEntry={true}
         control={control}
-        autoCapitalize='none'
+        autoCapitalize="none"
       />
-    
-      <Button title='Register' onPress={handleSubmit((data)=> {
-        Keyboard.dismiss();
-        onSubmit(data)
-        })}/>
-      <Button title='Allready have a account?' onPress={() =>{router.navigate('/signin')}}/>
 
-      </View>
+      <Button
+        title="Register"
+        onPress={handleSubmit((data) => {
+          Keyboard.dismiss();
+          onSubmit(data);
+        })}
+      />
+      <Button
+        title="Allready have a account?"
+        onPress={() => {
+          router.navigate('/signin');
+        }}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   headerTitle: {
-    flexGrow: 2, 
+    flexGrow: 2,
     fontSize: 24,
   },
   show: {
@@ -89,19 +90,19 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  itemContainer:{
+  itemContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     height: 56,
     justifyContent: 'space-between',
     paddingHorizontal: 16,
   },
-  textPressable : {
-    flexGrow: 2
+  textPressable: {
+    flexGrow: 2,
   },
   text: {
     fontSize: 18,
-    textDecorationLine:'none',
+    textDecorationLine: 'none',
     color: '#000',
   },
   textCheckboxActive: {

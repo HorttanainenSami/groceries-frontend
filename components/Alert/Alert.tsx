@@ -1,6 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
-import { AlertType, useAlert } from '@/contexts/AlertContext';
+import React, { useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+} from 'react-native';
+import { useAlert } from '@/contexts/AlertContext';
 import IconButton from '@/components/IconButton';
 
 type AlertProps = {
@@ -9,34 +13,43 @@ type AlertProps = {
   type: 'error' | 'warn' | 'success' | 'info';
   timer: number;
   onClose?: (id: string) => void;
-}
+};
 
 const Alert: React.FC<AlertProps> = ({ id, message, type, timer, onClose }) => {
-  const {removeAlert } = useAlert();
+  const { removeAlert } = useAlert();
 
   useEffect(() => {
-      const timerId = setInterval(() => clearAlert(), timer);
-      return () => clearInterval(timerId);
+    const timerId = setInterval(() => clearAlert(), timer);
+    return () => clearInterval(timerId);
   }, [id]);
 
   const clearAlert = () => {
     removeAlert(id);
     onClose?.(id);
-  }
+  };
   const alertStyles = {
-    backgroundColor: type === 'error' ? '#f44336' :
-                     type === 'warn' ? '#ff9800' :
-                     type === 'success' ? '#4caf50' : '#2196f3',
+    backgroundColor:
+      type === 'error'
+        ? '#f44336'
+        : type === 'warn'
+        ? '#ff9800'
+        : type === 'success'
+        ? '#4caf50'
+        : '#2196f3',
     color: '#fff',
   };
 
   return (
-      <View
-        style={[styles.alertContainer, { backgroundColor: alertStyles.backgroundColor }]}
-      >
-        <Text style={[styles.alertText, { color: alertStyles.color }]}>{message}</Text>
-        <IconButton icon='close' onPress={() => clearAlert()}/>
-      </View>
+    <View
+      style={[
+        styles.alertContainer,
+        { backgroundColor: alertStyles.backgroundColor },
+      ]}>
+      <Text style={[styles.alertText, { color: alertStyles.color }]}>
+        {message}
+      </Text>
+      <IconButton icon="close" onPress={() => clearAlert()} />
+    </View>
   );
 };
 
@@ -76,4 +89,3 @@ const styles = StyleSheet.create({
 });
 
 export default Alert;
-

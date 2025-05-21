@@ -4,7 +4,7 @@ import { z } from 'zod';
 const alertSchema = z.object({
   id: z.string(),
   message: z.string(),
-  type: z.enum(['error', 'warn', 'success', 'info']), 
+  type: z.enum(['error', 'warn', 'success', 'info']),
   timer: z.number().min(1000).max(10000),
 });
 
@@ -12,7 +12,7 @@ export type AlertType = z.infer<typeof alertSchema>;
 
 const addAlertPropsSchema = z.object({
   message: z.string(),
-  type: z.enum(['error', 'warn', 'success', 'info']), 
+  type: z.enum(['error', 'warn', 'success', 'info']),
   timer: z.number().min(1000).max(10000).optional(),
 });
 export type addAlertProps = z.infer<typeof addAlertPropsSchema>;
@@ -37,7 +37,8 @@ export const AlertContextProvider = ({ children }: React.PropsWithChildren) => {
   const [alerts, setAlerts] = useState<AlertType[]>([]);
 
   const addAlert = ({ message, type, timer = 10000 }: addAlertProps) => {
-    const id = Date.now().toString()+Math.random().toString(36).substring(2, 15);
+    const id =
+      Date.now().toString() + Math.random().toString(36).substring(2, 15);
     const newAlert = { id, message, type, timer };
 
     const parsedAlert = alertSchema.parse(newAlert);
@@ -55,4 +56,3 @@ export const AlertContextProvider = ({ children }: React.PropsWithChildren) => {
     </AlertContext.Provider>
   );
 };
-
