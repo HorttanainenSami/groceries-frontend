@@ -15,7 +15,7 @@ export default function Index() {
   const [selectedRelations, toggleSelected] = useToggleList<BaseTaskRelationsType>();
   const [friendsModalVisible, setFriendsModalVisible] = useState(false);
   const {addAlert } = useAlert();
-  const { refresh, relations, loading, shareRelation, addRelationLocal} = useRelationContext();
+  const { refresh, relations, loading, shareRelation, addRelationLocal, removeRelations} = useRelationContext();
 
   
   useEffect(() => {
@@ -23,33 +23,58 @@ export default function Index() {
       navigation.setOptions(
         {'title': 'Tee listoille toiminto',
           'headerLeft': () => <IconButton onPress ={() => toggleSelected(undefined)} icon='arrow-back'/>,
+          'headerRight': () => <IconButton onPress ={() => removeRelationsFromDevices(selectedRelations)} icon='trash'/>,
           'tabBarStyle': { display: 'none'}
         })
     }
-    return () => navigation.setOptions({'title': 'Ruokalista', 'headerLeft': undefined, 'tabBarStyle': undefined});
+    return () => navigation.setOptions({'title': 'Ruokalista', 'headerLeft': undefined, 'headerRight': undefined, 'tabBarStyle': undefined});
   },[selectedRelations]);
   useEffect(() => {
     refresh();
   },[]);
-  
-  const shareRelationsWithUsers = async (user: SearchUserType) => {
+  const cleanSelectView = () => {
+    toggleSelected(undefined);
+    setFriendsModalVisible(false);
+  }
+  const removeRelationsFromDevices = async (relations: BaseTaskRelationsType[]) => {
     try{
-      console.log(user);
-      // get tasks of selected relations
-      const relationsWithTasks = await Promise.all(
-        selectedRelations.map(async (relation) => ({...relation, tasks: await getTasksById(relation.id)}) )
-      );
-      console.log('things to share' , JSON.stringify(relationsWithTasks, null, 2));
-      shareRelation({user, relations: relationsWithTasks});
-      
+      const removed = await removeRelations(relations);
+      refresh();
+      removed.forEach( ([success, id]) => {
+        if(success) {
+          addAlert({message: 'Lista poistettu onnistuneesti!', type: 'success'})
+        }else{
+          addAlert({message: 'Listan poistossa virhe!', type: 'error'})
+        }
+    });
     }catch(e){
       if(e instanceof Error){
         console.log('error occurred', e);
         addAlert({message: e.message, type: 'error'});
       }
     }
-    setFriendsModalVisible(false);
-    toggleSelected(undefined);
+    cleanSelectView();
+  }
+  const shareRelationsWithUsers = async (user: SearchUserType) => {
+    try{
+      console.log(user);
+      // get tasks of selected relations
+      const relationsWithTasks = await Promise.all(
+        selectedRelations.map(async (relation) => (
+          {...relation,
+           tasks: await getTasksById(relation.id)}) )
+      );
+      console.log('things to share' , JSON.stringify(relationsWithTasks, null, 2));
+      shareRelation({user, relations: relationsWithTasks}).then(() => addAlert({message: 'Jaettu', type: 'success'}));
+      
+    }catch(e){
+      console.log('HERE ', e);
+      if(e instanceof Error){
+        console.log('error occurred', e);
+        addAlert({message: e.message, type: 'error'});
+      }
+    }
+    cleanSelectView();
   }
 
 
@@ -85,8 +110,8 @@ export default function Index() {
     >
     <FlatList
     data={relations}
-    renderItem={({item, index}) =>(
-      <TaskListItem {...item} onLongPress={() => toggleSelected(item)}/> 
+    renderItem={({item}) =>(
+      <TaskListItem key={item.id} {...item} onLongPress={() => toggleSelected(item)}/> 
     )}
     />
       <View>

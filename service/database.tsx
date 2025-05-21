@@ -1,14 +1,13 @@
-import { LoginResponseSchema, ErrorResponseSchema, PushRelationToServerResponse, RelationFromServerSchema, ServerTaskRelationType, BaseTaskRelationsWithTasksType, BaseTaskType, BaseTaskSchema, ServerTaskRelationsWithTasksType, ServerTaskRelationsWithTasksSchema, BaseTaskRelationsWithTasksSchema, BaseTaskSchemaFromServer, TaskType } from '@/types';
+import { LoginResponseSchema, ErrorResponseSchema,  RelationFromServerSchema, ServerTaskRelationType, BaseTaskRelationsWithTasksType, BaseTaskType, ServerTaskRelationsWithTasksType, ServerTaskRelationsWithTasksSchema, BaseTaskSchemaFromServer, TaskType, BaseTaskRelationsSchema } from '@/types';
 import { SearchUserSchema, SearchUserType, LoginType, RegisterType } from '@/types';
 import Constants from 'expo-constants';
 import { getAxiosInstance } from '@/service/AxiosInstance';
 
-const uri = `http:${Constants.experienceUrl.split(':')[1]}:8000`;
+const uri = `http:${Constants.experienceUrl.split(':')[1]}:3003`;
 
 
 export const loginAPI = async (credentials: LoginType) => {
   try {
-
     console.log(credentials);
     const url = uri + '/login';
     const response = await getAxiosInstance().post(url, credentials);
@@ -66,12 +65,15 @@ type shareListWithUsersProps = {
 export const shareListWithUser = async ({ user, relationsToShare }: shareListWithUsersProps) => {
   const postUrl = uri + `/relations/share`;
   const response = await getAxiosInstance().post(postUrl, {
-    user_shared_with: user,
+    user_shared_with: user.id,
     task_relations: relationsToShare,
   });
   if(response.status === 200){
-    const parsedData = ServerTaskRelationsWithTasksSchema.array().parse(response.data);
-    return parsedData.map(({tasks, ...rest}) => ({...rest}));
+    console.log('response', response.data);
+    const parsedData = BaseTaskRelationsSchema.omit({shared: true}).array().parse(response.data);
+    return parsedData;
+  }else{
+    throw new Error('Something went wrong with response', response.data);
   }
 };
 
@@ -113,4 +115,12 @@ export const removeTaskFromServerRelation = async (relationId: string, taskId: s
   const response = await getAxiosInstance().delete(postUrl);
   const parsedResponse = BaseTaskSchemaFromServer.parse(response.data) as TaskType;
   return parsedResponse;
+}
+export const removeRelationFromServer= async (relationId: string): Promise<[boolean, string]> => {
+  const postUrl = uri + `/relations/${relationId}`;
+  const response = await getAxiosInstance().delete(postUrl);
+  if(response.status=== 200){
+    return [true, relationId];
+  }
+ return [false, relationId];
 }
