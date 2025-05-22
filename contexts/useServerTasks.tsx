@@ -45,9 +45,9 @@ const useServerTasks = () => {
     setTasks((prevTasks) => [...prevTasks, response]);
   };
 
-  const editTaskToDb = async ({ id, text }: editTaskProps) => {
+  const editTaskToDb = async ({ id, task }: editTaskProps) => {
     if (relation.current === null) return;
-    await editTaskFromServerRelation(relation.current.id, { id, text });
+    await editTaskFromServerRelation(relation.current.id, { id, task });
   };
 
   const isToggled = (task: TaskType): boolean => {

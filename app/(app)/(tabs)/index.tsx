@@ -177,7 +177,7 @@ type TaskListItemProps = BaseTaskRelationsType & {
 };
 
 const TaskListItem = ({ onLongPress, ...task }: TaskListItemProps) => {
-  const { id, name, shared, created_at } = task;
+  const { id, name, created_at } = task;
   const route = useRouter();
   return (
     <Pressable
@@ -185,7 +185,6 @@ const TaskListItem = ({ onLongPress, ...task }: TaskListItemProps) => {
       onLongPress={() => onLongPress(id)}>
       <View style={styles.taskListItem}>
         <Text style={{ fontSize: 18 }}>{name}</Text>
-        <Text style={{ fontSize: 18 }}>{shared}</Text>
         <Text style={{ fontSize: 18 }}>{created_at}</Text>
       </View>
     </Pressable>
@@ -200,13 +199,13 @@ const SelectModeTaskListItem = ({
   toggle,
   ...task
 }: SelectModeTaskListItemProps) => {
-  const { id, name, shared, created_at } = task;
+  const { name, created_at } = task;
   return (
     <View style={styles.taskListItem}>
       <CheckboxWithText
         checked={isChecked}
         onToggle={toggle}
-        text={`${name} ${shared} ${created_at}`}
+        text={`${name} ${created_at}`}
       />
     </View>
   );

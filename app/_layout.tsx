@@ -7,13 +7,13 @@ import { initDb } from '@/service/LocalDatabase';
 
 export default function RootLayout() {
   return (
-    <AlertContextProvider>
-      <SQLiteProvider databaseName="todo" onInit={initDb}>
+    <SQLiteProvider databaseName="todo" onInit={initDb}>
+      <AlertContextProvider>
         <AuthContextProvider>
           <Slot />
           <AlertStack />
         </AuthContextProvider>
-      </SQLiteProvider>
-    </AlertContextProvider>
+      </AlertContextProvider>
+    </SQLiteProvider>
   );
 }

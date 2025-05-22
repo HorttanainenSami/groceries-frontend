@@ -51,7 +51,7 @@ export default function Index() {
 
   const addTask = async (newTaskText: string) => {
     const initialTasks = {
-      text: newTaskText,
+      task: newTaskText,
       created_at: getSQLiteTimestamp(),
       task_relations_id: id,
       completed_by: null,
@@ -73,7 +73,7 @@ export default function Index() {
   };
   return (
     <View style={styles.container}>
-      <Text>{id} </Text>
+      <Text>{id} {relations.find((i) => i.id ===id)?.relation_location} </Text>
       <FlatList
         data={tasks}
         renderItem={({ item }) => (
@@ -91,7 +91,7 @@ export default function Index() {
                   styles.text,
                   !!item?.completed_at && styles.textCheckboxActive,
                 ]}>
-                {item?.text}
+                {item?.task}
               </Text>
             </Pressable>
           </View>

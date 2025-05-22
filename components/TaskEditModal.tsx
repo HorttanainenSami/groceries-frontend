@@ -22,11 +22,11 @@ const TaskEditModal = ({
   React.useEffect(() => {
     if (!task) return;
 
-    setText(task.text);
+    setText(task.task);
     setTimeout(() => {
       if (inputRef.current) {
         inputRef.current.focus();
-        const length = task.text.length;
+        const length = task.task.length;
         inputRef.current.setSelection(length, length);
       }
     }, 100);
@@ -38,7 +38,7 @@ const TaskEditModal = ({
   };
   const handleAccept = () => {
     if (task) {
-      onAccept({ ...task, text });
+      onAccept({ ...task, task: text });
     }
   };
 

@@ -1,10 +1,8 @@
 ## IN-PROGRESS
-* Make local and server sql tables similar and to use use same field names nad types
-* Change interface of server and frontend so backend doesn't need to process data before pushing it to sql
+* Fix that you cannot share relations with yourself
 * Make Tests
 
 ## TODO
-* Fix that you cannot share relations with yourself
 * Fix alert component to be rendered over the view rather in view
     * fix alert to show only 1-2 error messsages on time and set timer only then when its viewed
 * make more alerts so user knows when something were success or error occurred
@@ -18,6 +16,8 @@
 
 
 ### DONE
+* ~~Make local and server sql tables similar and to use use same field names nad types~~
+*~~ Change interface of server and frontend so backend doesn't need to process data before pushing it to sql~~
 * ~~share relations needs to be transaction so if some call fails, all will be reverted~~
 * ~~Deploy to server~~
 * ~~Push to docker~~

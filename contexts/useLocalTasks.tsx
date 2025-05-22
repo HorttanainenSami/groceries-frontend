@@ -15,6 +15,7 @@ const useLocalTasks = () => {
   const relation = useRef<LocalTaskRelationType | null>(null);
 
   useEffect(() => {
+    console.log('relation.current in useEffect:', relation.current);
     refresh();
   }, [relation.current?.id]);
 
@@ -32,7 +33,7 @@ const useLocalTasks = () => {
   const changeRelation = (newRelation: LocalTaskRelationType) => {
     relation.current = newRelation;
     setTasks([]);
-    console.log('relation.current:', relation.current);
+    console.log('relation.current changeRelation:', relation.current, newRelation);
   };
   const addTaskToDb = async (newTask: Omit<TaskType, 'id'>) => {
     console.log('newTask', newTask);
@@ -40,8 +41,8 @@ const useLocalTasks = () => {
     if (response) setTasks((prev) => [...prev, response]);
   };
 
-  const editTaskToDb = async ({ id, text }: editTaskProps) => {
-    await editTask({ id, text });
+  const editTaskToDb = async ({ id, task }: editTaskProps) => {
+    await editTask({ id, task });
   };
 
   const isToggled = (task: TaskType): boolean => {

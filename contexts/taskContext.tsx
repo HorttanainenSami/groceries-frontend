@@ -58,7 +58,7 @@ export const TaskContextProvider = ({ children }: PropsWithChildren) => {
 
     await taskManager(relation).editTaskToDb({
       id: newTasks.id,
-      text: newTasks.text,
+      task: newTasks.task,
     });
     await taskManager(relation).refresh();
   };
@@ -83,9 +83,12 @@ export const TaskContextProvider = ({ children }: PropsWithChildren) => {
     loading.current = true;
     setRelation(relation);
     if (relation.relation_location === 'Local') {
+      console.log('relation location local');
       const parsedRelation = LocalTaskRelationSchema.parse(relation);
+      console.log('parsedRelation', parsedRelation);
       localTasks.changeRelation(parsedRelation);
     } else if (relation.relation_location === 'Server') {
+      console.log('relation location server');
       const parsedRelation = ServerTaskRelationSchema.parse(relation);
       serverTasks.changeRelation(parsedRelation);
     } else {

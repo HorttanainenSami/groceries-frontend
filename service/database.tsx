@@ -7,9 +7,9 @@ import {
   BaseTaskType,
   ServerTaskRelationsWithTasksType,
   ServerTaskRelationsWithTasksSchema,
-  BaseTaskSchemaFromServer,
   TaskType,
   BaseTaskRelationsSchema,
+  BaseTaskSchema,
 } from '@/types';
 import {
   SearchUserSchema,
@@ -95,7 +95,7 @@ export const shareListWithUser = async ({
   });
   if (response.status === 200) {
     console.log('response', response.data);
-    const parsedData = BaseTaskRelationsSchema.omit({ shared: true })
+    const parsedData = BaseTaskRelationsSchema
       .array()
       .parse(response.data);
     return parsedData;
@@ -121,8 +121,7 @@ export const getServerTasksByRelationId = async (
   const getUrl = uri + `/relations/${relationId}`;
   console.log('connecting to server tasks', getUrl);
   const response = await getAxiosInstance().get(getUrl);
-  const initialData = { shared: 1, ...response.data };
-  const parsedResponse = ServerTaskRelationsWithTasksSchema.parse(initialData);
+  const parsedResponse = ServerTaskRelationsWithTasksSchema.parse(response.data);
   return parsedResponse;
 };
 export const createTaskForServerRelation = async (
@@ -131,7 +130,7 @@ export const createTaskForServerRelation = async (
 ) => {
   const postUrl = uri + `/relations/${relationId}/tasks`;
   const response = await getAxiosInstance().post(postUrl, { task });
-  const parsedResponse = BaseTaskSchemaFromServer.parse(response.data);
+  const parsedResponse = BaseTaskSchema.parse(response.data);
   console.log(parsedResponse);
   return parsedResponse;
 };
@@ -142,7 +141,7 @@ export const editTaskFromServerRelation = async (
   const { id, ...rest } = task;
   const postUrl = uri + `/relations/${relationId}/tasks/${id}`;
   const response = await getAxiosInstance().patch(postUrl, rest);
-  const parsedResponse = BaseTaskSchemaFromServer.parse(
+  const parsedResponse = BaseTaskSchema.parse(
     response.data
   ) as TaskType;
   console.log(parsedResponse);
@@ -155,7 +154,7 @@ export const removeTaskFromServerRelation = async (
 ) => {
   const postUrl = uri + `/relations/${relationId}/tasks/${taskId}`;
   const response = await getAxiosInstance().delete(postUrl);
-  const parsedResponse = BaseTaskSchemaFromServer.parse(
+  const parsedResponse = BaseTaskSchema.parse(
     response.data
   ) as TaskType;
   return parsedResponse;

@@ -61,7 +61,7 @@ export default function selectTaks() {
         renderItem={({ item }) => (
           <Pressable onPress={() => toggleTask(item.id)}>
             <View style={styles.itemContainer}>
-              <Text style={styles.text}>{item.text}</Text>
+              <Text style={styles.text}>{item.task}</Text>
               <Checkbox
                 isChecked={item.selected}
                 toggle={() => toggleTask(item.id)}
