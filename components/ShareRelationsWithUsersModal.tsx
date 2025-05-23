@@ -12,6 +12,7 @@ import { searchUsers } from '@/service/database';
 import CheckboxWithText from './CheckboxWithText';
 import { SearchUserType } from '@/types';
 import { useAlert } from '@/contexts/AlertContext';
+import { useAuth } from '@/contexts/AuthenticationContext';
 
 type ShareRelationsWithUsersModalProps = {
   visible: boolean;
@@ -26,22 +27,24 @@ const ShareRelationsWithUsersModal = ({
   const [users, setUsers] = useState<SearchUserType[]>([]);
   const [selectedUser, setSelectedUser] = useState<SearchUserType>();
   const alert = useAlert();
+  const {user} = useAuth();
 
   const [query, setQuery] = useState('');
   const [tab, setTab] = useState<'all' | 'friends'>('friends');
 
   useEffect(() => {
     const getUsers = setTimeout(async () => {
+      if(!user){ return;}
       try {
+       
         if (tab === 'friends') {
-          const response = await searchUsers(query, true);
+          const response = await searchUsers(query, true).then(r => r.filter((u) => u.id  !== user.id));
           console.log(JSON.stringify(response, null, 2));
           setUsers(response);
           return;
         }
         const response = await searchUsers(query);
-        console.log(JSON.stringify(response, null, 2));
-        setUsers(response);
+        setUsers(response.filter((u) => u.id !== user.id));
       } catch (e) {
         alert.addAlert({
           message: e instanceof Error ? e.message : 'An unknown error occurred',
