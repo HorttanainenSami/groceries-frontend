@@ -1,18 +1,56 @@
-import { View } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { useEffect } from 'react';
 import { useAlert } from '@/contexts/AlertContext';
 import Alert from '@/components/Alert/Alert';
-
+import { Animated } from 'react-native';
+import { useRef } from 'react';
 const AlertStack = () => {
-  const { alerts } = useAlert();
-  useEffect(() => console.log(alerts.map((a) => a.message)), [alerts]);
+  const { alertsDisplaying: alerts, displayAlert, removeAlert } = useAlert();
+
+  useEffect(() => {
+    displayAlert();
+  }, []);
   return (
-    <View>
-      {alerts.map((a) => (
-        <Alert key={a.id} {...a} />
+    <View style={styles.alertContainer} pointerEvents="box-none">
+      {alerts.map((AlertObject) => (
+      <AnimatedAlert
+        key={AlertObject.Alert.id}
+        {...AlertObject}
+        onClose={() => removeAlert(AlertObject.Alert.id)}
+      />
       ))}
     </View>
   );
 };
 
+const styles = StyleSheet.create({
+  alertContainer: {
+    position: 'absolute',
+    bottom: 32,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 1000,
+    pointerEvents: 'box-none',
+  },
+});
 export default AlertStack;
+const AnimatedAlert = (props: React.ComponentProps<typeof Alert>) => {
+  const opacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.spring(opacity, {
+      toValue: 1,
+      useNativeDriver: true,
+      friction: 6,
+      tension: 80,
+    }).start();
+  }, []);
+
+
+  return (
+    <Animated.View style={{ opacity }}>
+      <Alert {...props}/>
+    </Animated.View>
+  );
+};

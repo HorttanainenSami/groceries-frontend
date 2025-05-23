@@ -1,3 +1,4 @@
+23.5.25 2h Alert jonon luominen. Näyttää maksimissaan 2 ilmoitusta kerrallaan FIFO periaatteella. Näyttää myös ajan kuinka kauan ennen kuin poistuu näkyvistä. 
 22.5.25 2h lokaalin tietokannan yhdenmukaistaminen serverin tietokannan kanssa
 22.4.25 1h Korjaa Taskmanageria jotta serverille siirretty lista poistuu lokaalista muistista ja se päivitetään taskmanageriin
 15.4.25 16h Task managerin luominen jolla hallitaan lokaaleja ja serveriltä tulleita listoja. Listan siirtäminen serverille ja sen jakaminen toisen käyttäjän kanssa. Serverillä olevan listan manipuoliminen.

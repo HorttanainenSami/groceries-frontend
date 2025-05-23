@@ -1,30 +1,27 @@
 import React, { useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-} from 'react-native';
-import { useAlert } from '@/contexts/AlertContext';
+import { View, Text, StyleSheet } from 'react-native';
+import { AlertDisplayType } from '@/contexts/AlertContext';
 import IconButton from '@/components/IconButton';
 
-type AlertProps = {
-  id: string;
-  message: string;
-  type: 'error' | 'warn' | 'success' | 'info';
-  timer: number;
+type AlertProps = AlertDisplayType & {
   onClose?: (id: string) => void;
 };
 
-const Alert: React.FC<AlertProps> = ({ id, message, type, timer, onClose }) => {
-  const { removeAlert } = useAlert();
-
+const Alert: React.FC<AlertProps> = ({ Alert: AlertObject, onClose }) => {
+  const { id, message, type, timer } = AlertObject;
+  const [counter, setCounter] = React.useState(timer);
+  const timerRef = React.useRef<number | null>(null);
   useEffect(() => {
-    const timerId = setInterval(() => clearAlert(), timer);
+    const timerId = setInterval(() => setCounter((prev) => prev - 1000), 1000);
+    timerRef.current = timerId;
     return () => clearInterval(timerId);
   }, [id]);
 
   const clearAlert = () => {
-    removeAlert(id);
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
     onClose?.(id);
   };
   const alertStyles = {
@@ -48,6 +45,7 @@ const Alert: React.FC<AlertProps> = ({ id, message, type, timer, onClose }) => {
       <Text style={[styles.alertText, { color: alertStyles.color }]}>
         {message}
       </Text>
+      <Text>{counter / 1000}s</Text>
       <IconButton icon="close" onPress={() => clearAlert()} />
     </View>
   );

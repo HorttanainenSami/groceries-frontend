@@ -1,12 +1,10 @@
 ## IN-PROGRESS
-* Fix alert component to be rendered over the view rather in view
-    * fix alert to show only 1-2 error messsages on time and set timer only then when its viewed
 * Make Tests
 
 ## TODO
-* make more alerts so user knows when something were success or error occurred
 * sse for relations updating
 * make notification when you user have shared list with you
+* make more alerts so user knows when something were success or error occurred
 * Fix server and frontend to use same schemas and types
 * Create CICD pipe
 * possibility to store recipes and that way to bring ingredients to our task list if you are using task list as groceries list
@@ -15,6 +13,8 @@
 
 
 ### DONE
+* ~~Fix alert component to be rendered over the view rather in view~~
+    * ~~fix alert to show only 1-2 error messsages on time and set timer only then when its viewed~~
 * ~~Fix that you cannot share relations with yourself~~
 * ~~Make local and server sql tables similar and to use use same field names nad types~~
 *~~ Change interface of server and frontend so backend doesn't need to process data before pushing it to sql~~
