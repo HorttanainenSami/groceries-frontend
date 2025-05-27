@@ -29,10 +29,10 @@ export default function Index() {
   const {
     removeTask,
     toggleTask,
-    changeRelationContext,
     tasks,
     editTask,
     loading,
+    refresh,
     storeTask,
   } = useTaskStorage();
   const { relations } = useRelationContext();
@@ -46,7 +46,7 @@ export default function Index() {
       addAlert({ type: 'error', message: 'Relation not found' });
       return;
     }
-    changeRelationContext(initialRelation);
+    refresh(initialRelation);
   }, [id]);
 
   const addTask = async (newTaskText: string) => {
@@ -57,7 +57,7 @@ export default function Index() {
       completed_by: null,
       completed_at: null,
     };
-    await storeTask(initialTasks);
+    storeTask(initialTasks);
   };
   const cleanEditTask = () => {
     setEditModalVisible(null);
@@ -80,7 +80,7 @@ export default function Index() {
           <View style={styles.itemContainer}>
             <Checkbox
               isChecked={!!item?.completed_at}
-              toggle={() => toggleTask(item.id)}
+              toggle={() => toggleTask(item)}
             />
             <Pressable
               onPress={() => setEditModalVisible(item)}

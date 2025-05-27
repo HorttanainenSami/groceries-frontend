@@ -1,5 +1,4 @@
-import { useRef, useState, useEffect } from 'react';
-import { LocalTaskRelationType, TaskType, editTaskProps } from '@/types';
+import { TaskType } from '@/types';
 import {
   createTasks,
   getTasksById,
@@ -7,94 +6,63 @@ import {
   editTask,
   removeTask,
 } from '@/service/LocalDatabase';
-import { useAuth } from '@/contexts/AuthenticationContext';
 import { getSQLiteTimestamp } from '@/utils/utils';
 const useLocalTasks = () => {
-  const [tasks, setTasks] = useState<TaskType[]>([]);
-  const { user } = useAuth();
-  const relation = useRef<LocalTaskRelationType | null>(null);
-
-  useEffect(() => {
-    console.log('relation.current in useEffect:', relation.current);
-    refresh();
-  }, [relation.current?.id]);
-
-  const refresh = async () => {
-    if (!relation.current) {
-      setTasks([]);
-      return;
-    }
-    console.log('relation is locally stored:', relation.current.id);
-    const result = await getTasksById(relation.current.id);
+  const refresh = async (id: string) => {
+    console.log('relation is locally stored:');
+    const result = await getTasksById(id);
     console.log(JSON.stringify(result, null, 2));
-    setTasks(result);
+    return result;
   };
 
-  const changeRelation = (newRelation: LocalTaskRelationType) => {
-    relation.current = newRelation;
-    setTasks([]);
-    console.log('relation.current changeRelation:', relation.current, newRelation);
-  };
-  const addTaskToDb = async (newTask: Omit<TaskType, 'id'>) => {
+  const addTaskToDb = async (
+    newTask: Omit<TaskType, 'id'>
+  ): Promise<TaskType> => {
     console.log('newTask', newTask);
     const response = await createTasks(newTask);
-    if (response) setTasks((prev) => [...prev, response]);
+    if (!response) throw new Error('Failed to create task');
+    return response;
   };
 
-  const editTaskToDb = async ({ id, task }: editTaskProps) => {
-    await editTask({ id, task });
+  const editTaskToDb = async ({ id, task }: TaskType): Promise<TaskType> => {
+    const response = await editTask({ id, task });
+    if (!response) throw new Error('Failed to edit task');
+    return response;
   };
 
   const isToggled = (task: TaskType): boolean => {
     if (!task?.completed_at && !task?.completed_by) return false;
     return true;
   };
-  const removeTaskFromDb = async (id: string | string[]) => {
-    if (Array.isArray(id)) {
-      const promises = id.map(removeTask);
-      const response = await Promise.all(promises);
-
-      setTasks(
-        tasks.filter(
-          (t) =>
-            !response
-              .filter((i) => i !== null)
-              .map((i) => i!.id)
-              .includes(t.id)
-        )
-      );
-      return response;
-    }
-    const data = await removeTask(id);
-    console.log('data', data);
-    if (data) setTasks(tasks.filter((t) => t.id !== data.id));
-    return data;
+  const removeTaskFromDb = async (
+    removeItems: { id: string; relation_id: string }[]
+  ): Promise<TaskType[]> => {
+    const promises = removeItems.map(({ id }) => removeTask(id));
+    const response = await Promise.all(promises);
+    return response.filter((t) => t !== null) as TaskType[];
   };
 
-  const toggleTaskInDb = async (id: string) => {
-    const togglableTask = tasks.find((t) => t.id === id);
-    if (user?.id && togglableTask) {
-      isToggled(togglableTask)
-        ? await toggleTask({
-            id: togglableTask.id,
-            completed_at: null,
-            completed_by: null,
-          })
-        : await toggleTask({
-            id: togglableTask.id,
-            completed_at: getSQLiteTimestamp(),
-            completed_by: user?.id,
-          });
-    }
+  const toggleTaskInDb = async (
+    task: TaskType,
+    toggled_by_id: string
+  ): Promise<TaskType> => {
+    return isToggled(task)
+      ? await toggleTask({
+          id: task.id,
+          completed_at: null,
+          completed_by: null,
+        })
+      : await toggleTask({
+          id: task.id,
+          completed_at: getSQLiteTimestamp(),
+          completed_by: toggled_by_id,
+        });
   };
 
   return {
-    changeRelation,
     refresh,
     removeTaskFromDb,
-    tasks,
     addTaskToDb,
-    setTasks,
     editTaskToDb,
     toggleTaskInDb,
   };

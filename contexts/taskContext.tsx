@@ -6,21 +6,19 @@ import {
   useState,
 } from 'react';
 import {
-  ServerTaskRelationSchema,
   BaseTaskRelationsType,
-  LocalTaskRelationSchema,
   TaskType,
 } from '@/types';
 import useLocalTasks from '@/contexts/useLocalTasks';
 import useServerTasks from './useServerTasks';
+import { useAuth } from './AuthenticationContext';
 
 type TaskContextProps = {
   tasks: TaskType[];
   editTask: (newTask: TaskType) => void;
   storeTask: (newTask: Omit<TaskType, 'id'>) => void;
-  refresh: () => void;
-  changeRelationContext: (relation: BaseTaskRelationsType) => void;
-  toggleTask: (id: string) => void;
+  refresh: (relation:BaseTaskRelationsType) => void;
+  toggleTask: (task: TaskType) => void;
   removeTask: (ids: string | string[]) => void;
   loading: boolean;
 };
@@ -30,7 +28,6 @@ export const TaskContext = createContext<TaskContextProps>({
   storeTask: () => {},
   toggleTask: () => {},
   refresh: () => {},
-  changeRelationContext: () => {},
   removeTask: () => {},
   loading: true,
 });
@@ -40,74 +37,68 @@ export const useTaskStorage = () => useContext(TaskContext);
 export const TaskContextProvider = ({ children }: PropsWithChildren) => {
   const loading = useRef<boolean>(true);
   const [relation, setRelation] = useState<BaseTaskRelationsType | null>(null);
+  const [tasks, setTasks] = useState<TaskType[]>([]);
   const localTasks = useLocalTasks();
   const serverTasks = useServerTasks();
-  const taskManager = (relations: BaseTaskRelationsType) =>
-    relations.relation_location === 'Local' ? localTasks : serverTasks;
+  const {user} = useAuth();
 
-  const tasks = () => {
-    if (relation === null) return [];
-    return taskManager(relation).tasks;
-  };
-  const refresh = () => {
-    if (relation === null) return {};
-    return taskManager(relation).refresh();
+  const isLocal = (relation: BaseTaskRelationsType) =>
+    relation.relation_location === 'Local';
+
+  const refresh = async (relation: BaseTaskRelationsType) => {
+    setRelation(relation);
+    const refreshedTasks = isLocal(relation)
+      ? await localTasks.refresh(relation.id)
+      : await serverTasks.refresh(relation.id);
+    setTasks(refreshedTasks);
   };
   const editTask = async (newTasks: TaskType) => {
     if (relation === null) return;
 
-    await taskManager(relation).editTaskToDb({
-      id: newTasks.id,
-      task: newTasks.task,
-    });
-    await taskManager(relation).refresh();
+    const editedTask = isLocal(relation)
+      ? await localTasks.editTaskToDb(newTasks)
+      : await serverTasks.editTaskToDb(newTasks);
+    setTasks((prev) =>
+      prev.map((task) => (task.id === newTasks.id ? editedTask : task))
+    );
   };
   const storeTask = async (newTasks: Omit<TaskType, 'id'>) => {
     if (relation === null) return;
-
-    console.log('newTasks', newTasks);
-    await taskManager(relation).addTaskToDb(newTasks);
+    const initNewTask = { ...newTasks, relation_id: relation.id };
+    const storedTask = isLocal(relation)
+      ? await localTasks.addTaskToDb(initNewTask)
+      : await serverTasks.addTaskToDb(initNewTask);
+    setTasks((prev) => [...prev, storedTask]);
+    return storedTask;
   };
-  const toggleTask = async (id: string) => {
-    if (relation === null) return;
+  const toggleTask = async (task: TaskType) => {
+    if (!relation||!user?.id) return;
 
-    await taskManager(relation).toggleTaskInDb(id);
-    await taskManager(relation).refresh();
+    const toggledTask = isLocal(relation)
+      ? await localTasks.toggleTaskInDb(task, user.id)
+      : await serverTasks.toggleTaskInDb(task, user.id);
+    setTasks((prev) =>
+      prev.map((t) => (t.id === task.id ? toggledTask : t))
+    );
   };
   const removeTask = async (ids: string | string[]) => {
-    if (relation === null) return;
-    await taskManager(relation).removeTaskFromDb(ids);
-  };
-  const changeRelationContext = async (relation: BaseTaskRelationsType) => {
-    if (relation === null) return;
-    loading.current = true;
-    setRelation(relation);
-    if (relation.relation_location === 'Local') {
-      console.log('relation location local');
-      const parsedRelation = LocalTaskRelationSchema.parse(relation);
-      console.log('parsedRelation', parsedRelation);
-      localTasks.changeRelation(parsedRelation);
-    } else if (relation.relation_location === 'Server') {
-      console.log('relation location server');
-      const parsedRelation = ServerTaskRelationSchema.parse(relation);
-      serverTasks.changeRelation(parsedRelation);
-    } else {
-      console.log('relation doenst have location');
-      loading.current = false;
-      return;
-    }
-    await taskManager(relation).refresh();
-    loading.current = false;
+    if (!relation) return;
+    const idsArray = Array.isArray(ids) ? ids : [ids];
+    const response = isLocal(relation)
+      ? await localTasks.removeTaskFromDb(idsArray.map((id) => ({ id, relation_id: relation.id })))
+      : await serverTasks.removeTaskFromDb(idsArray.map((id) => ({ id, relation_id: relation.id })));
+      const responseIds = response.map((task) => task.id);
+    setTasks((prev) => prev.filter((task) => responseIds.includes(task.id)));
+
   };
 
   return (
     <TaskContext.Provider
       value={{
         removeTask,
-        changeRelationContext,
         loading: loading.current,
         toggleTask,
-        tasks: tasks(),
+        tasks,
         editTask,
         storeTask,
         refresh,

@@ -125,10 +125,9 @@ export const getServerTasksByRelationId = async (
   return parsedResponse;
 };
 export const createTaskForServerRelation = async (
-  relationId: string,
   task: Omit<BaseTaskType, 'id'>
 ) => {
-  const postUrl = uri + `/relations/${relationId}/tasks`;
+  const postUrl = uri + `/relations/${task.task_relations_id}/tasks`;
   const response = await getAxiosInstance().post(postUrl, { task });
   const parsedResponse = BaseTaskSchema.parse(response.data);
   console.log(parsedResponse);
@@ -138,7 +137,7 @@ export const editTaskFromServerRelation = async (
   relationId: string,
   task: Partial<BaseTaskType>
 ) => {
-  const { id, ...rest } = task;
+  const { id, ...rest} = task;
   const postUrl = uri + `/relations/${relationId}/tasks/${id}`;
   const response = await getAxiosInstance().patch(postUrl, rest);
   const parsedResponse = BaseTaskSchema.parse(

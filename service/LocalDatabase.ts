@@ -167,7 +167,7 @@ export const toggleTask = async ({
   id,
   completed_by,
   completed_at,
-}: toggleTaskProps): Promise<TaskType | null> => {
+}: toggleTaskProps): Promise<TaskType> => {
   try {
     const db = await getDatabaseSingleton();
     const result = await db.getFirstAsync<TaskType>(
@@ -176,10 +176,11 @@ export const toggleTask = async ({
       completed_by,
       id
     );
+    if(!result) throw new Error('Task not found');
     return result;
   } catch (e) {
     console.log('error occurred', e);
-    return null;
+    throw e;
   }
 };
 export const removeTask = async (id: string): Promise<TaskType | null> => {
