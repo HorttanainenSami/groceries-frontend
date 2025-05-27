@@ -6,7 +6,6 @@ import {
   editTask,
   removeTask,
 } from '@/service/LocalDatabase';
-import { getSQLiteTimestamp } from '@/utils/utils';
 const useLocalTasks = () => {
   const refresh = async (id: string) => {
     console.log('relation is locally stored:');
@@ -30,33 +29,20 @@ const useLocalTasks = () => {
     return response;
   };
 
-  const isToggled = (task: TaskType): boolean => {
-    if (!task?.completed_at && !task?.completed_by) return false;
-    return true;
-  };
   const removeTaskFromDb = async (
-    removeItems: { id: string; relation_id: string }[]
+    removeItems: TaskType[]
   ): Promise<TaskType[]> => {
     const promises = removeItems.map(({ id }) => removeTask(id));
     const response = await Promise.all(promises);
     return response.filter((t) => t !== null) as TaskType[];
   };
 
-  const toggleTaskInDb = async (
-    task: TaskType,
-    toggled_by_id: string
-  ): Promise<TaskType> => {
-    return isToggled(task)
-      ? await toggleTask({
-          id: task.id,
-          completed_at: null,
-          completed_by: null,
-        })
-      : await toggleTask({
-          id: task.id,
-          completed_at: getSQLiteTimestamp(),
-          completed_by: toggled_by_id,
-        });
+  const toggleTaskInDb = async (task: TaskType): Promise<TaskType> => {
+    return await toggleTask({
+      id: task.id,
+      completed_at: task.completed_at,
+      completed_by: task.completed_by,
+    });
   };
 
   return {

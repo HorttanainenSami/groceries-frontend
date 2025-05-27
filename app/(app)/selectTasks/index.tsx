@@ -47,9 +47,8 @@ export default function selectTaks() {
 
   const removeToggled = async () => {
     //TODO push modal to confirm if you want to remove selected items if seleted more than 1
-    const removableTasks: string[] = selectedTasks
+    const removableTasks = selectedTasks
       .filter((task) => !!task.selected)
-      .map((task) => task.id);
     await removeTask(removableTasks);
     router.back();
   };

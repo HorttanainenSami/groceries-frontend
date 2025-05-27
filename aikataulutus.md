@@ -1,3 +1,4 @@
+27.5.25 3h Websocketin lisääminen task näkymään jotta listaa voidaan muokata reaaliajassa
 27.5.25 2h Task managerin refactorointi
 23.5.25 2h Alert jonon luominen. Näyttää maksimissaan 2 ilmoitusta kerrallaan FIFO periaatteella. Näyttää myös ajan kuinka kauan ennen kuin poistuu näkyvistä. 
 22.5.25 2h lokaalin tietokannan yhdenmukaistaminen serverin tietokannan kanssa

@@ -1,5 +1,4 @@
 import { TaskType } from '@/types';
-import { getSQLiteTimestamp } from '@/utils/utils';
 import {
   createTaskForServerRelation,
   editTaskFromServerRelation,
@@ -31,35 +30,23 @@ const useServerTasks = () => {
   };
 
   const removeTaskFromDb = async (
-    removeItems: { id: string; relation_id: string }[]
+    removeItems: TaskType[]
   ): Promise<TaskType[]> => {
-    const promises = removeItems.map(({ id, relation_id }) =>
-      removeTaskFromServerRelation(relation_id, id)
+    const promises = removeItems.map(({ id, task_relations_id }) =>
+      removeTaskFromServerRelation(task_relations_id, id)
     );
     const response = await Promise.all(promises);
 
     return response;
   };
 
-  const isToggled = (task: TaskType): boolean => {
-    if (!task?.completed_at && !task?.completed_by) return false;
-    return true;
-  };
-  const toggleTaskInDb = async (
-    task: TaskType,
-    toggled_by_id: string
-  ): Promise<TaskType> => {
-    const response = isToggled(task)
-      ? await editTaskFromServerRelation(task.task_relations_id, {
-          id: task.id,
-          completed_at: null,
-          completed_by: null,
-        })
-      : await editTaskFromServerRelation(task.task_relations_id, {
-          id: task.id,
-          completed_at: getSQLiteTimestamp(),
-          completed_by: toggled_by_id,
-        });
+
+  const toggleTaskInDb = async (task: TaskType): Promise<TaskType> => {
+    const response = await editTaskFromServerRelation(task.task_relations_id, {
+      id: task.id,
+      completed_at: task.completed_at,
+      completed_by: task.completed_by,
+    });
     console.log(response);
     return response;
   };

@@ -1,8 +1,10 @@
 ## IN-PROGRESS
+* websocket for relations updating when relation/:id view is opened
+* use fcm to background messaging when websocket is not initialized
 * Make Tests
 
 ## TODO
-* sse for relations updating
+* publish app to google play
 * make notification when you user have shared list with you
 * make more alerts so user knows when something were success or error occurred
 * Fix server and frontend to use same schemas and types

@@ -23,6 +23,7 @@ export default function Index() {
   const [isEditModalVisible, setEditModalVisible] = useState<TaskType | null>(
     null
   );
+
   const [isCreateModalVisible, setCreateModalVisible] = useState(false);
   const params = useLocalSearchParams();
   const id = String(params.id);
@@ -37,10 +38,10 @@ export default function Index() {
   } = useTaskStorage();
   const { relations } = useRelationContext();
   const { addAlert } = useAlert();
+  
 
   useLayoutEffect(() => {
     const initialRelation = relations.find((i) => i.id === id);
-
     console.log('relation', initialRelation);
     if (!initialRelation) {
       addAlert({ type: 'error', message: 'Relation not found' });
@@ -62,6 +63,7 @@ export default function Index() {
   const cleanEditTask = () => {
     setEditModalVisible(null);
   };
+  
   //TODO
   const selectTask = (id: string) => {
     router.push({
@@ -73,7 +75,9 @@ export default function Index() {
   };
   return (
     <View style={styles.container}>
-      <Text>{id} {relations.find((i) => i.id ===id)?.relation_location} </Text>
+      <Text>
+        {id} {relations.find((i) => i.id === id)?.relation_location}{' '}
+      </Text>
       <FlatList
         data={tasks}
         renderItem={({ item }) => (
@@ -106,7 +110,7 @@ export default function Index() {
       <TaskEditModal
         onClose={() => cleanEditTask()}
         onAccept={(task: TaskType) => editTask(task)}
-        onDelete={(task: TaskType) => removeTask(task.id)}
+        onDelete={(task: TaskType) => removeTask(task)}
         task={isEditModalVisible}
       />
       <View>
