@@ -1,19 +1,20 @@
-import { Keyboard, StyleSheet, Button, Text, View } from 'react-native';
+import { Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthenticationContext';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import FormInput from '@/components/FormInput';
 import { LoginType, LoginSchema } from '@/types';
+import { useAlert } from '@/contexts/AlertContext';
 
-export default function Index() {
+export default function LoginScreen() {
   const router = useRouter();
-
+  const { login } = useAuth();
+  const alert = useAlert();
   const {
-    register,
     handleSubmit,
     control,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<LoginType>({
     resolver: zodResolver(LoginSchema),
     defaultValues: {
@@ -21,93 +22,117 @@ export default function Index() {
       password: '',
     },
   });
-  const { login } = useAuth();
 
-  const onSubmit = async (data: LoginType) => {
+  const onSubmit = async (credentials: LoginType) => {
     try {
-      const response = await login(data);
+      await login(credentials);
       router.navigate('/');
-    } catch (e) {}
+    } catch (e) {
+      alert.addAlert({
+        message: 'Tarkista sähköposti ja salasana.',
+        type: 'error',
+      });
+    }
   };
 
   return (
     <View style={styles.container}>
-      <Text> Login view </Text>
-      <FormInput<LoginType>
-        name="email"
-        keyboardType="email-address"
-        control={control}
-        textContentType="emailAddress"
-        placeholder="email"
-      />
-      <FormInput<LoginType>
-        placeholder="password"
-        textContentType="password"
-        name="password"
-        secureTextEntry={true}
-        control={control}
-        autoCapitalize="none"
-      />
+      <Text style={styles.headerTitle}>Kirjaudu sisään</Text>
+      <View style={styles.form}>
+        <FormInput<LoginType>
+          name="email"
+          keyboardType="email-address"
+          control={control}
+          textContentType="emailAddress"
+          placeholder="Sähköposti"
+        />
+        <FormInput<LoginType>
+          placeholder="Salasana"
+          textContentType="password"
+          name="password"
+          secureTextEntry={true}
+          control={control}
+          autoCapitalize="none"
+        />
 
-      <Button
-        title="Login"
-        onPress={handleSubmit((data) => {
-          Keyboard.dismiss();
-          onSubmit(data);
-        })}
-      />
-      <Button
-        title="Register a new account"
-        onPress={() => {
-          router.navigate('/register');
-        }}
-      />
+        <Pressable
+          style={[styles.button, isSubmitting && styles.buttonDisabled]}
+          onPress={handleSubmit((data) => {
+            Keyboard.dismiss();
+            onSubmit(data);
+          })}
+          disabled={isSubmitting}>
+          <Text style={styles.buttonText}>Kirjaudu</Text>
+        </Pressable>
+      </View>
+
+      <View style={styles.divider} />
+      <Pressable
+        style={styles.linkButton}
+        onPress={() => router.navigate('/register')}>
+        <Text style={styles.linkText}>
+          Eikö sinulla ole tiliä? Luo uusi tili
+        </Text>
+      </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  headerTitle: {
-    flexGrow: 2,
-    fontSize: 24,
-  },
-  show: {
-    opacity: 100,
-  },
   container: {
     flex: 1,
+    padding: 28,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
   },
-  itemContainer: {
-    flexDirection: 'row',
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginBottom: 18,
+    color: '#1e88e5',
+    textAlign: 'center',
+  },
+  form: {
+    backgroundColor: '#f9f9f9',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 24,
+    elevation: 2,
+  },
+  error: {
+    color: '#e53935',
+    fontSize: 13,
+    marginBottom: 6,
+    marginLeft: 2,
+  },
+  button: {
+    backgroundColor: '#1e88e5',
+    paddingVertical: 14,
+    borderRadius: 8,
     alignItems: 'center',
-    height: 56,
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    marginTop: 10,
   },
-  textPressable: {
-    flexGrow: 2,
+  buttonDisabled: {
+    backgroundColor: '#b3c6e6',
   },
-  text: {
-    fontSize: 18,
-    textDecorationLine: 'none',
-    color: '#000',
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 17,
+    letterSpacing: 0.5,
   },
-  textCheckboxActive: {
-    textDecorationLine: 'line-through',
-    color: '#555',
+  divider: {
+    height: 1,
+    backgroundColor: '#eee',
+    marginVertical: 18,
   },
-  selectHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  linkButton: {
     alignItems: 'center',
-    opacity: 0,
+    paddingVertical: 8,
   },
-  input: {
-    width: '100%',
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 15,
+  linkText: {
+    color: '#1e88e5',
+    fontSize: 16,
+    fontWeight: '500',
   },
 });

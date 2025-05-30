@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { TextInput, StyleSheet } from 'react-native';
+import { TextInput, View } from 'react-native';
 import Modal from './Modal';
+import TextInputComponent from './TextInputComponent';
 
 type TaskCreateModalProps = {
   visible: boolean;
@@ -39,25 +40,16 @@ const TaskCreateModal = ({
       onClose={handleClose}
       onAccept={handleAccept}
       title="Uusi tehtävä">
-      <TextInput
-        ref={inputRef}
-        style={styles.input}
-        placeholder="Enter text here..."
-        value={text}
-        onChangeText={setText}
-      />
+      <View style={{ width: '90%', paddingVertical: 16 }}>
+        <TextInputComponent
+          ref={inputRef}
+          placeholder="Lisää tehtävä"
+          value={text}
+          onChangeText={setText}
+        />
+      </View>
     </Modal>
   );
 };
-const styles = StyleSheet.create({
-  input: {
-    width: '100%',
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 15,
-  },
-});
 
 export default TaskCreateModal;

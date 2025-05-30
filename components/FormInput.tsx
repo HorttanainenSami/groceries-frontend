@@ -3,18 +3,15 @@ import {
   useController,
   FieldValues,
 } from 'react-hook-form';
-import {
-  Text,
-  View,
-  TextInput,
-  StyleSheet,
-  TextInputProps,
-} from 'react-native';
+import { Text, View, StyleSheet, TextInputProps } from 'react-native';
+import TextInputComponent from './TextInputComponent';
 
 export type RHFTextInputProps<TFieldValues extends FieldValues> =
   UseControllerProps<TFieldValues>;
 export type FormInputProps<TFieldValues extends FieldValues> = TextInputProps &
-  RHFTextInputProps<TFieldValues>;
+  RHFTextInputProps<TFieldValues> & {
+    label?: string;
+  };
 
 function FormInput<TFieldValues extends FieldValues>({
   name,
@@ -22,46 +19,65 @@ function FormInput<TFieldValues extends FieldValues>({
   shouldUnregister,
   defaultValue,
   control,
+  label,
   ...rest
 }: FormInputProps<TFieldValues>) {
   const {
-    field: { value, onChange },
+    field: { value, onChange, onBlur },
     fieldState: { error },
   } = useController({
     name,
     control,
-    rules: { required: true },
+    rules,
+    defaultValue,
+    shouldUnregister,
   });
 
   return (
-    <View>
-      <TextInput
+    <View style={styles.wrapper}>
+      {label && <Text style={styles.label}>{label}</Text>}
+      <TextInputComponent
         {...rest}
-        style={[styles.input, error && styles.error]}
+        error={error?.message}
         value={value}
-        onChangeText={(value) => onChange(value)}
+        onChangeText={onChange}
+        onBlur={onBlur}
       />
-      <Text style={styles.errorText}> {error?.message} </Text>
     </View>
   );
 }
+
 const styles = StyleSheet.create({
+  wrapper: {
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 15,
+    color: '#444',
+    marginBottom: 6,
+    marginLeft: 2,
+    fontWeight: '500',
+  },
   input: {
     width: '100%',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#ccc',
-    borderRadius: 5,
-    padding: 10,
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    fontSize: 16,
+    backgroundColor: '#f9f9f9',
+    color: '#222',
   },
-  error: {
-    borderColor: 'red',
+  inputDisabled: {
+    backgroundColor: '#eee',
+    color: '#aaa',
   },
   errorText: {
-    color: 'red',
-    opacity: 100,
-  },
-  errorTextErrorOccurred: {
-    opacity: 0,
+    color: '#e53935',
+    fontSize: 13,
+    marginTop: 4,
+    marginLeft: 2,
   },
 });
 

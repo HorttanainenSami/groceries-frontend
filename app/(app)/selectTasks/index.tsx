@@ -12,30 +12,29 @@ import { useRouter, useNavigation, useLocalSearchParams } from 'expo-router';
 import { useTaskStorage } from '@/contexts/taskContext';
 import { TaskType } from '@/types';
 
-type selectedTask = TaskType & {
+type SelectedTask = TaskType & {
   selected: boolean;
 };
-const date: Date = new Date();
-export default function selectTaks() {
+
+export default function SelectTasks() {
   const navigation = useNavigation();
   const router = useRouter();
   const params = useLocalSearchParams();
-  const [selectedTasks, setSelectedTasks] = useState<selectedTask[]>([]);
+  const [selectedTasks, setSelectedTasks] = useState<SelectedTask[]>([]);
   const { tasks, removeTask, loading } = useTaskStorage();
-  const [allToggled, setAllToggled] = useState(false);
 
   useEffect(() => {
     if (!tasks) return;
     const initialSelectedTasks = tasks.map((task) => ({
       ...task,
-      selected: task.id === params.selectedId ? true : false,
+      selected: task.id === params.selectedId,
     }));
     setSelectedTasks(initialSelectedTasks);
   }, [tasks]);
 
   useEffect(() => {
-    navigation.setOptions({ animation: 'none', title: 'Valitse toiminto' });
-  }, [navigation]);
+    navigation.setOptions({ animation: 'none', title: 'Valitse tehtävät' });
+  }, []);
 
   const toggleTask = (id: string) => {
     setSelectedTasks((prev) =>
@@ -46,21 +45,27 @@ export default function selectTaks() {
   };
 
   const removeToggled = async () => {
-    //TODO push modal to confirm if you want to remove selected items if seleted more than 1
-    const removableTasks = selectedTasks
-      .filter((task) => !!task.selected)
+    const removableTasks = selectedTasks.filter((task) => task.selected);
     await removeTask(removableTasks);
     router.back();
   };
+
   return (
     <View style={styles.container}>
       <FlatList
         data={selectedTasks}
         refreshing={loading}
+        keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <Pressable onPress={() => toggleTask(item.id)}>
             <View style={styles.itemContainer}>
-              <Text style={styles.text}>{item.task}</Text>
+              <Text
+                style={[
+                  styles.text,
+                  item.selected && styles.textCheckboxActive,
+                ]}>
+                {item.task}
+              </Text>
               <Checkbox
                 isChecked={item.selected}
                 toggle={() => toggleTask(item.id)}
@@ -69,22 +74,16 @@ export default function selectTaks() {
           </Pressable>
         )}
       />
-      <IconButton onPress={removeToggled} icon="trash" />
+      <View style={styles.footer}>
+        <IconButton onPress={removeToggled} icon="trash" />
+      </View>
     </View>
   );
-  return <View>{selectedTasks?.length}</View>;
 }
 const styles = StyleSheet.create({
-  headerTitle: {
-    flexGrow: 2,
-    fontSize: 24,
-  },
-  show: {
-    opacity: 100,
-  },
   container: {
     flex: 1,
-    width: '100%',
+    backgroundColor: '#fff',
   },
   itemContainer: {
     flexDirection: 'row',
@@ -92,21 +91,22 @@ const styles = StyleSheet.create({
     height: 56,
     justifyContent: 'space-between',
     paddingHorizontal: 16,
+    borderBottomColor: '#eee',
+    borderBottomWidth: 1,
   },
   text: {
     fontSize: 18,
-    textDecorationLine: 'none',
     color: '#000',
-    flexGrow: 2,
+    flexGrow: 1,
   },
   textCheckboxActive: {
     textDecorationLine: 'line-through',
     color: '#555',
   },
-  selectHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  footer: {
+    padding: 16,
+    borderTopColor: '#eee',
+    borderTopWidth: 1,
     alignItems: 'center',
-    opacity: 0,
   },
 });

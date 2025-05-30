@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { TextInput, StyleSheet } from 'react-native';
+import { TextInput, StyleSheet, View } from 'react-native';
 import IconButton from './IconButton';
 import { TaskType } from '../types';
 import Modal from './Modal';
+import TextInputComponent from './TextInputComponent';
 
 type TaskEditModalProps = {
   onClose: () => void;
@@ -54,26 +55,38 @@ const TaskEditModal = ({
       onClose={handleClose}
       onAccept={handleAccept}
       title="Muokkaa tehtävää">
-      <TextInput
-        ref={inputRef}
-        style={styles.input}
-        placeholder="Enter text here..."
-        value={text}
-        onChangeText={setText}
-      />
-      <IconButton onPress={handleDelete} icon="trash" />
+      <View style={styles.container}>
+        <TextInputComponent
+          ref={inputRef}
+          placeholder="Muokkaa tehtävää"
+          style={styles.input}
+          value={text}
+          onChangeText={setText}
+        />
+        <IconButton
+          style={styles.deleteButton}
+          onPress={handleDelete}
+          icon="trash"
+        />
+      </View>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    width: '100%',
+    paddingVertical: 8,
+    paddingHorizontal: 0,
+    backgroundColor: '#fff',
+    alignItems: 'stretch',
+  },
   input: {
     width: '100%',
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 15,
+    marginBottom: 26,
+  },
+  deleteButton: {
+    alignSelf: 'center',
   },
 });
 

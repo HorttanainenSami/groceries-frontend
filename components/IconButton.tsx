@@ -4,34 +4,42 @@ import {
   StyleSheet,
   StyleProp,
   ViewStyle,
-  TextStyle,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+
 interface IconButtonProps {
   icon: keyof typeof Ionicons.glyphMap;
   onPress: () => void;
   style?: StyleProp<ViewStyle>;
   iconColor?: string;
   iconSize?: number;
-  textStyle?: StyleProp<TextStyle>;
   disabled?: boolean;
+  accessibilityLabel?: string;
 }
 
 const IconButton: React.FC<IconButtonProps> = ({
   icon,
   onPress,
   style,
-  iconColor = '#fff',
+  iconColor = '#222',
   iconSize = 24,
-  textStyle,
   disabled,
+  accessibilityLabel,
 }) => {
   return (
     <Pressable
-      style={({ pressed }) => [styles.button, style, pressed && styles.pressed]}
+      style={({ pressed }) => [
+        styles.button,
+        style,
+        pressed && styles.pressed,
+        disabled && styles.disabled,
+      ]}
       disabled={disabled}
-      onPress={onPress}>
-      <Ionicons name={icon} size={iconSize} color="black" style={styles.icon} />
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+    >
+      <Ionicons name={icon} size={iconSize} color={iconColor} />
     </Pressable>
   );
 };
@@ -39,20 +47,17 @@ const IconButton: React.FC<IconButtonProps> = ({
 const styles = StyleSheet.create({
   button: {
     justifyContent: 'center',
-    padding: 8,
-    borderRadius: 50,
+    alignItems: 'center',
+    padding: 10,
+    borderRadius: 24,
+    backgroundColor: 'transparent',
   },
   pressed: {
-    opacity: 0.5,
-    backgroundColor: 'grey',
+    backgroundColor: '#e3e3e3',
+    opacity: 0.7,
   },
-  icon: {
-    marginRight: 8,
-  },
-  text: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+  disabled: {
+    opacity: 0.4,
   },
 });
 

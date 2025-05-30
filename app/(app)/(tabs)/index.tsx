@@ -1,11 +1,4 @@
-import {
-  StyleSheet,
-  Pressable,
-  Button,
-  FlatList,
-  Text,
-  View,
-} from 'react-native';
+import { StyleSheet, Pressable, FlatList, Text, View } from 'react-native';
 import { useEffect, useState } from 'react';
 import { useRouter, useNavigation } from 'expo-router';
 import IconButton from '@/components/IconButton';
@@ -16,6 +9,15 @@ import CheckboxWithText from '@/components/CheckboxWithText';
 import useToggleList from '@/hooks/useToggleList';
 import { useAlert } from '@/contexts/AlertContext';
 import { useRelationContext } from '@/contexts/RelationContext';
+
+function formatDate(date: string) {
+  const d = new Date(date);
+  return d.toLocaleDateString('fi-FI', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  });
+}
 
 export default function Index() {
   const navigation = useNavigation();
@@ -35,7 +37,7 @@ export default function Index() {
   useEffect(() => {
     if (selectedRelations.length !== 0) {
       navigation.setOptions({
-        title: 'Tee listoille toiminto',
+        title: 'Valitse toiminto',
         headerLeft: () => (
           <IconButton
             onPress={() => toggleSelected(undefined)}
@@ -50,22 +52,25 @@ export default function Index() {
         ),
         tabBarStyle: { display: 'none' },
       });
-    }
-    return () =>
+    } else {
       navigation.setOptions({
-        title: 'Ruokalista',
+        title: 'Ruokalistat',
         headerLeft: undefined,
         headerRight: undefined,
         tabBarStyle: undefined,
       });
+    }
   }, [selectedRelations]);
+
   useEffect(() => {
     refresh();
   }, []);
+
   const cleanSelectView = () => {
     toggleSelected(undefined);
     setFriendsModalVisible(false);
   };
+
   const removeRelationsFromDevices = async (
     relations: BaseTaskRelationsType[]
   ) => {
@@ -73,109 +78,103 @@ export default function Index() {
       const removed = await removeRelations(relations);
       refresh();
       removed.forEach(([success, id]) => {
-        if (success) {
-          addAlert({
-            message: 'Lista poistettu onnistuneesti!',
-            type: 'success',
-          });
-        } else {
-          addAlert({ message: 'Listan poistossa virhe!', type: 'error' });
-        }
+        addAlert({
+          message: success
+            ? 'Lista poistettu onnistuneesti!'
+            : 'Listan poistossa virhe!',
+          type: success ? 'success' : 'error',
+        });
       });
     } catch (e) {
-      if (e instanceof Error) {
-        console.log('error occurred', e);
-        addAlert({ message: e.message, type: 'error' });
-      }
+      console.log('error occurred', e);
+      addAlert({ message: (e as Error).message, type: 'error' });
     }
     cleanSelectView();
   };
+
   const shareRelationsWithUsers = async (user: SearchUserType) => {
     try {
-      console.log(user);
-      // get tasks of selected relations
       const relationsWithTasks = await Promise.all(
         selectedRelations.map(async (relation) => ({
           ...relation,
           tasks: await getTasksById(relation.id),
         }))
       );
-      console.log(
-        'things to share',
-        JSON.stringify(relationsWithTasks, null, 2)
-      );
-      shareRelation({ user, relations: relationsWithTasks }).then(() =>
-        addAlert({ message: 'Jaettu', type: 'success' })
-      );
+      await shareRelation({ user, relations: relationsWithTasks });
+      addAlert({ message: 'Jaettu onnistuneesti!', type: 'success' });
     } catch (e) {
-      console.log('HERE ', e);
-      if (e instanceof Error) {
-        console.log('error occurred', e);
-        addAlert({ message: e.message, type: 'error' });
-      }
+      console.log('error occurred', e);
+      addAlert({ message: (e as Error).message, type: 'error' });
     }
     cleanSelectView();
   };
 
   const addTasks = async () => {
-    await addRelationLocal('new relation');
+    await addRelationLocal('Uusi lista');
   };
-  if (selectedRelations.length !== 0) {
-    return (
-      <View style={styles.container}>
-        <FlatList
-          data={relations}
-          refreshing={loading}
-          renderItem={({ item, index }) => (
-            <SelectModeTaskListItem
-              {...item}
-              isChecked={!!selectedRelations?.find((i) => i.id === item.id)}
-              toggle={() => toggleSelected(item)}
-            />
-          )}
-        />
-        <View>
-          <Button
-            title="Kutsu kaveri"
-            onPress={() => {
-              setFriendsModalVisible(true);
-            }}
-          />
-        </View>
-        {friendsModalVisible && (
-          <ShareRelationsWithUser
-            onAccept={shareRelationsWithUsers}
-            visible={friendsModalVisible}
-            onClose={() => {
-              setFriendsModalVisible(false);
-            }}
-          />
-        )}
-      </View>
-    );
-  }
+
+  const showSelectionMode = selectedRelations.length !== 0;
+
   return (
     <View style={styles.container}>
+      {showSelectionMode && (
+        <View style={styles.selectionBanner}>
+          <Text style={styles.selectionText}>
+            {selectedRelations.length} valittu
+          </Text>
+          <Pressable
+            style={styles.shareButton}
+            onPress={() => setFriendsModalVisible(true)}>
+            <Text style={styles.shareButtonText}>Kutsu kaveri</Text>
+          </Pressable>
+        </View>
+      )}
+
       <FlatList
         data={relations}
-        renderItem={({ item }) => (
-          <TaskListItem
-            key={item.id}
-            {...item}
-            onLongPress={() => toggleSelected(item)}
-          />
-        )}
+        refreshing={loading}
+        contentContainerStyle={{ flexGrow: 1 }}
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyText}>Ei listoja vielä</Text>
+          </View>
+        }
+        renderItem={({ item }) =>
+          showSelectionMode ? (
+            <SelectModeTaskListItem
+              {...item}
+              isChecked={!!selectedRelations.find((i) => i.id === item.id)}
+              toggle={() => toggleSelected(item)}
+            />
+          ) : (
+            <TaskListItem
+              key={item.id}
+              {...item}
+              onLongPress={() => toggleSelected(item)}
+            />
+          )
+        }
       />
-      <View>
-        <Button title="Lisää lista" onPress={() => addTasks()} />
-      </View>
+
+      {!showSelectionMode && (
+        <Pressable style={styles.fab} onPress={addTasks}>
+          <Text style={styles.fabText}>+</Text>
+        </Pressable>
+      )}
+
+      {friendsModalVisible && (
+        <ShareRelationsWithUser
+          onAccept={shareRelationsWithUsers}
+          visible={friendsModalVisible}
+          onClose={() => setFriendsModalVisible(false)}
+        />
+      )}
     </View>
   );
 }
 type TaskListItemProps = BaseTaskRelationsType & {
   onLongPress: (id: string) => void;
 };
-
 const TaskListItem = ({ onLongPress, ...task }: TaskListItemProps) => {
   const { id, name, created_at } = task;
   const route = useRouter();
@@ -184,8 +183,8 @@ const TaskListItem = ({ onLongPress, ...task }: TaskListItemProps) => {
       onPress={() => route.push(`/tasksRelations/${id}`)}
       onLongPress={() => onLongPress(id)}>
       <View style={styles.taskListItem}>
-        <Text style={{ fontSize: 18 }}>{name}</Text>
-        <Text style={{ fontSize: 18 }}>{created_at}</Text>
+        <Text style={styles.taskName}>{name}</Text>
+        <Text style={styles.taskDate}>{formatDate(created_at)}</Text>
       </View>
     </Pressable>
   );
@@ -205,53 +204,81 @@ const SelectModeTaskListItem = ({
       <CheckboxWithText
         checked={isChecked}
         onToggle={toggle}
-        text={`${name} ${created_at}`}
+        text={`${name} — ${formatDate(created_at)}`}
       />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  taskListItem: {
-    height: 50,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    alignItems: 'center',
-  },
-  headerTitle: {
-    flexGrow: 2,
-    fontSize: 24,
-  },
-  show: {
-    opacity: 100,
-  },
   container: {
     flex: 1,
+    backgroundColor: '#fff',
   },
-  itemContainer: {
+  taskListItem: {
+    height: 64,
     flexDirection: 'row',
-    alignItems: 'center',
-    height: 56,
     justifyContent: 'space-between',
     paddingHorizontal: 16,
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderColor: '#eee',
   },
-  textPressable: {
-    flexGrow: 2,
-  },
-  text: {
+  taskName: {
     fontSize: 18,
-    textDecorationLine: 'none',
-    color: '#000',
+    fontWeight: '500',
   },
-  textCheckboxActive: {
-    textDecorationLine: 'line-through',
-    color: '#555',
+  taskDate: {
+    fontSize: 14,
+    color: '#999',
   },
-  selectHeader: {
+  selectionBanner: {
+    backgroundColor: '#f0f0f0',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    opacity: 0,
+  },
+  selectionText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  shareButton: {
+    backgroundColor: '#007bff',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 4,
+  },
+  shareButtonText: {
+    color: '#fff',
+    fontWeight: '500',
+  },
+  fab: {
+    backgroundColor: '#28a745',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    position: 'absolute',
+    bottom: 24,
+    right: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+  },
+  fabText: {
+    color: '#fff',
+    fontSize: 28,
+    lineHeight: 28,
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 60,
+  },
+  emptyText: {
+    fontSize: 18,
+    color: '#777',
   },
 });
