@@ -12,6 +12,7 @@ import {
   BaseTaskRelationsType,
   BaseTaskRelationsWithTasksType,
   SearchUserType,
+  ServerTaskRelationType,
 } from '@/types';
 import React, { createContext } from 'react';
 
@@ -21,7 +22,7 @@ type ShareRelationType = {
 };
 
 type RelationContextType = {
-  relations: BaseTaskRelationsType[];
+  relations: BaseTaskRelationsType[]|ServerTaskRelationType[];
   refresh: () => Promise<void>;
   loading: boolean;
   shareRelation: (data: ShareRelationType) => Promise<void>;
@@ -82,14 +83,11 @@ export const RelationProvider = ({ children }: React.PropsWithChildren) => {
 
   const shareRelation = async ({ user, relations }: ShareRelationType) => {
     try {
-      // push selected relations with tasks to server
       const response = await shareListWithUser({
         user,
         relationsToShare: relations,
       });
       console.log('response from server', response);
-      // here we need info about which relations are shared and which are not
-      // delete current data from local database and replace it with data from server
       if (!response) return;
       const deleteLocalRelationsIds = relations.map(
         (relations) => relations.id

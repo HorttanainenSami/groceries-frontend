@@ -1,7 +1,6 @@
 import {
   LoginResponseSchema,
   ErrorResponseSchema,
-  RelationFromServerSchema,
   ServerTaskRelationType,
   BaseTaskRelationsWithTasksType,
   BaseTaskType,
@@ -10,6 +9,7 @@ import {
   TaskType,
   BaseTaskRelationsSchema,
   BaseTaskSchema,
+  ServerTaskRelationSchema,
 } from '@/types';
 import {
   SearchUserSchema,
@@ -105,12 +105,18 @@ export const shareListWithUser = async ({
 export const getServerRelations = async (): Promise<
   ServerTaskRelationType[]
 > => {
-  const getUrl = uri + '/relations';
-  console.log('connecting to server relations', getUrl);
-  const response = await getAxiosInstance().get(getUrl);
-  const parsedResponse = RelationFromServerSchema.array().parse(response.data);
-  console.log(JSON.stringify(parsedResponse, null, 2));
-  return parsedResponse;
+  try{
+    const getUrl = uri + '/relations';
+    console.log('connecting to server relations', getUrl);
+    const response = await getAxiosInstance().get(getUrl);
+    console.log(JSON.stringify(response.data, null, 2));
+    const parsedResponse = ServerTaskRelationSchema.array().parse(response.data);
+    console.log(JSON.stringify(parsedResponse, null, 2));
+    return parsedResponse;
+  } catch(e){
+    console.log(e);
+    return [];
+  }
 };
 
 export const getServerTasksByRelationId = async (

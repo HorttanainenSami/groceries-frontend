@@ -3,7 +3,11 @@ import { useEffect, useState } from 'react';
 import { useRouter, useNavigation } from 'expo-router';
 import IconButton from '@/components/IconButton';
 import { getTasksById } from '@/service/LocalDatabase';
-import { SearchUserType, BaseTaskRelationsType } from '@/types';
+import {
+  SearchUserType,
+  BaseTaskRelationsType,
+  ServerTaskRelationType,
+} from '@/types';
 import ShareRelationsWithUser from '@/components/ShareRelationsWithUsersModal';
 import CheckboxWithText from '@/components/CheckboxWithText';
 import useToggleList from '@/hooks/useToggleList';
@@ -139,28 +143,42 @@ export default function Index() {
             <Text style={styles.emptyText}>Ei listoja vielä</Text>
           </View>
         }
-        renderItem={({ item }) =>
-          showSelectionMode ? (
-            <SelectModeTaskListItem
-              {...item}
-              isChecked={!!selectedRelations.find((i) => i.id === item.id)}
-              toggle={() => toggleSelected(item)}
-            />
-          ) : (
+        renderItem={({
+          item,
+        }: {
+          item: BaseTaskRelationsType | ServerTaskRelationType;
+        }) => {
+          if (showSelectionMode) {
+            return (
+              <SelectModeTaskListItem
+                {...(item as BaseTaskRelationsType)}
+                isChecked={!!selectedRelations.find((i) => i.id === item.id)}
+                toggle={() => toggleSelected(item as BaseTaskRelationsType)}
+              />
+            );
+          }
+          if ((item as ServerTaskRelationType).relation_location === 'Server')
+            return (
+              <ServerTaskListItem
+                key={item.id}
+                {...(item as ServerTaskRelationType)}
+                onLongPress={() =>
+                  toggleSelected(item as BaseTaskRelationsType)
+                }
+              />
+            );
+          return (
             <TaskListItem
               key={item.id}
-              {...item}
-              onLongPress={() => toggleSelected(item)}
+              {...(item as BaseTaskRelationsType)}
+              onLongPress={() => toggleSelected(item as BaseTaskRelationsType)}
             />
-          )
-        }
+          );
+        }}
       />
-
-      {!showSelectionMode && (
-        <Pressable style={styles.fab} onPress={addTasks}>
-          <Text style={styles.fabText}>+</Text>
-        </Pressable>
-      )}
+      <Pressable style={styles.fab} onPress={addTasks}>
+        <Text style={styles.fabText}>+</Text>
+      </Pressable>
 
       {friendsModalVisible && (
         <ShareRelationsWithUser
@@ -188,6 +206,48 @@ const TaskListItem = ({ onLongPress, ...task }: TaskListItemProps) => {
       </View>
     </Pressable>
   );
+};
+type ServerTaskListItemProps = ServerTaskRelationType & {
+  onLongPress: (id: string) => void;
+};
+
+const ServerTaskListItem = ({
+  onLongPress,
+  ...task
+}: ServerTaskListItemProps) => {
+  const { id, name, created_at, shared_with_name, my_permission } = task;
+  const route = useRouter();
+
+  return (
+    <Pressable
+      onPress={() => route.push(`/tasksRelations/${id}`)}
+      onLongPress={() => onLongPress(id)}
+    >
+      <View style={styles.serverTaskContent}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.serverTaskName}>{name}</Text>
+          {shared_with_name && (
+            <Text style={styles.sharedWith}>
+              Jaettu: <Text style={styles.sharedWithNames}>{shared_with_name}</Text>
+            </Text>
+          )}
+        </View>
+        <View style={styles.rightSection}>
+          <View style={[styles.permissionBadge, my_permission === 'edit' ? styles.editBadge : styles.viewBadge]}>
+            <Text style={styles.permissionBadgeText}>
+              {PermissionLabels[my_permission] || 'Tuntematon'}
+            </Text>
+          </View>
+          <Text style={styles.serverTaskDate}>{formatDate(created_at)}</Text>
+        </View>
+      </View>
+    </Pressable>
+  );
+};
+export const PermissionLabels: Record<string, string> = {
+  edit: 'Muokkaaja',
+  owner: 'Omistaja',
+  view: 'Katsoja',
 };
 type SelectModeTaskListItemProps = BaseTaskRelationsType & {
   isChecked: boolean;
@@ -281,4 +341,62 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#777',
   },
-});
+  serverTaskCard: {
+    backgroundColor: '#f9f9f9',
+    borderRadius: 12,
+    marginHorizontal: 12,
+    marginVertical: 8,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+  },
+  serverTaskContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+  },
+  serverTaskName: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#222',
+    marginBottom: 4,
+  },
+  sharedWith: {
+    fontSize: 14,
+    color: '#888',
+  },
+  sharedWithNames: {
+    color: '#1e88e5',
+    fontWeight: '500',
+  },
+  rightSection: {
+    alignItems: 'flex-end',
+    marginLeft: 16,
+  },
+  permissionBadge: {
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    marginBottom: 6,
+    alignSelf: 'flex-end',
+  },
+  editBadge: {
+    backgroundColor: '#e3fcec',
+  },
+  viewBadge: {
+    backgroundColor: '#e3e8fc',
+  },
+  permissionBadgeText: {
+    color: '#1e88e5',
+    fontWeight: 'bold',
+    fontSize: 13,
+  },
+  serverTaskDate: {
+    fontSize: 13,
+    color: '#aaa',
+    fontWeight: '400',
+}
+}
+);

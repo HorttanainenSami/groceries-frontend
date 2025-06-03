@@ -1,11 +1,20 @@
 ## IN-PROGRESS
-* websocket for relations updating when relation/:id view is opened
-* use fcm to background messaging when websocket is not initialized
+* publish app to google play
 * Make Tests
 
 ## TODO
-* publish app to google play
-* make notification when you user have shared list with you
+* use drizzle in database
+* Make application to work in offline mode and sync changes as app is again connected to server
+    * If cannot connect to server handle it correctly
+        * change to offline mode
+        * when connected sync to backend
+* If cannot connect to db handle it correctly
+    * try to reconnect to db
+    * send error message
+* show with whom list is shared
+* use fcm to background messaging when websocket is not initialized
+* make notification when user have shared list with you
+    * if websocket not connected -> fcm
 * make more alerts so user knows when something were success or error occurred
 * Fix server and frontend to use same schemas and types
 * Create CICD pipe
@@ -15,6 +24,7 @@
 
 
 ### DONE
+* ~~websocket for relations updating when relation/:id view is opened~~
 * ~~Fix alert component to be rendered over the view rather in view~~
     * ~~fix alert to show only 1-2 error messsages on time and set timer only then when its viewed~~
 * ~~Fix that you cannot share relations with yourself~~

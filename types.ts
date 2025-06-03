@@ -23,20 +23,6 @@ export const BaseTaskSchema = z.object({
 });
 
 export type BaseTaskType = z.infer<typeof BaseTaskSchema>;
-export const RelationFromServerSchema = z
-  .object({
-    id: z.string().uuid(),
-    name: z.string(),
-    created_at: z.string(),
-  })
-  .transform((data) =>
-    ServerTaskRelationSchema.parse({
-      ...data,
-      relation_location: 'Server',
-    })
-  );
-
-export type RelationsFromServerType = z.infer<typeof RelationFromServerSchema>;
 
 export const BaseTaskRelationsSchema = z.object({
   id: z.string().uuid(),
@@ -52,6 +38,10 @@ export type LocalTaskRelationType = z.infer<typeof LocalTaskRelationSchema>;
 
 export const ServerTaskRelationSchema = BaseTaskRelationsSchema.extend({
   relation_location: z.literal('Server').default('Server'),
+  my_permission: z.string(),
+  shared_with_id: z.string().uuid(),
+  shared_with_name: z.string(),
+  shared_with_email: z.string().email(),
 });
 export type ServerTaskRelationType = z.infer<typeof ServerTaskRelationSchema>;
 
