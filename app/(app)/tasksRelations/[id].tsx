@@ -27,6 +27,7 @@ export default function Index() {
     loading,
     refresh,
     storeTask,
+    cleanup
   } = useTaskStorage();
   const { relations } = useRelationContext();
   const { addAlert } = useAlert();
@@ -35,9 +36,12 @@ export default function Index() {
     const initialRelation = relations.find((i) => i.id === id);
     if (!initialRelation) {
       addAlert({ type: 'error', message: 'Relation not found' });
-      return;
+    } else {
+      refresh(initialRelation);
     }
-    refresh(initialRelation);
+    return () => {
+      cleanup();
+    };
   }, [id]);
 
   const addTask = async (newTaskText: string) => {

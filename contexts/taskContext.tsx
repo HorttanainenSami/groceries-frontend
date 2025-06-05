@@ -21,6 +21,7 @@ type TaskContextProps = {
   toggleTask: (task: TaskType) => void;
   removeTask: (task: TaskType | TaskType[]) => void;
   loading: boolean;
+  cleanup: () => void;
 };
 export const TaskContext = createContext<TaskContextProps>({
   relation: null,
@@ -31,6 +32,7 @@ export const TaskContext = createContext<TaskContextProps>({
   refresh: () => {},
   removeTask: () => {},
   loading: true,
+  cleanup: () => {},
 });
 
 export const useTaskStorage = () => useContext(TaskContext);
@@ -49,34 +51,56 @@ export const TaskContextProvider = ({ children }: PropsWithChildren) => {
     emitCreateTask,
     emitEditTask,
     emitRemoveTask,
+    emitRefresh,
+    socketDisconnect,
+    loading: socketLoading,
   } = useRelationSocket();
 
   useEffect(() => {
     if (!socket) return;
     socket.on('taskCreated', (data: TaskType) => {
+      console.log('taskCreated', data);
       setTasks((prev) => [...prev, data]);
     });
     socket.on('taskEdited', (data: TaskType) => {
+      console.log('taskEdited', data);
       setTasks((prev) =>
         prev.map((task) => (task.id === data.id ? data : task))
       );
     });
     socket.on('tasksRemoved', (data: TaskType[]) => {
+      console.log('tasksRemoved', data);
       const ids = data.map((task) => task.id);
       setTasks((prev) => prev.filter((task) => !ids.includes(task.id)));
     });
+    socket.on('taskRefresh', (data: any) => {
+
+      ///HERE FIX THIS backend sends stupid data if no tasks are present
+      //make schema for this or give better data from backend
+      console.log('taskRefreshed', data);
+      setTasks(data.tasks);
+    });
   }, [socket]);
+
+  useEffect(() => {
+    loading.current = socketLoading;
+  }, [socketLoading]);
+
 
   const isLocal = (relation: BaseTaskRelationsType) =>
     relation.relation_location === 'Local';
 
   const refresh = async (relation: BaseTaskRelationsType) => {
     setRelation(relation);
-    connectToSocket(relation);
-    const refreshedTasks = isLocal(relation)
+    const connect = await connectToSocket(relation);
+    if(connect){
+      emitRefresh(relation);
+      return;
+    }
+      const refreshedTasks = isLocal(relation)
       ? await localTasks.refresh(relation.id)
       : await serverTasks.refresh(relation.id);
-    setTasks(refreshedTasks);
+      setTasks(refreshedTasks);
   };
   const editTask = async (newTasks: TaskType) => {
     if (relation === null) return;
@@ -152,6 +176,7 @@ export const TaskContextProvider = ({ children }: PropsWithChildren) => {
         editTask,
         storeTask,
         refresh,
+        cleanup: socketDisconnect,
       }}>
       {children}
     </TaskContext.Provider>
