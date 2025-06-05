@@ -1,16 +1,16 @@
 import { Keyboard, StyleSheet, Text, View, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuth } from '@/contexts/AuthenticationContext';
+import useAuth from '@/hooks/useAuth';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import FormInput from '@/components/FormInput';
 import { RegisterType, RegisterSchema } from '@/types';
-import { useAlert } from '@/contexts/AlertContext';
+import useAlert from '@/hooks/useAlert';
 
 export default function RegisterScreen() {
   const router = useRouter();
   const { signup } = useAuth();
-  const alert = useAlert();
+  const {addAlert} = useAlert();
 
   const {
     handleSubmit,
@@ -32,7 +32,7 @@ export default function RegisterScreen() {
       router.navigate('/signin');
     } catch (e) {
       console.error('Registration error:', e);
-      alert.addAlert({
+      addAlert({
         message: 'Tarkista syöttämäsi tiedot ja yritä uudelleen.',
         type: 'error',
       });

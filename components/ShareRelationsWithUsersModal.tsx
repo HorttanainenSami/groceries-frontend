@@ -1,17 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import {
-  Pressable,
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-} from 'react-native';
+import { Pressable, View, Text, StyleSheet, FlatList } from 'react-native';
 import Modal from './Modal';
 import { searchUsers } from '@/service/database';
 import CheckboxWithText from './CheckboxWithText';
 import { SearchUserType } from '@/types';
-import { useAlert } from '@/contexts/AlertContext';
-import { useAuth } from '@/contexts/AuthenticationContext';
+import useAlert from '@/hooks/useAlert';
+import useAuth from '@/hooks/useAuth';
 import TextInputComponent from './TextInputComponent';
 
 type ShareRelationsWithUsersModalProps = {
@@ -28,7 +22,7 @@ const ShareRelationsWithUsersModal = ({
   const [users, setUsers] = useState<SearchUserType[]>([]);
   const [selectedUser, setSelectedUser] = useState<SearchUserType>();
   const { user } = useAuth();
-  const alert = useAlert();
+  const {addAlert} = useAlert();
 
   const [query, setQuery] = useState('');
   const [tab, setTab] = useState<'all' | 'friends'>('friends');
@@ -40,7 +34,7 @@ const ShareRelationsWithUsersModal = ({
         const response = await searchUsers(query, tab === 'friends');
         setUsers(response.filter((u) => u.id !== user.id));
       } catch (e) {
-        alert.addAlert({
+        addAlert({
           message: e instanceof Error ? e.message : 'Tuntematon virhe',
           type: 'error',
         });

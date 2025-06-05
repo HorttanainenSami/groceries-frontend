@@ -4,11 +4,11 @@ import TaskCreateModal from '@/components/TaskCreateModal';
 import TaskEditModal from '@/components/TaskEditModal';
 import { useLayoutEffect, useState } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { useTaskStorage } from '@/contexts/taskContext';
+import useTaskStorage from '@/hooks/useTaskStorage';
 import { TaskType } from '@/types';
 import { getSQLiteTimestamp } from '@/utils/utils';
-import { useRelationContext } from '@/contexts/RelationContext';
-import { useAlert } from '@/contexts/AlertContext';
+import useRelationStorage from '@/hooks/useRelationStorage';
+import useAlert from '@/hooks/useAlert';
 
 export default function Index() {
   const router = useRouter();
@@ -27,9 +27,8 @@ export default function Index() {
     loading,
     refresh,
     storeTask,
-    cleanup
   } = useTaskStorage();
-  const { relations } = useRelationContext();
+  const { relations } = useRelationStorage();
   const { addAlert } = useAlert();
 
   useLayoutEffect(() => {
@@ -39,9 +38,6 @@ export default function Index() {
     } else {
       refresh(initialRelation);
     }
-    return () => {
-      cleanup();
-    };
   }, [id]);
 
   const addTask = async (newTaskText: string) => {

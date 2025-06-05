@@ -1,4 +1,4 @@
-import { useAuth } from '@/contexts/AuthenticationContext';
+import useAuth from '@/hooks/useAuth';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 
 export default function SettingsTab() {

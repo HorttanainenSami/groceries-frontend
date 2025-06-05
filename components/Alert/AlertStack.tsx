@@ -1,6 +1,6 @@
 import { View, StyleSheet } from 'react-native';
 import { useEffect } from 'react';
-import { useAlert } from '@/contexts/AlertContext';
+import useAlert from '@/hooks/useAlert';
 import Alert from '@/components/Alert/Alert';
 import { Animated } from 'react-native';
 import { useRef } from 'react';

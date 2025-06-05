@@ -11,8 +11,8 @@ import {
 import ShareRelationsWithUser from '@/components/ShareRelationsWithUsersModal';
 import CheckboxWithText from '@/components/CheckboxWithText';
 import useToggleList from '@/hooks/useToggleList';
-import { useAlert } from '@/contexts/AlertContext';
-import { useRelationContext } from '@/contexts/RelationContext';
+import useAlert from '@/hooks/useAlert';
+import useRelationStorage from '@/hooks/useRelationStorage';
 
 function formatDate(date: string) {
   const d = new Date(date);
@@ -36,7 +36,7 @@ export default function Index() {
     shareRelation,
     addRelationLocal,
     removeRelations,
-  } = useRelationContext();
+  } = useRelationStorage();
 
   useEffect(() => {
     if (selectedRelations.length !== 0) {

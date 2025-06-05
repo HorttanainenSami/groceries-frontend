@@ -1,7 +1,7 @@
 import React from 'react';
 import { uri } from '@/service/database';
 import { io, Socket } from 'socket.io-client';
-import { useAuth } from '@/contexts/AuthenticationContext';
+import useAuth from '@/hooks/useAuth';
 import { BaseTaskRelationsType, TaskType } from '@/types';
 
 const useRelationSocket = () => {

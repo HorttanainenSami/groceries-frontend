@@ -1,6 +1,6 @@
 import { Stack, Redirect } from 'expo-router';
 import { TaskContextProvider } from '@/contexts/taskContext';
-import { useAuth } from '@/contexts/AuthenticationContext';
+import useAuth from '@/hooks/useAuth';
 import { RelationProvider } from '@/contexts/RelationContext';
 
 export default function RootLayout() {

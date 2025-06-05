@@ -1,16 +1,16 @@
 import { Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuth } from '@/contexts/AuthenticationContext';
+import useAuth from '@/hooks/useAuth';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import FormInput from '@/components/FormInput';
 import { LoginType, LoginSchema } from '@/types';
-import { useAlert } from '@/contexts/AlertContext';
+import useAlert from '@/hooks/useAlert';
 
 export default function LoginScreen() {
   const router = useRouter();
   const { login } = useAuth();
-  const alert = useAlert();
+  const {addAlert} = useAlert();
   const {
     handleSubmit,
     control,
@@ -28,7 +28,7 @@ export default function LoginScreen() {
       await login(credentials);
       router.navigate('/');
     } catch (e) {
-      alert.addAlert({
+      addAlert({
         message: 'Tarkista sähköposti ja salasana.',
         type: 'error',
       });
