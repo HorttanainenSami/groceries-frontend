@@ -1,7 +1,7 @@
 import useLocalTasks from '@/hooks/useLocalTasks';
 import useServerTasks from './useServerTasks';
 import useAuth from '@/hooks/useAuth';
-import useRelationSocket from '@/hooks/useRelationSocket';
+import useTaskSocket from '@/hooks/useTaskSocket';
 import React, {
   useEffect,
 } from 'react';
@@ -25,7 +25,7 @@ const useTaskStorage = () => {
     emitRefresh,
     socketDisconnect,
     loading: socketLoading,
-  } = useRelationSocket();
+  } = useTaskSocket();
 
   useEffect(() => {
     if (!socket) return;

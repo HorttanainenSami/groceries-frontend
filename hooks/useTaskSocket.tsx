@@ -4,7 +4,7 @@ import { io, Socket } from 'socket.io-client';
 import useAuth from '@/hooks/useAuth';
 import { BaseTaskRelationsType, TaskType } from '@/types';
 
-const useRelationSocket = () => {
+const useTaskSocket = () => {
   const { user } = useAuth();
   const socketRef = React.useRef<Socket | null>(null);
   const loading = React.useRef<boolean>(false);
@@ -87,4 +87,4 @@ const useRelationSocket = () => {
     socketDisconnect: disconnect,
   };
 };
-export default useRelationSocket;
+export default useTaskSocket;
