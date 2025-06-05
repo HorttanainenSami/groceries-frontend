@@ -112,7 +112,7 @@ export const shareListWithUser = async ({
     });
     if (response.status === 200) {
       console.log('response', response.data);
-      const parsedData = BaseTaskRelationsSchema.array().parse(response.data);
+      const parsedData = ServerTaskRelationSchema.array().parse(response.data);
       return parsedData;
     } else {
       throw new Error('Something went wrong with response', response.data);
