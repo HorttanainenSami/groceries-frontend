@@ -1,90 +1,124 @@
-import React from 'react';
-import { uri } from '@/service/database';
-import { io, Socket } from 'socket.io-client';
-import useAuth from '@/hooks/useAuth';
-import { BaseTaskRelationsType, TaskType } from '@/types';
+import React, { useEffect } from 'react';
+import { BaseTaskRelationsType, ServerTaskRelationsWithTasksType, TaskType } from '@/types';
+import { useSocketContext } from '@/contexts/SocketContext';
 
-const useTaskSocket = () => {
-  const { user } = useAuth();
-  const socketRef = React.useRef<Socket | null>(null);
-  const loading = React.useRef<boolean>(false);
+const useTaskSocket = (
+  setTasks: React.Dispatch<React.SetStateAction<TaskType[]>>
+) => {
+  const { socket, loading } = useSocketContext();
+  const loadingRef = React.useRef<boolean>(false);
+  const [isConnectedToRelation, setConnectedRelation] =
+    React.useState<BaseTaskRelationsType | null>(null);
 
-  const disconnect = () => {
-    socketRef.current?.disconnect();
-    socketRef.current = null;
-  };
-  const connectToSocket = async (relation: BaseTaskRelationsType) =>
-    new Promise((res, rej) => {
-      loading.current = true;
-      if (!user || !user.token || relation.relation_location !== 'Server') {
-        console.log(
-          'useEffect socket disconnect',
-          'user:',
-          user,
-          'token:',
-          user?.token,
-          'token'
-        );
-        loading.current = false;
-        return rej(false);
-      }
-      const s = io(uri + '/relation', {
-        auth: {
-          token: user.token,
-          relation_id: relation.id,
-        },
-      });
-      socketRef.current = s;
-      s.on('connect', () => {
-        console.log('Socket connected', s.id);
-      });
-      loading.current = false;
-      console.log('connectToSocket', relation);
-      s.on('disconnect', () => {
-        console.log('Socket disconnected');
-      });
-      res(true);
+  useEffect(() => {
+    if (!socket) {
+      return;
+    }
+    const handleTaskJoined = ({tasks, ...data}: ServerTaskRelationsWithTasksType) => {
+      console.log('task:join:success', data, JSON.stringify(tasks, null, 2));
+      setConnectedRelation(data);
+      setTasks(tasks);
+      loadingRef.current = false;
+    };
+    const handleTaskCreated = (data: TaskType) => {
+      console.log('task:created', data);
+      setTasks((prev) => [...prev, data]);
+    };
+
+    const handleTaskEdited = (data: TaskType) => {
+      console.log('task:edited', data);
+      setTasks((prev) =>
+        prev.map((task) => (task.id === data.id ? data : task))
+      );
+    };
+
+    const handleTasksRemoved = (data: TaskType[]) => {
+      console.log('task:removed', data);
+      const ids = data.map((task) => task.id);
+      setTasks((prev) => prev.filter((task) => !ids.includes(task.id)));
+    };
+
+    const handleTaskRefresh = (data: any) => {
+      console.log('task:refresh', data);
+      setTasks(data.tasks);
+    };
+    socket.onAnyOutgoing((event, ...args) => {
+      console.log('ON ANY OUTGOING                      Socket event emitted, ', event, JSON.stringify(args, null, 2));
     });
+    socket.onAny((event, ...args) => {
+      console.log('ON ANY INCOMING                      Socket event received, ', event, JSON.stringify(args, null, 2));
+    });
+    socket.on('task:created', handleTaskCreated);
+    socket.on('task:edited', handleTaskEdited);
+    socket.on('task:removed', handleTasksRemoved);
+    socket.on('task:refresh', handleTaskRefresh);
+    socket.on('task:join:success', handleTaskJoined);
+    return () => {
+      socket.off('task:created', handleTaskCreated);
+      socket.off('task:edited', handleTaskEdited);
+      socket.off('task:removed', handleTasksRemoved);
+      socket.off('task:refresh', handleTaskRefresh);
+      socket?.off('task:join:success', handleTaskJoined);
+    };
+  }, [socket]);
+
+  const emitJoinTaskRoom = (relation: BaseTaskRelationsType) => {
+    loadingRef.current = true;
+    if (!socket) {
+      return;
+    }
+    socket.emit('task:join', relation.id);
+  };
+  const isConnected = () => {
+    if (!isConnectedToRelation) {
+      console.log('No relation is set');
+      return false;
+    }
+    if (!socket) {
+      console.log('Socket is not initialized');
+      return false;
+    }
+    return socket.connected;
+  };
 
   const emitCreateTask = (task: Omit<TaskType, 'id'>) => {
-    if (!socketRef.current) {
-      console.error('Socket is not initialized');
+    if (!socket) {
+      console.log('Socket is not initialized');
       return;
     }
-    socketRef.current.emit('createTask', task);
+    socket.emit('task:create', task);
   };
-  const emitEditTask = (task: Omit<TaskType, 'id'>) => {
-    if (!socketRef.current) {
-      console.error('Socket is not initialized');
+  const emitEditTask = (task: TaskType) => {
+    if (!socket) {
+      console.log('Socket is not initialized');
       return;
     }
-    socketRef.current.emit('editTask', task);
+    socket.emit('task:edit', task);
   };
 
   const emitRemoveTask = (task: TaskType[]) => {
-    if (!socketRef.current) {
-      console.error('Socket is not initialized');
+    if (!socket) {
+      console.log('Socket is not initialized');
       return;
     }
-    socketRef.current.emit('removeTask', task);
+    socket.emit('task:remove', task);
   };
   const emitRefresh = (relation: BaseTaskRelationsType) => {
-    if (!socketRef.current) {
-      console.error('Socket is not initialized');
+    if (!socket) {
+      console.log('Socket is not initialized');
       return;
     }
-    socketRef.current.emit('taskRefresh', relation);
+    socket.emit('task:refresh', relation);
   };
   return {
-    loading: loading.current,
-    socket: socketRef.current,
-    isConnected: socketRef.current?.connected || false,
+    loading: loading || loadingRef.current,
+    socket: socket,
+    isConnected: isConnected,
     emitCreateTask,
-    connectToSocket,
     emitEditTask,
     emitRemoveTask,
     emitRefresh,
-    socketDisconnect: disconnect,
+    emitJoinTaskRoom,
   };
 };
 export default useTaskSocket;

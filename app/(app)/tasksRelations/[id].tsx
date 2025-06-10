@@ -8,7 +8,6 @@ import useTaskStorage from '@/hooks/useTaskStorage';
 import { TaskType } from '@/types';
 import { getSQLiteTimestamp } from '@/utils/utils';
 import useRelationStorage from '@/hooks/useRelationStorage';
-import useAlert from '@/hooks/useAlert';
 
 export default function Index() {
   const router = useRouter();
@@ -29,13 +28,11 @@ export default function Index() {
     storeTask,
   } = useTaskStorage();
   const { relations } = useRelationStorage();
-  const { addAlert } = useAlert();
 
   useLayoutEffect(() => {
     const initialRelation = relations.find((i) => i.id === id);
-    if (!initialRelation) {
-      addAlert({ type: 'error', message: 'Relation not found' });
-    } else {
+    if (initialRelation) {
+    
       refresh(initialRelation);
     }
   }, [id]);

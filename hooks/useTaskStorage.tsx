@@ -2,12 +2,9 @@ import useLocalTasks from '@/hooks/useLocalTasks';
 import useServerTasks from './useServerTasks';
 import useAuth from '@/hooks/useAuth';
 import useTaskSocket from '@/hooks/useTaskSocket';
-import React, {
-  useEffect,
-} from 'react';
+import React, { useEffect } from 'react';
 import { BaseTaskRelationsType, TaskType } from '@/types';
 import { useTaskContext } from '@/contexts/taskContext';
-
 
 const useTaskStorage = () => {
   const { relation, setTasks, tasks, setRelation } = useTaskContext();
@@ -16,57 +13,24 @@ const useTaskStorage = () => {
   const localTasks = useLocalTasks();
   const serverTasks = useServerTasks();
   const {
+    loading: socketLoading,
     socket,
     isConnected,
-    connectToSocket,
     emitCreateTask,
     emitEditTask,
     emitRemoveTask,
-    emitRefresh,
-    socketDisconnect,
-    loading: socketLoading,
-  } = useTaskSocket();
+    emitJoinTaskRoom,
+  } = useTaskSocket(setTasks);
 
-  useEffect(() => {
-    if (!socket) return;
-    socket.on('taskCreated', (data: TaskType) => {
-      console.log('taskCreated', data);
-      setTasks((prev) => [...prev, data]);
-    });
-    socket.on('taskEdited', (data: TaskType) => {
-      console.log('taskEdited', data);
-      setTasks((prev) =>
-        prev.map((task) => (task.id === data.id ? data : task))
-      );
-    });
-    socket.on('tasksRemoved', (data: TaskType[]) => {
-      console.log('tasksRemoved', data);
-      const ids = data.map((task) => task.id);
-      setTasks((prev) => prev.filter((task) => !ids.includes(task.id)));
-    });
-    socket.on('taskRefresh', (data: any) => {
-      ///HERE FIX THIS backend sends stupid data if no tasks are present
-      //make schema for this or give better data from backend
-      console.log('taskRefreshed', data);
-      setTasks(data.tasks);
-    });
-    return () => {
-      socketDisconnect();
-    };
-  }, [socket]);
-
-  useEffect(() => {
-    loading.current = socketLoading;
-  }, [socketLoading]);
+  
 
   const isLocal = (relation: BaseTaskRelationsType) =>
     relation.relation_location === 'Local';
 
   const refresh = async (relation: BaseTaskRelationsType) => {
     setRelation(relation);
-    const connect = await connectToSocket(relation);
-    if (connect) {
-      emitRefresh(relation);
+    if (socket) {
+      emitJoinTaskRoom(relation);
       return;
     }
     const refreshedTasks = isLocal(relation)
@@ -74,9 +38,28 @@ const useTaskStorage = () => {
       : await serverTasks.refresh(relation.id);
     setTasks(refreshedTasks);
   };
+  const waitConnection = () => (
+    new Promise<void>((resolve) => {
+      if (!socketLoading) {
+        resolve();
+      } else {
+        let count = 0
+        const interval = setInterval(() => {
+          if (!socketLoading|| count > 5) {
+            clearInterval(interval);
+            resolve();
+          }
+          console.log(`Waiting for socket connection... ${count}s`);
+          count++;
+        }, 1000);
+        
+      }
+    }
+  ))
   const editTask = async (newTasks: TaskType) => {
     if (relation === null) return;
-    if (isConnected) {
+    socketLoading && waitConnection();
+    if (isConnected()) {
       emitEditTask(newTasks);
       return;
     }
@@ -90,7 +73,9 @@ const useTaskStorage = () => {
   const storeTask = async (newTasks: Omit<TaskType, 'id'>) => {
     if (relation === null) return;
     const initNewTask = { ...newTasks, relation_id: relation.id };
-    if (isConnected) {
+    socketLoading && waitConnection();
+
+    if (isConnected()) {
       emitCreateTask(initNewTask);
       return;
     }
@@ -113,7 +98,9 @@ const useTaskStorage = () => {
           completed_at: new Date().toISOString(),
           completed_by: user.id,
         };
-    if (isConnected) {
+    socketLoading && waitConnection();
+
+    if (isConnected()) {
       emitEditTask(initToggledTask);
       return;
     }
@@ -125,8 +112,9 @@ const useTaskStorage = () => {
   const removeTask = async (task: TaskType | TaskType[]) => {
     if (!relation) return;
     const tasksArray = Array.isArray(task) ? task : [task];
+    socketLoading && waitConnection();
 
-    if (isConnected) {
+    if (isConnected()) {
       emitRemoveTask(tasksArray);
       return;
     }
@@ -150,6 +138,5 @@ const useTaskStorage = () => {
     removeTask,
   };
 };
-
 
 export default useTaskStorage;
