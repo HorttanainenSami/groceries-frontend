@@ -16,9 +16,9 @@ import {
   LoginType,
   RegisterType,
 } from '@/types';
-import Constants from 'expo-constants';
 import { getAxiosInstance } from '@/service/AxiosInstance';
 export const uri = 'http://5.61.90.231';
+//import Constants from 'expo-constants';
 //export const uri = `http:${Constants.experienceUrl.split(':')[1]}:3003`;
 
 export const loginAPI = async (credentials: LoginType) => {

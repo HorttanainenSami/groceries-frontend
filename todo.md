@@ -1,5 +1,4 @@
 ## IN-PROGRESS
-* publish app to google play
 * Make Tests
 
 ## TODO
@@ -21,9 +20,14 @@
 * possibility to store recipes and that way to bring ingredients to our task list if you are using task list as groceries list
 * ~~Ability to remove relations~~
     * if in server, popup info to collaborator and ask also from that user
+* Make server to use https protocol
+    - remove usesCleartextTraffic from app.json
+* Deploy to google store
+* Write Readme
 
 
 ### DONE
+* ~~build internal distribution~~
 * ~~websocket for relations updating when relation/:id view is opened~~
 * ~~Fix alert component to be rendered over the view rather in view~~
     * ~~fix alert to show only 1-2 error messsages on time and set timer only then when its viewed~~

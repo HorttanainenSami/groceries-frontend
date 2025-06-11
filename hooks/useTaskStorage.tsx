@@ -2,7 +2,7 @@ import useLocalTasks from '@/hooks/useLocalTasks';
 import useServerTasks from './useServerTasks';
 import useAuth from '@/hooks/useAuth';
 import useTaskSocket from '@/hooks/useTaskSocket';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { BaseTaskRelationsType, TaskType } from '@/types';
 import { useTaskContext } from '@/contexts/taskContext';
 
@@ -29,7 +29,7 @@ const useTaskStorage = () => {
 
   const refresh = async (relation: BaseTaskRelationsType) => {
     setRelation(relation);
-    if (socket) {
+    if (!isLocal(relation) && socket) {
       emitJoinTaskRoom(relation);
       return;
     }
