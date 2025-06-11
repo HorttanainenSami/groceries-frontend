@@ -13,6 +13,7 @@ import CheckboxWithText from '@/components/CheckboxWithText';
 import useToggleList from '@/hooks/useToggleList';
 import useAlert from '@/hooks/useAlert';
 import useRelationStorage from '@/hooks/useRelationStorage';
+import RelationCreateModal from '@/components/RelationCreateModal';
 
 function formatDate(date: string) {
   const d = new Date(date);
@@ -28,6 +29,7 @@ export default function Index() {
   const [selectedRelations, toggleSelected] =
     useToggleList<BaseTaskRelationsType>();
   const [friendsModalVisible, setFriendsModalVisible] = useState(false);
+  const [relationModalVisible, setRelationModalVisible] = useState(false);
   const { addAlert } = useAlert();
   const {
     refresh,
@@ -113,8 +115,11 @@ export default function Index() {
     cleanSelectView();
   };
 
-  const addTasks = async () => {
-    await addRelationLocal('Uusi lista');
+  const handleCreateRelation = async (name: string) => {
+    await addRelationLocal(name);
+  };
+  const openRelationCreateModal = () => {
+    setRelationModalVisible(true);
   };
 
   const showSelectionMode = selectedRelations.length !== 0;
@@ -176,9 +181,17 @@ export default function Index() {
           );
         }}
       />
-      <Pressable style={styles.fab} onPress={addTasks}>
+      <Pressable style={styles.fab} onPress={openRelationCreateModal}>
         <Text style={styles.fabText}>+</Text>
       </Pressable>
+
+      {relationModalVisible && (
+        <RelationCreateModal
+          onAccept={handleCreateRelation}
+          visible={relationModalVisible}
+          onClose={() => setRelationModalVisible(false)}
+        />
+      )}
 
       {friendsModalVisible && (
         <ShareRelationsWithUser
@@ -221,19 +234,23 @@ const ServerTaskListItem = ({
   return (
     <Pressable
       onPress={() => route.push(`/tasksRelations/${id}`)}
-      onLongPress={() => onLongPress(id)}
-    >
+      onLongPress={() => onLongPress(id)}>
       <View style={styles.serverTaskContent}>
         <View style={{ flex: 1 }}>
           <Text style={styles.serverTaskName}>{name}</Text>
           {shared_with_name && (
             <Text style={styles.sharedWith}>
-              Jaettu: <Text style={styles.sharedWithNames}>{shared_with_name}</Text>
+              Jaettu:{' '}
+              <Text style={styles.sharedWithNames}>{shared_with_name}</Text>
             </Text>
           )}
         </View>
         <View style={styles.rightSection}>
-          <View style={[styles.permissionBadge, my_permission === 'edit' ? styles.editBadge : styles.viewBadge]}>
+          <View
+            style={[
+              styles.permissionBadge,
+              my_permission === 'edit' ? styles.editBadge : styles.viewBadge,
+            ]}>
             <Text style={styles.permissionBadgeText}>
               {PermissionLabels[my_permission] || 'Tuntematon'}
             </Text>
@@ -397,6 +414,5 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#aaa',
     fontWeight: '400',
-}
-}
-);
+  },
+});

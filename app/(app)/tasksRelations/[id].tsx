@@ -3,7 +3,7 @@ import Checkbox from '@/components/Checkbox';
 import TaskCreateModal from '@/components/TaskCreateModal';
 import TaskEditModal from '@/components/TaskEditModal';
 import { useLayoutEffect, useState } from 'react';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams, useNavigation } from 'expo-router';
 import useTaskStorage from '@/hooks/useTaskStorage';
 import { TaskType } from '@/types';
 import { getSQLiteTimestamp } from '@/utils/utils';
@@ -28,14 +28,18 @@ export default function Index() {
     storeTask,
   } = useTaskStorage();
   const { relations } = useRelationStorage();
+  const navigation = useNavigation();
 
   useLayoutEffect(() => {
     const initialRelation = relations.find((i) => i.id === id);
+    console.log('initialRelation', initialRelation);
     if (initialRelation) {
-    
       refresh(initialRelation);
+      navigation.setOptions({
+        title: initialRelation.name,
+      });
     }
-  }, [id]);
+  }, [id, navigation]);
 
   const addTask = async (newTaskText: string) => {
     const newTask = {

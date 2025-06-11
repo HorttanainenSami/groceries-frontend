@@ -10,7 +10,6 @@
 * If cannot connect to db handle it correctly
     * try to reconnect to db
     * send error message
-* show with whom list is shared
 * use fcm to background messaging when websocket is not initialized
 * make notification when user have shared list with you
     * if websocket not connected -> fcm
@@ -27,6 +26,7 @@
 
 
 ### DONE
+* ~~show with whom list is shared~~
 * ~~build internal distribution~~
 * ~~websocket for relations updating when relation/:id view is opened~~
 * ~~Fix alert component to be rendered over the view rather in view~~
