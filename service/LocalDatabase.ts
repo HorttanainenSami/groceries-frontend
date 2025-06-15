@@ -59,6 +59,31 @@ export const createTasksRelations = async ({ name }: createTasksType) => {
     console.log('sql error occurred', e);
   }
 };
+export const changeRelationName = async (
+  id: string,
+  newName: string
+): Promise<LocalTaskRelationType | null> => {
+  try {
+    const db = await getDatabaseSingleton();
+    const result = await db.getFirstAsync<LocalTaskRelationType>(
+      'UPDATE task_relations SET name = ? WHERE id=? RETURNING *',
+      newName,
+      id
+    );
+    if (!result) {
+      console.log('No relation found with the given ID');
+      return null;
+    }
+    console.log('Relation name changed successfully:', result);
+    return result;
+  } catch (e) {
+    console.log('error occurred', e);
+    if (e instanceof Error) {
+      console.error('Error message:', e.message);
+    }
+    throw e; // Re-throw the error for further handling if needed
+  }
+};
 
 export const getTaskRelations = async (): Promise<LocalTaskRelationType[]> => {
   try {

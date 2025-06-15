@@ -8,6 +8,7 @@ import useTaskStorage from '@/hooks/useTaskStorage';
 import { TaskType } from '@/types';
 import { getSQLiteTimestamp } from '@/utils/utils';
 import useRelationStorage from '@/hooks/useRelationStorage';
+import RelationCreateModal from '@/components/RelationCreateModal';
 
 export default function Index() {
   const router = useRouter();
@@ -27,16 +28,25 @@ export default function Index() {
     refresh,
     storeTask,
   } = useTaskStorage();
-  const { relations } = useRelationStorage();
+  const { relations, editRelationsName } = useRelationStorage();
   const navigation = useNavigation();
-
+  const [editRelationNameModalVisible, setEditRelationNameModalVisible] =
+    useState(false);
   useLayoutEffect(() => {
     const initialRelation = relations.find((i) => i.id === id);
     console.log('initialRelation', initialRelation);
     if (initialRelation) {
       refresh(initialRelation);
       navigation.setOptions({
-        title: initialRelation.name,
+        headerTitle: () => (
+          <Pressable onPress={() => setEditRelationNameModalVisible(true)}>
+            <Text style={{ fontSize: 22 }}>{initialRelation.name}</Text>
+          </Pressable>
+        ),
+      });
+    } else {
+      navigation.setOptions({
+        headerTitle: 'Lista',
       });
     }
   }, [id, navigation]);
@@ -51,7 +61,17 @@ export default function Index() {
     };
     storeTask(newTask);
   };
-
+  const handleRelationNameChange = async (newName: string) => {
+    console.log('handleRelationNameChange', newName, id);
+    const response = await editRelationsName(id, newName);
+    navigation.setOptions({
+      headerTitle: () => (
+        <Pressable onPress={() => setEditRelationNameModalVisible(true)}>
+          <Text style={{ fontSize: 22 }}>{response?.name}</Text>
+        </Pressable>
+      ),
+    });
+  };
   const cleanEditTask = () => setEditModalVisible(null);
 
   const selectTask = (id: string) => {
@@ -62,7 +82,7 @@ export default function Index() {
   };
 
   const relation = relations.find((i) => i.id === id);
-
+  console.log('tasks', JSON.stringify(tasks, null, 2));
   return (
     <View style={styles.container}>
       <Text style={styles.headerText}>
@@ -107,7 +127,13 @@ export default function Index() {
         onDelete={(task) => removeTask(task)}
         task={isEditModalVisible}
       />
-
+      <RelationCreateModal
+        visible={editRelationNameModalVisible}
+        onClose={() => setEditRelationNameModalVisible(false)}
+        onAccept={handleRelationNameChange}
+        title="Muuta listan nimeä"
+        initialValue={relation?.name}
+      />
       <Pressable style={styles.fab} onPress={() => setCreateModalVisible(true)}>
         <Text style={styles.fabText}>+</Text>
       </Pressable>

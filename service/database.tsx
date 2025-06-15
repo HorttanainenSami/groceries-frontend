@@ -17,9 +17,9 @@ import {
   RegisterType,
 } from '@/types';
 import { getAxiosInstance } from '@/service/AxiosInstance';
-export const uri = 'http://5.61.90.231';
-//import Constants from 'expo-constants';
-//export const uri = `http:${Constants.experienceUrl.split(':')[1]}:3003`;
+//export const uri = 'http://5.61.90.231';
+import Constants from 'expo-constants';
+export const uri = `http:${Constants.experienceUrl.split(':')[1]}:3003`;
 
 export const loginAPI = async (credentials: LoginType) => {
   try {
@@ -160,6 +160,20 @@ export const getServerTasksByRelationId = async (
     throw e;
   }
 };
+export const changeRelationNameOnServer = async (
+  relationId: string,
+  newName: string
+): Promise<ServerTaskRelationType> => {
+  try {
+    const postUrl = uri + `/relations/${relationId}`;
+    const response = await getAxiosInstance().patch(postUrl, { name: newName });
+    const parsedResponse = ServerTaskRelationSchema.parse(response.data);
+    return parsedResponse;
+  } catch (e) {
+    console.error('Error changing relation name on server:', e);
+    throw e;
+  }
+}
 export const createTaskForServerRelation = async (
   task: Omit<BaseTaskType, 'id'>
 ) => {

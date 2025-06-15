@@ -1,10 +1,12 @@
 import { useRelationContext } from '@/contexts/RelationContext';
 import {
+  changeRelationNameOnServer,
   getServerRelations,
   removeRelationFromServer,
   shareListWithUser,
 } from '@/service/database';
 import {
+  changeRelationName,
   createTasksRelations,
   deleteRelationsWithTasks,
   getTaskRelations,
@@ -13,6 +15,7 @@ import {
   BaseTaskRelationsType,
   BaseTaskRelationsWithTasksType,
   SearchUserType,
+  ServerTaskRelationType,
 } from '@/types';
 import React from 'react';
 
@@ -54,8 +57,39 @@ const useRelationStorage = () => {
     );
     return removeAll;
   };
+  const editRelationsName = async (
+    id: string,
+    newName: string
+  ): Promise<BaseTaskRelationsType | ServerTaskRelationType | null> => {
+    const relation = relations.find((r) => r.id === id);
+    if (!relation) {
+      console.error('Relation not found for id:', id);
+      return null;
+    }
 
-  const shareRelation = async ({ user, relations: relationsToShare }: ShareRelationType) => {
+    console.log('Attempting to change relation name in DB for id:', id);
+    const db =relation.relation_location === 'Local'
+    ? await changeRelationName(id, newName) : relation;
+      /*relation.relation_location === 'Local'
+        ? await changeRelationName(id, newName)
+        : await changeRelationNameOnServer(id, newName);
+        */
+
+    console.log('Response from changeRelationName (db):', db);
+    if (!db) {
+      console.error('Failed to change relation name in DB for id:', id);
+      return null;
+    }
+    const updatedRelations = relations.map((r) => (r.id === id ? db : r));
+    setRelations(updatedRelations);
+    console.log('Relations state updated.');
+    return db;
+  };
+
+  const shareRelation = async ({
+    user,
+    relations: relationsToShare,
+  }: ShareRelationType) => {
     try {
       const response = await shareListWithUser({
         user,
@@ -66,10 +100,10 @@ const useRelationStorage = () => {
       const deleteLocalRelationsIds = relationsToShare.map(
         (relations) => relations.id
       );
-   
- 
-      const promises = await Promise.all(deleteLocalRelationsIds.map((id) =>
-        deleteRelationsWithTasks(id)));
+
+      const promises = await Promise.all(
+        deleteLocalRelationsIds.map((id) => deleteRelationsWithTasks(id))
+      );
       const successfulDeletes = promises
         .filter((result) => result[0] === true)
         .map((result) => result[1]);
@@ -94,6 +128,7 @@ const useRelationStorage = () => {
     addRelationLocal,
     removeRelations,
     shareRelation,
+    editRelationsName,
     loading,
   };
 };

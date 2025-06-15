@@ -185,21 +185,18 @@ export default function Index() {
         <Text style={styles.fabText}>+</Text>
       </Pressable>
 
-      {relationModalVisible && (
-        <RelationCreateModal
-          onAccept={handleCreateRelation}
-          visible={relationModalVisible}
-          onClose={() => setRelationModalVisible(false)}
-        />
-      )}
+      <RelationCreateModal
+        onAccept={handleCreateRelation}
+        visible={relationModalVisible}
+        onClose={() => setRelationModalVisible(false)}
+        title="Luo uusi lista"
+      />
 
-      {friendsModalVisible && (
-        <ShareRelationsWithUser
-          onAccept={shareRelationsWithUsers}
-          visible={friendsModalVisible}
-          onClose={() => setFriendsModalVisible(false)}
-        />
-      )}
+      <ShareRelationsWithUser
+        onAccept={shareRelationsWithUsers}
+        visible={friendsModalVisible}
+        onClose={() => setFriendsModalVisible(false)}
+      />
     </View>
   );
 }

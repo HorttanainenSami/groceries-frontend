@@ -6,10 +6,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import FormInput from '@/components/FormInput';
 import { LoginType, LoginSchema } from '@/types';
 import useAlert from '@/hooks/useAlert';
+import React from 'react';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const {addAlert} = useAlert();
   const {
     handleSubmit,
@@ -22,7 +23,11 @@ export default function LoginScreen() {
       password: '',
     },
   });
-
+React.useLayoutEffect(() => {
+    if(user) {
+      router.navigate('/'); // Redirect to home if user is already logged in
+    }
+  }, [user])
   const onSubmit = async (credentials: LoginType) => {
     try {
       await login(credentials);

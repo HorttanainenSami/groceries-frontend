@@ -6,10 +6,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import FormInput from '@/components/FormInput';
 import { RegisterType, RegisterSchema } from '@/types';
 import useAlert from '@/hooks/useAlert';
+import React from 'react';
 
 export default function RegisterScreen() {
   const router = useRouter();
-  const { signup } = useAuth();
+  const { signup, user } = useAuth();
   const {addAlert} = useAlert();
 
   const {
@@ -25,7 +26,11 @@ export default function RegisterScreen() {
       confirm: '',
     },
   });
-
+  React.useLayoutEffect(() => {
+    if(user) {
+      router.navigate('/'); // Redirect to home if user is already logged in
+    }
+  }, [user])
   const onSubmit = async (credentials: RegisterType) => {
     try {
       await signup(credentials);
