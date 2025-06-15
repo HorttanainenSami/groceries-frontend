@@ -21,19 +21,24 @@ const RelationCreateModal = ({
   const inputRef = React.useRef<TextInput | null>(null);
 
   React.useEffect(() => {
-    console.log(initialValue);
     if (!visible) return;
-    setTimeout(() => {
+    setText(initialValue);
+    const timeout = setTimeout(() => {
       if (inputRef.current) {
         inputRef.current.focus();
       }
     }, 100);
+
+    return () => {
+      inputRef.current = null;
+      clearTimeout(timeout);
+    }
   }, [visible]);
 
   const handleAccept = () => {
     if(text.length === 0) {
       console.log('Empty text, setting default value');
-      onAccept('Uusi lista');
+      handleClose();
       return;
     }
     onAccept(text);

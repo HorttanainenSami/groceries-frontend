@@ -170,18 +170,17 @@ const styles = StyleSheet.create({
   itemContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 56,
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    minHeight: 56,
     borderBottomColor: '#eee',
     borderBottomWidth: 1,
   },
   textPressable: {
-    flexGrow: 1,
-    marginLeft: 12,
+    flex: 1,
+    justifyContent: 'center',
   },
   text: {
     fontSize: 18,
+    marginInline: 16,
     color: '#000',
   },
   textCheckboxActive: {

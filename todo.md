@@ -2,16 +2,16 @@
 * Make Tests
 
 ## TODO
+* If cannot connect to db handle it correctly
+    * try to reconnect to db
+    * send error message
 * use drizzle in database
 * Make application to work in offline mode and sync changes as app is again connected to server
     * If cannot connect to server handle it correctly
         * change to offline mode
         * when connected sync to backend
-* If cannot connect to db handle it correctly
-    * try to reconnect to db
-    * send error message
 * use fcm to background messaging when websocket is not initialized
-* make notification when user have shared list with you
+    * make notification when user have shared list with you
     * if websocket not connected -> fcm
 * make more alerts so user knows when something were success or error occurred
 * Fix server and frontend to use same schemas and types
