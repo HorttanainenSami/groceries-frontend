@@ -9,6 +9,7 @@ import { TaskType } from '@/types';
 import { getSQLiteTimestamp } from '@/utils/utils';
 import useRelationStorage from '@/hooks/useRelationStorage';
 import RelationCreateModal from '@/components/RelationCreateModal';
+import React from 'react';
 
 export default function Index() {
   const router = useRouter();
@@ -32,8 +33,6 @@ export default function Index() {
   const navigation = useNavigation();
   const [editRelationNameModalVisible, setEditRelationNameModalVisible] =
     useState(false);
-
-    
   useLayoutEffect(() => {
     const initialRelation = relations.find((i) => i.id === id);
     console.log('initialRelation', initialRelation);
@@ -51,7 +50,7 @@ export default function Index() {
         headerTitle: 'Lista',
       });
     }
-    return () => {}
+    return () => {};
   }, [id]);
 
   const addTask = async (newTaskText: string) => {
@@ -83,6 +82,23 @@ export default function Index() {
       params: { selectedId: id },
     });
   };
+  const sortedTasks = React.useMemo(() => {
+    return [...tasks].sort((a, b) => {
+      const aCompleted = !!a.completed_at;
+      const bCompleted = !!b.completed_at;
+      if (aCompleted && !bCompleted) return 1;
+      if (!aCompleted && bCompleted) return -1;
+
+      if (a.completed_at && b.completed_at) {
+        const dateA = new Date(a.completed_at).getTime();
+        const dateB = new Date(b.completed_at).getTime();
+        return dateB - dateA;
+      }
+      const dateA = new Date(a.created_at).getTime();
+      const dateB = new Date(b.created_at).getTime();
+      return dateB - dateA;
+    });
+  }, [tasks]);
 
   const relation = relations.find((i) => i.id === id);
   console.log('tasks', JSON.stringify(tasks, null, 2));
@@ -93,7 +109,7 @@ export default function Index() {
       </Text>
 
       <FlatList
-        data={tasks}
+        data={sortedTasks}
         refreshing={loading}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
