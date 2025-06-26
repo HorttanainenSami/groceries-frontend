@@ -26,13 +26,13 @@ const useAlert = () => {
   const maxAlerts = 2;
 
   useEffect(() => {
+    if (alerts.length === 0) return;
     displayAlert();
   }, [alerts, alertsDisplaying]);
 
   const displayAlert = () => {
     if (alertsDisplaying.length >= maxAlerts) return;
     const initAlert = getFromQueue();
-    console.log('initAlert', initAlert);
     if (!initAlert) return;
 
     const alertTimer = setTimeout(() => {

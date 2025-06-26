@@ -8,7 +8,6 @@ import {
 const useServerTasks = () => {
   const refresh = async (id: string) => {
     const { tasks } = await getServerTasksByRelationId(id);
-    console.log(JSON.stringify(tasks, null, 2));
     return tasks;
   };
 

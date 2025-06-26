@@ -32,6 +32,8 @@ export default function Index() {
   const navigation = useNavigation();
   const [editRelationNameModalVisible, setEditRelationNameModalVisible] =
     useState(false);
+
+    
   useLayoutEffect(() => {
     const initialRelation = relations.find((i) => i.id === id);
     console.log('initialRelation', initialRelation);
@@ -49,7 +51,8 @@ export default function Index() {
         headerTitle: 'Lista',
       });
     }
-  }, [id, navigation]);
+    return () => {}
+  }, [id]);
 
   const addTask = async (newTaskText: string) => {
     const newTask = {

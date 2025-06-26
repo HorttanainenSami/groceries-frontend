@@ -8,9 +8,7 @@ import {
 } from '@/service/LocalDatabase';
 const useLocalTasks = () => {
   const refresh = async (id: string) => {
-    console.log('relation is locally stored:');
     const result = await getTasksById(id);
-    console.log(JSON.stringify(result, null, 2));
     return result;
   };
 
