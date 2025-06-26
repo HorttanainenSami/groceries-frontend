@@ -1,17 +1,17 @@
 import useLocalTasks from '@/hooks/useLocalTasks';
-import useServerTasks from './useServerTasks';
 import useAuth from '@/hooks/useAuth';
 import useTaskSocket from '@/hooks/useTaskSocket';
 import React from 'react';
 import { BaseTaskRelationsType, TaskType } from '@/types';
 import { useTaskContext } from '@/contexts/taskContext';
+import { useSocketContext } from '@/contexts/SocketContext';
 
 const useTaskStorage = () => {
   const { relation, setTasks, tasks, setRelation } = useTaskContext();
   const loading = React.useRef<boolean>(false);
   const { user } = useAuth();
   const localTasks = useLocalTasks();
-  const serverTasks = useServerTasks();
+  const { waitConnection } = useSocketContext();
   const {
     loading: socketLoading,
     socket,
@@ -22,40 +22,20 @@ const useTaskStorage = () => {
     emitJoinTaskRoom,
   } = useTaskSocket(setTasks);
 
-  
-
   const isLocal = (relation: BaseTaskRelationsType) =>
     relation.relation_location === 'Local';
 
   const refresh = async (relation: BaseTaskRelationsType) => {
     setRelation(relation);
-    if (!isLocal(relation) && socket) {
+    loading && waitConnection();
+    if (!isLocal(relation)) {
       emitJoinTaskRoom(relation);
       return;
     }
-    const refreshedTasks = isLocal(relation)
-      ? await localTasks.refresh(relation.id)
-      : await serverTasks.refresh(relation.id);
+    const refreshedTasks = await localTasks.refresh(relation.id);
+
     setTasks(refreshedTasks);
   };
-  const waitConnection = () => (
-    new Promise<void>((resolve) => {
-      if (!socketLoading) {
-        resolve();
-      } else {
-        let count = 0
-        const interval = setInterval(() => {
-          if (!socketLoading|| count > 5) {
-            clearInterval(interval);
-            resolve();
-          }
-          console.log(`Waiting for socket connection... ${count}s`);
-          count++;
-        }, 1000);
-        
-      }
-    }
-  ))
   const editTask = async (newTasks: TaskType) => {
     if (relation === null) return;
     socketLoading && waitConnection();
@@ -63,9 +43,7 @@ const useTaskStorage = () => {
       emitEditTask(newTasks);
       return;
     }
-    const editedTask = isLocal(relation)
-      ? await localTasks.editTaskToDb(newTasks)
-      : await serverTasks.editTaskToDb(newTasks);
+    const editedTask = await localTasks.editTaskToDb(newTasks);
     setTasks((prev) =>
       prev.map((task) => (task.id === newTasks.id ? editedTask : task))
     );
@@ -79,9 +57,7 @@ const useTaskStorage = () => {
       emitCreateTask(initNewTask);
       return;
     }
-    const storedTask = isLocal(relation)
-      ? await localTasks.addTaskToDb(initNewTask)
-      : await serverTasks.addTaskToDb(initNewTask);
+    const storedTask = await localTasks.addTaskToDb(initNewTask);
     setTasks((prev) => [...prev, storedTask]);
     return storedTask;
   };
@@ -104,9 +80,7 @@ const useTaskStorage = () => {
       emitEditTask(initToggledTask);
       return;
     }
-    const toggledTask = isLocal(relation)
-      ? await localTasks.toggleTaskInDb(initToggledTask)
-      : await serverTasks.toggleTaskInDb(initToggledTask);
+    const toggledTask = await localTasks.toggleTaskInDb(initToggledTask);
     setTasks((prev) => prev.map((t) => (t.id === task.id ? toggledTask : t)));
   };
   const removeTask = async (task: TaskType | TaskType[]) => {
@@ -118,9 +92,7 @@ const useTaskStorage = () => {
       emitRemoveTask(tasksArray);
       return;
     }
-    const response = isLocal(relation)
-      ? await localTasks.removeTaskFromDb(tasksArray)
-      : await serverTasks.removeTaskFromDb(tasksArray);
+    const response = await localTasks.removeTaskFromDb(tasksArray);
     const responseIds = response.map((task) => task.id);
     setTasks((prev) => prev.filter((task) => !responseIds.includes(task.id)));
   };

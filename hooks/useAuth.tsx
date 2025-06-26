@@ -7,6 +7,7 @@ import { loginAPI, signupAPI } from '@/service/database';
 import { isAxiosError, AxiosError } from 'axios';
 import { getAxiosInstance } from '@/service/AxiosInstance';
 import { useAuthContext } from '@/contexts/AuthenticationContext';
+
 const useAuth = () => {
   const { user, setUser } = useAuthContext();
   const { addAlert } = useAlert();
@@ -30,7 +31,6 @@ const useAuth = () => {
       (error: AxiosError) => {
         console.log('error', error);
         if (error.response?.status === 401) {
-          console.warn('Unauthorized! Logging out...');
           logout();
         }
         return Promise.reject(error);
@@ -39,7 +39,7 @@ const useAuth = () => {
 
     return () => {
       getAxiosInstance().interceptors.request.eject(tokenBearer);
-      getAxiosInstance().interceptors.request.eject(expiredJwtToken);
+      getAxiosInstance().interceptors.response.eject(expiredJwtToken);
     };
   }, [user]);
 

@@ -1,16 +1,18 @@
-import React, { useEffect } from 'react';
-import { Socket, io } from 'socket.io-client';
-import { uri } from '@/service/database';
+import React from 'react';
+import { Socket } from 'socket.io-client';
+import { socketSingleton } from '@/service/Socket';
 import useAuth from '@/hooks/useAuth';
 
 type SocketContextProps = {
   socket: Socket | null;
   loading: boolean;
+  waitConnection: () => Promise<void>;
 };
 
 const socketContextValues = {
   socket: null as Socket | null,
   loading: false,
+  waitConnection: () => new Promise<void>((resolve) => resolve()),
 };
 
 const SocketContext =
@@ -27,48 +29,91 @@ export const useSocketContext = () => {
 export const SocketProvider = ({ children }: React.PropsWithChildren) => {
   const [socket, setSocket] = React.useState<Socket | null>(null);
   const [loading, setLoading] = React.useState<boolean>(false);
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
-  React.useEffect(() => {
-    setLoading(true);
-    if (!user) {
-      setLoading(false);
-      if (socket) socket.disconnect();
-      setSocket(null);
-      return;
+  const waitConnection = () => (
+    new Promise<void>((resolve) => {
+      if (!loading) {
+        resolve();
+      } else {
+        let count = 0
+        const interval = setInterval(() => {
+          if (!loading|| count > 5) {
+            clearInterval(interval);
+            resolve();
+          }
+          console.log(`Waiting for socket connection... ${count}s`);
+          count++;
+        }, 1000);
+        
+      }
     }
-    const ws = io(uri + '/user', {
-      auth: {
-        token: user.token,
-      },
-    });
-
-    ws.on('connect', () => {
+  ))
+  
+  React.useEffect(() => {
+    console.log('Initializing socket to context');
+    setLoading(true);
+    const ws = socketSingleton();
+    setSocket(ws);
+    ws.auth = {token: user?.token};
+    ws.connect();
+    const errorHandler = (err: Error) => {
+      console.log('*WEBSOCKET ERROR HEREREEEEEEEE*', err);
+      if (err.message === 'Invalid token' || err.message === 'jwt expired') {
+        console.error('Invalid token, logging out');
+        logout();
+      }
+    }
+    const connectHandler = () => {
+      console.log('Socket connected');
       setLoading(false);
-      console.log('Socket connected', ws.id);
-      setSocket(ws);
-    });
-    ws.on('disconnect', () => {
-      console.log('Socket disconnected emitter');
+    };
+    const disconnectHandler = (reason: Socket.DisconnectReason) => {
+      console.log('Socket disconnected emitter ', reason);
       setLoading(false);
-      setSocket(null);
-    });
-    ws.on('error', (err) => {
-      console.log(err);
-      setLoading(false);
-    });
-    ws.on('connect_error', async (err) => {
+    }
+   
+    const reconnectFailedHadler = () => {
+      console.error('Reconnection failed after maximum attempts');
+      // Notify the user or retry manually
+    }
+    
+    const connectErrorHandler = async (err:Error) => {
       console.error('Connection error:', err.stack, err.message);
       setLoading(false);
-    });
-
+    }
+    ws.on('connect', connectHandler);
+    ws.on('disconnect', disconnectHandler);
+    ws.on('reconnect_failed',reconnectFailedHadler);
+    ws.on('auth:error', errorHandler );
+    ws.on('connect_error', connectErrorHandler);
+    ws.on('token:error',errorHandler);
     return () => {
+      ws.off('connect', connectHandler);
+      ws.off('disconnect', disconnectHandler);
+      ws.off('reconnect_failed', reconnectFailedHadler);
+      ws.off('error', errorHandler);
+      ws.off('connect_error', connectErrorHandler);
+      console.log('Socket event listeners cleaned up');
       ws.disconnect();
+      console.log('Socket disconnected and cleaned up');
+      ws.off('token:error', errorHandler);
+
+      setLoading(false);
     };
+    
   }, [user?.token]);
 
+
+  
+
   return (
-    <SocketContext.Provider value={{ socket, loading }}>
+    <SocketContext.Provider
+      value={{
+        socket,
+        loading,
+        waitConnection
+      }}>
       {children}
     </SocketContext.Provider>
   );

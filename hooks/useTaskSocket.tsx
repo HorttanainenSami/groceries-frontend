@@ -1,22 +1,28 @@
-import React, { useEffect } from 'react';
-import { BaseTaskRelationsType, ServerTaskRelationsWithTasksType, TaskType } from '@/types';
+import React, { useEffect, useState } from 'react';
+import {
+  BaseTaskRelationsType,
+  ServerTaskRelationsWithTasksType,
+  TaskType,
+} from '@/types';
 import { useSocketContext } from '@/contexts/SocketContext';
 
 const useTaskSocket = (
   setTasks: React.Dispatch<React.SetStateAction<TaskType[]>>
 ) => {
   const { socket, loading } = useSocketContext();
+  const [currentRoom, setCurrentRoom] = useState<string | null>(null);
   const loadingRef = React.useRef<boolean>(false);
-  const [isConnectedToRelation, setConnectedRelation] =
-    React.useState<BaseTaskRelationsType | null>(null);
 
   useEffect(() => {
     if (!socket) {
       return;
     }
-    const handleTaskJoined = ({tasks, ...data}: ServerTaskRelationsWithTasksType) => {
+    const handleTaskJoined = ({
+      tasks,
+      ...data
+    }: ServerTaskRelationsWithTasksType) => {
       console.log('task:join:success', data, JSON.stringify(tasks, null, 2));
-      setConnectedRelation(data);
+      setCurrentRoom(data.id);
       setTasks(tasks);
       loadingRef.current = false;
     };
@@ -43,34 +49,56 @@ const useTaskSocket = (
       setTasks(data.tasks);
     };
     socket.onAnyOutgoing((event, ...args) => {
-      console.log('ON ANY OUTGOING                      Socket event emitted, ', event, JSON.stringify(args, null, 2));
+      console.log(
+        'ON ANY OUTGOING                      Socket event emitted, ',
+        event,
+        JSON.stringify(args, null, 2)
+      );
     });
     socket.onAny((event, ...args) => {
-      console.log('ON ANY INCOMING                      Socket event received, ', event, JSON.stringify(args, null, 2));
+      console.log(
+        'ON ANY INCOMING                      Socket event received, ',
+        event,
+        JSON.stringify(args, null, 2)
+      );
     });
+    const reconnectHandler = (attemptNumber: number) => {
+      if (!currentRoom) {
+        console.log('No current room to rejoin');
+        loadingRef.current = false;
+        return;
+      }
+      console.log(`Reconnected to server after ${attemptNumber} attempts`);
+      if (socket.connected) {
+        console.log('Socket is not connected, attempting to connect');
+        socket.emit('task:join', currentRoom);
+      }
+    };
+    socket.on('task:join:success', handleTaskJoined);
     socket.on('task:created', handleTaskCreated);
     socket.on('task:edited', handleTaskEdited);
     socket.on('task:removed', handleTasksRemoved);
     socket.on('task:refresh', handleTaskRefresh);
-    socket.on('task:join:success', handleTaskJoined);
+    socket.on('reconnect', reconnectHandler);
+
     return () => {
+      setCurrentRoom(null);
+      socket.off('task:join:success', handleTaskJoined);
+      socket.off('reconnect', reconnectHandler);
+
       socket.off('task:created', handleTaskCreated);
       socket.off('task:edited', handleTaskEdited);
       socket.off('task:removed', handleTasksRemoved);
       socket.off('task:refresh', handleTaskRefresh);
-      socket?.off('task:join:success', handleTaskJoined);
     };
   }, [socket]);
 
   const emitJoinTaskRoom = (relation: BaseTaskRelationsType) => {
     loadingRef.current = true;
-    if (!socket) {
-      return;
-    }
-    socket.emit('task:join', relation.id);
+    socket?.emit('task:join', relation.id);
   };
   const isConnected = () => {
-    if (!isConnectedToRelation) {
+    if (!currentRoom) {
       console.log('No relation is set');
       return false;
     }
