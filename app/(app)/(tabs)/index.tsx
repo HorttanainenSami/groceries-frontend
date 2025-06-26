@@ -14,6 +14,7 @@ import useToggleList from '@/hooks/useToggleList';
 import useAlert from '@/hooks/useAlert';
 import useRelationStorage from '@/hooks/useRelationStorage';
 import RelationCreateModal from '@/components/RelationCreateModal';
+import React from 'react';
 
 function formatDate(date: string) {
   const d = new Date(date);
@@ -124,6 +125,13 @@ export default function Index() {
 
   const showSelectionMode = selectedRelations.length !== 0;
 
+  const sortedRelations = React.useMemo(() => {
+    return [...relations].sort((a, b) => {
+      const aDate = new Date(a.created_at);
+      const bDate = new Date(b.created_at);
+      return bDate.getTime() - aDate.getTime();
+    });
+  }, [relations])
   return (
     <View style={styles.container}>
       {showSelectionMode && (
@@ -140,7 +148,7 @@ export default function Index() {
       )}
 
       <FlatList
-        data={relations}
+        data={sortedRelations}
         refreshing={loading}
         contentContainerStyle={{ flexGrow: 1 }}
         ListEmptyComponent={
