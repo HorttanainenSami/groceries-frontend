@@ -2,6 +2,7 @@ import React from 'react';
 import { Socket } from 'socket.io-client';
 import { socketSingleton } from '@/service/Socket';
 import useAuth from '@/hooks/useAuth';
+import useAppStateChange from '@/hooks/useAppStateChange';
 
 type SocketContextProps = {
   socket: Socket | null;
@@ -29,6 +30,7 @@ export const useSocketContext = () => {
 export const SocketProvider = ({ children }: React.PropsWithChildren) => {
   const [socket, setSocket] = React.useState<Socket | null>(null);
   const [loading, setLoading] = React.useState<boolean>(false);
+  const active = useAppStateChange();
   const { user, logout } = useAuth();
 
   const waitConnection = () => (
@@ -49,8 +51,15 @@ export const SocketProvider = ({ children }: React.PropsWithChildren) => {
       }
     }
   ))
-  
+  React.useEffect(()=> {
+    //reconnectiong logic
+    if(active && socket &&  socket.disconnected){
+      socket.connect();
+    }
+  }, [active, socket]);
+
   React.useEffect(() => {
+    
     console.log('Initializing socket to context');
     setLoading(true);
     const ws = socketSingleton();

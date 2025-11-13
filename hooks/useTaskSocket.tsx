@@ -69,10 +69,7 @@ const useTaskSocket = (
         return;
       }
       console.log(`Reconnected to server after ${attemptNumber} attempts`);
-      if (socket.connected) {
-        console.log('Socket is not connected, attempting to connect');
-        socket.emit('task:join', currentRoom);
-      }
+      socket.emit('task:join', currentRoom);
     };
     socket.on('task:join:success', handleTaskJoined);
     socket.on('task:created', handleTaskCreated);

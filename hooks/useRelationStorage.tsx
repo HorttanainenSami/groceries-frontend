@@ -55,6 +55,9 @@ const useRelationStorage = () => {
         }
       })
     );
+    const removed = removeAll.filter(([res, ]) => res === true).map(([, id]) => id);
+    const initialRelations = relations.filter(r => removed.includes(r.id) );
+    setRelations(initialRelations);
     return removeAll;
   };
   const editRelationsName = async (

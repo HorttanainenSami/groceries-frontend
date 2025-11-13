@@ -1,3 +1,4 @@
+12.11.25 2h socketin uudelleen yhdistäminen
 5.6.25 1h Taskien hakeminen socketin avulla ja oikeellisen datan näyttäminen kun lista siirretään tietokantaan
 3.6.25 1h Listojen näkymän muokkaus. Nyt näkyy kenen kanssa lista on jaettuna
 27.5.25 3h Websocketin lisääminen task näkymään jotta listaa voidaan muokata reaaliajassa
