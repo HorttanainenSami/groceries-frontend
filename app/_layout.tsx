@@ -4,16 +4,19 @@ import { AuthContextProvider } from '@/contexts/AuthenticationContext';
 import { AlertContextProvider } from '@/contexts/AlertContext';
 import { SQLiteProvider } from 'expo-sqlite';
 import { initDb } from '@/service/LocalDatabase';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export default function RootLayout() {
   return (
     <SQLiteProvider databaseName="todo" onInit={initDb}>
-      <AlertContextProvider>
-        <AuthContextProvider>
-          <Slot />
-          <AlertStack />
-        </AuthContextProvider>
-      </AlertContextProvider>
+      <GestureHandlerRootView>
+        <AlertContextProvider>
+          <AuthContextProvider>
+            <Slot />
+            <AlertStack />
+          </AuthContextProvider>
+        </AlertContextProvider>
+      </GestureHandlerRootView>
     </SQLiteProvider>
   );
 }

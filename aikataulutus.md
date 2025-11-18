@@ -1,3 +1,4 @@
+18.11.25 4h Lokaalin ruokalistan sisällön uudelleen järjestämisen mahdollisuus
 12.11.25 2h socketin uudelleen yhdistäminen
 5.6.25 1h Taskien hakeminen socketin avulla ja oikeellisen datan näyttäminen kun lista siirretään tietokantaan
 3.6.25 1h Listojen näkymän muokkaus. Nyt näkyy kenen kanssa lista on jaettuna

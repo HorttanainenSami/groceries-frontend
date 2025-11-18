@@ -36,6 +36,18 @@ const useTaskStorage = () => {
 
     setTasks(refreshedTasks);
   };
+  const reorderTasks = async ( reorderedTasks: TaskType[]) => {
+    if(tasks.length !== reorderedTasks.length){
+      return;
+    }
+    if(isConnected()){
+      //emitReorderTasks(reorderedTasks);
+      return;
+    }
+    await localTasks.reorderTasksInDb(reorderedTasks);
+
+
+  }
   const editTask = async (newTasks: TaskType) => {
     if (relation === null) return;
     socketLoading && waitConnection();
@@ -108,6 +120,7 @@ const useTaskStorage = () => {
     storeTask,
     toggleTask,
     removeTask,
+    reorderTasks
   };
 };
 

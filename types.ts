@@ -20,6 +20,7 @@ export const BaseTaskSchema = z.object({
   completed_at: z.string().nullable(),
   completed_by: z.string().uuid().nullable(),
   task_relations_id: z.string().uuid(),
+  order_idx: z.number().optional(),
 });
 
 export type BaseTaskType = z.infer<typeof BaseTaskSchema>;

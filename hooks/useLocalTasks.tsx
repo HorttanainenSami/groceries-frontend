@@ -5,6 +5,7 @@ import {
   toggleTask,
   editTask,
   removeTask,
+  reorderTasks
 } from '@/service/LocalDatabase';
 const useLocalTasks = () => {
   const refresh = async (id: string) => {
@@ -43,12 +44,16 @@ const useLocalTasks = () => {
     });
   };
 
+  const reorderTasksInDb = async (reorderedTasks: TaskType[]): Promise<TaskType[]> => await reorderTasks(reorderedTasks);
+  
+ 
   return {
     refresh,
     removeTaskFromDb,
     addTaskToDb,
     editTaskToDb,
     toggleTaskInDb,
+    reorderTasksInDb
   };
 };
 

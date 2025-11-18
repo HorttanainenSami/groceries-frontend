@@ -10,6 +10,10 @@ import { getSQLiteTimestamp } from '@/utils/utils';
 import useRelationStorage from '@/hooks/useRelationStorage';
 import RelationCreateModal from '@/components/RelationCreateModal';
 import React from 'react';
+import DraggableFlatList, {
+  DragEndParams,
+  ScaleDecorator,
+} from "react-native-draggable-flatlist";
 
 export default function Index() {
   const router = useRouter();
@@ -18,39 +22,45 @@ export default function Index() {
   );
   const [isCreateModalVisible, setCreateModalVisible] = useState(false);
 
+
+
   const params = useLocalSearchParams();
   const id = String(params.id);
   const {
     removeTask,
     toggleTask,
     tasks,
+    setTasks,
     editTask,
     loading,
     refresh,
     storeTask,
+    reorderTasks
+
   } = useTaskStorage();
   const { relations, editRelationsName } = useRelationStorage();
   const navigation = useNavigation();
   const [editRelationNameModalVisible, setEditRelationNameModalVisible] =
     useState(false);
-  useLayoutEffect(() => {
-    const initialRelation = relations.find((i) => i.id === id);
-    console.log('initialRelation', initialRelation);
-    if (initialRelation) {
-      refresh(initialRelation);
-      navigation.setOptions({
-        headerTitle: () => (
-          <Pressable onPress={() => setEditRelationNameModalVisible(true)}>
-            <Text style={{ fontSize: 22 }}>{initialRelation.name}</Text>
-          </Pressable>
-        ),
-      });
-    } else {
-      navigation.setOptions({
-        headerTitle: 'Lista',
-      });
-    }
-    return () => {};
+
+    useLayoutEffect(() => {
+      const initialRelation = relations.find((i) => i.id === id);
+      console.log('initialRelation', initialRelation);
+      if (initialRelation) {
+        refresh(initialRelation);
+        navigation.setOptions({
+          headerTitle: () => (
+            <Pressable onPress={() => setEditRelationNameModalVisible(true)}>
+              <Text style={{ fontSize: 22 }}>{initialRelation.name}</Text>
+            </Pressable>
+          ),
+        });
+      } else {
+        navigation.setOptions({
+          headerTitle: 'Lista',
+        });
+      }
+      return () => {};
   }, [id]);
 
   const addTask = async (newTaskText: string) => {
@@ -82,55 +92,44 @@ export default function Index() {
       params: { selectedId: id },
     });
   };
-  const sortedTasks = React.useMemo(() => {
-    return [...tasks].sort((a, b) => {
-      const aCompleted = !!a.completed_at;
-      const bCompleted = !!b.completed_at;
-      if (aCompleted && !bCompleted) return 1;
-      if (!aCompleted && bCompleted) return -1;
-
-      if (a.completed_at && b.completed_at) {
-        const dateA = new Date(a.completed_at).getTime();
-        const dateB = new Date(b.completed_at).getTime();
-        return dateB - dateA;
-      }
-      const dateA = new Date(a.created_at).getTime();
-      const dateB = new Date(b.created_at).getTime();
-      return dateB - dateA;
-    });
-  }, [tasks]);
+  
+  
+  const updateOrder = ({data}:DragEndParams<TaskType>)=> {
+    const ordered = data.map((data, idx) => ({...data, order_idx:idx}))
+    setTasks(ordered);
+    reorderTasks(ordered);
+  }
 
   const relation = relations.find((i) => i.id === id);
-  console.log('tasks', JSON.stringify(tasks, null, 2));
   return (
     <View style={styles.container}>
-      <Text style={styles.headerText}>
-        {relation?.relation_location || 'Lista'}
-      </Text>
 
-      <FlatList
-        data={sortedTasks}
+      <DraggableFlatList
+        data={tasks}
+        onDragEnd={updateOrder}
         refreshing={loading}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.itemContainer}>
-            <Checkbox
-              isChecked={!!item.completed_at}
-              toggle={() => toggleTask(item)}
-            />
-            <Pressable
-              onPress={() => setEditModalVisible(item)}
-              onLongPress={() => selectTask(item.id)}
-              style={styles.textPressable}>
-              <Text
-                style={[
-                  styles.text,
-                  !!item.completed_at && styles.textCheckboxActive,
-                ]}>
-                {item.task}
-              </Text>
-            </Pressable>
-          </View>
+        renderItem={({ item, drag}) => (
+          <ScaleDecorator>
+            <View style={styles.itemContainer}>
+              <Checkbox
+                isChecked={!!item.completed_at}
+                toggle={() => toggleTask(item)}
+                />
+              <Pressable
+                onPress={() => setEditModalVisible(item)}
+                onLongPress={drag}
+                style={styles.textPressable}>
+                <Text
+                  style={[
+                    styles.text,
+                    !!item.completed_at && styles.textCheckboxActive,
+                  ]}>
+                  {item.task}
+                </Text>
+              </Pressable>
+            </View>
+          </ScaleDecorator>
         )}
       />
 

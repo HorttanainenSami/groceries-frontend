@@ -27,6 +27,7 @@ export const initDb = async () => {
     completed_at TEXT,
     completed_by UUID,
     task_relations_id UUID,
+    order_idx INTEGER DEFAULT NULL,
     FOREIGN KEY (task_relations_id) REFERENCES task_relations(id) ON DELETE CASCADE
   );`);
 };
@@ -156,10 +157,10 @@ export const getTasksById = async (id: string): Promise<TaskType[]> => {
   try {
     const db = await getDatabaseSingleton();
     const result = await db.getAllAsync<TaskType>(
-      'SELECT * FROM tasks WHERE task_relations_id=?;',
+      'SELECT * FROM tasks WHERE task_relations_id=? ORDER BY order_idx;',
       id
     );
-    console.log('result:', result);
+    console.log('result:', JSON.stringify(result, null, 2));
     return result;
   } catch (e) {
     console.log('error occurred', e);
@@ -222,3 +223,23 @@ export const removeTask = async (id: string): Promise<TaskType | null> => {
     return null;
   }
 };
+export const reorderTasks = async (tasks : TaskType[]) :Promise<TaskType[]> => {
+  if(tasks.length===0) return getTasksById(tasks[0].task_relations_id)
+  console.log('reorder');
+  try{
+    const db = await getDatabaseSingleton();
+    await db.withTransactionAsync(async () => {
+      for(const {order_idx, id} of tasks){
+        await db.runAsync(
+          'UPDATE tasks SET order_idx = ? WHERE id=? RETURNING *',
+          order_idx||null,
+          id
+        );
+      }
+    })
+    return getTasksById(tasks[0].task_relations_id);
+  }catch(e){
+    console.log(e);
+    return getTasksById(tasks[0].task_relations_id);
+  }
+}
