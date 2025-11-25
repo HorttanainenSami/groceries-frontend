@@ -3,11 +3,6 @@ import {
   ErrorResponseSchema,
   ServerTaskRelationType,
   BaseTaskRelationsWithTasksType,
-  BaseTaskType,
-  ServerTaskRelationsWithTasksType,
-  ServerTaskRelationsWithTasksSchema,
-  TaskType,
-  BaseTaskSchema,
   ServerTaskRelationSchema,
   BaseTaskRelationsSchema,
   BaseTaskRelationsType,
@@ -19,9 +14,11 @@ import {
   RegisterType,
 } from '@/types';
 import { getAxiosInstance } from '@/service/AxiosInstance';
-export const uri = 'http://5.61.90.231';
-//import Constants from 'expo-constants';
-//export const uri = `http:${Constants.experienceUrl.split(':')[1]}:3003`;
+import {postRelationAndShareWithUserRequestType} from '@groceries/shared_types';
+
+//export const uri = 'http://5.61.90.231';
+import Constants from 'expo-constants';
+export const uri = `http:${Constants.experienceUrl.split(':')[1]}:3003`;
 
 export const loginAPI = async (credentials: LoginType) => {
   try {
@@ -96,20 +93,17 @@ export const searchUsers = async (
   }
 };
 
-type shareListWithUsersProps = {
-  user: SearchUserType;
-  relationsToShare: BaseTaskRelationsWithTasksType[];
-};
+
 export const shareListWithUser = async ({
-  user,
-  relationsToShare,
-}: shareListWithUsersProps) => {
+  user_shared_with,
+  task_relations,
+}: postRelationAndShareWithUserRequestType) => {
   try{
 
     const postUrl = uri + `/relations/share`;
     const response = await getAxiosInstance().post(postUrl, {
-      user_shared_with: user.id,
-      task_relations: relationsToShare,
+      user_shared_with,
+      task_relations,
     });
     if (response.status === 200) {
       console.log('response', response.data);
@@ -146,22 +140,7 @@ export const getServerRelations = async (): Promise<
   }
 };
 
-export const getServerTasksByRelationId = async (
-  relationId: string
-): Promise<ServerTaskRelationsWithTasksType> => {
-  try {
-    const getUrl = uri + `/relations/${relationId}`;
-    console.log('connecting to server tasks', getUrl);
-    const response = await getAxiosInstance().get(getUrl);
-    const parsedResponse = ServerTaskRelationsWithTasksSchema.parse(
-      response.data
-    );
-    return parsedResponse;
-  } catch (e) {
-    console.error('Error fetching server tasks by relation ID:', e);
-    throw e;
-  }
-};
+
 export const changeRelationNameOnServer = async (
   relationId: string,
   newName: string
@@ -176,48 +155,8 @@ export const changeRelationNameOnServer = async (
     throw e;
   }
 }
-export const createTaskForServerRelation = async (
-  task: Omit<BaseTaskType, 'id'>
-) => {
-  const postUrl = uri + `/relations/${task.task_relations_id}/tasks`;
-  const response = await getAxiosInstance().post(postUrl, { task });
-  const parsedResponse = BaseTaskSchema.parse(response.data);
-  console.log(parsedResponse);
-  return parsedResponse;
-};
-export const editTaskFromServerRelation = async (
-  relationId: string,
-  task: Partial<BaseTaskType>
-) => {
-  try {
-    const { id, ...rest } = task;
-    const postUrl = uri + `/relations/${relationId}/tasks/${id}`;
-    const response = await getAxiosInstance().patch(postUrl, rest);
-    console.log('response', response.data);
 
-    const parsedResponse = BaseTaskSchema.parse(response.data) as TaskType;
-    console.log(parsedResponse);
-    return parsedResponse;
-  } catch (e) {
-    console.error('Error editing task from server relation:', e);
-    throw e;
-  }
-};
 
-export const removeTaskFromServerRelation = async (
-  relationId: string,
-  taskId: string
-) => {
-  try {
-    const postUrl = uri + `/relations/${relationId}/tasks/${taskId}`;
-    const response = await getAxiosInstance().delete(postUrl);
-    const parsedResponse = BaseTaskSchema.parse(response.data) as TaskType;
-    return parsedResponse;
-  } catch (e) {
-    console.error('Error removing task from server relation:', e);
-    throw e;
-  }
-};
 export const removeRelationFromServer = async (
   relationId: string
 ): Promise<[boolean, string]> => {

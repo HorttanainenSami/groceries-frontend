@@ -107,7 +107,7 @@ export default function Index() {
           tasks: await getTasksById(relation.id),
         }))
       );
-      await shareRelation({ user, relations: relationsWithTasks });
+      await shareRelation({ user_shared_with:user.id, task_relations: relationsWithTasks });
       addAlert({ message: 'Jaettu onnistuneesti!', type: 'success' });
     } catch (e) {
       console.log('error occurred', e);

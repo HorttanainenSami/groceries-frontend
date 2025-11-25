@@ -16,8 +16,8 @@ export type ErrorResponse = z.infer<typeof ErrorResponseSchema>;
 export const BaseTaskSchema = z.object({
   id: z.string().uuid(),
   task: z.string(),
-  created_at: z.string(),
-  completed_at: z.string().nullable(),
+  created_at: z.string().datetime(),
+  completed_at: z.string().datetime().nullable(),
   completed_by: z.string().uuid().nullable(),
   task_relations_id: z.string().uuid(),
   order_idx: z.number().optional(),
@@ -29,7 +29,7 @@ export const BaseTaskRelationsSchema = z.object({
   id: z.string().uuid(),
   relation_location: z.enum(['Local', 'Server']),
   name: z.string(),
-  created_at: z.string(),
+  created_at: z.string().datetime(),
 });
 export type BaseTaskRelationsType = z.infer<typeof BaseTaskRelationsSchema>;
 export const LocalTaskRelationSchema = BaseTaskRelationsSchema.extend({

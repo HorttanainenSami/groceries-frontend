@@ -17,6 +17,7 @@ import {
   SearchUserType,
   ServerTaskRelationType,
 } from '@/types';
+import { postRelationAndShareWithUserRequestType } from '@groceries/shared_types';
 import React from 'react';
 
 type ShareRelationType = {
@@ -90,17 +91,17 @@ const useRelationStorage = () => {
   };
 
   const shareRelation = async ({
-    user,
-    relations: relationsToShare,
-  }: ShareRelationType) => {
+    user_shared_with,
+    task_relations,
+  }: postRelationAndShareWithUserRequestType) => {
     try {
       const response = await shareListWithUser({
-        user,
-        relationsToShare,
+        user_shared_with,
+        task_relations,
       });
       console.log('response from server', JSON.stringify(response, null, 2));
       if (!response) return;
-      const deleteLocalRelationsIds = relationsToShare.map(
+      const deleteLocalRelationsIds = task_relations.map(
         (relations) => relations.id
       );
 

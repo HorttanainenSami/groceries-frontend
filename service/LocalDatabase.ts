@@ -52,8 +52,8 @@ export const createTasksRelations = async ({ name }: createTasksType) => {
   try {
     const db = await getDatabaseSingleton();
     const result = await db.runAsync(
-      'INSERT INTO task_relations (id, name, created_at, relation_location) VALUES (?, ?, datetime("now"), ?)',
-      [Crypto.randomUUID(), name, 'Local']
+      'INSERT INTO task_relations (id, name, created_at, relation_location) VALUES (?, ?, ?, ?)',
+      [Crypto.randomUUID(), name, new Date().toISOString(), 'Local']
     );
     console.log(result.changes);
   } catch (e) {
@@ -124,8 +124,8 @@ export const createTasks = async ({
     console.log('in createTasks');
     const db = await getDatabaseSingleton();
     const result = await db.getFirstAsync<TaskType>(
-      'INSERT INTO tasks (id, task, created_at, task_relations_id ) VALUES (?, ?, datetime("now"), ?) RETURNING *;',
-      [Crypto.randomUUID(), task, task_relations_id]
+      'INSERT INTO tasks (id, task, created_at, task_relations_id ) VALUES (?, ?, ?, ?) RETURNING *;',
+      [Crypto.randomUUID(), task, new Date().toISOString(), task_relations_id]
     );
     console.log(result);
     return result;

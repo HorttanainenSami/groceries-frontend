@@ -1,4 +1,4 @@
-import { StyleSheet, Pressable, FlatList, Text, View } from 'react-native';
+import { StyleSheet, Pressable, Text, View } from 'react-native';
 import Checkbox from '@/components/Checkbox';
 import TaskCreateModal from '@/components/TaskCreateModal';
 import TaskEditModal from '@/components/TaskEditModal';
