@@ -6,7 +6,6 @@ import { useLayoutEffect, useState } from 'react';
 import { useRouter, useLocalSearchParams, useNavigation } from 'expo-router';
 import useTaskStorage from '@/hooks/useTaskStorage';
 import { TaskType } from '@/types';
-import { getSQLiteTimestamp } from '@/utils/utils';
 import useRelationStorage from '@/hooks/useRelationStorage';
 import RelationCreateModal from '@/components/RelationCreateModal';
 import React from 'react';
@@ -66,7 +65,7 @@ export default function Index() {
   const addTask = async (newTaskText: string) => {
     const newTask = {
       task: newTaskText,
-      created_at: getSQLiteTimestamp(),
+      created_at: new Date().toISOString(),
       task_relations_id: id,
       completed_by: null,
       completed_at: null,

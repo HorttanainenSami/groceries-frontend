@@ -2,10 +2,7 @@ import {
   LoginResponseSchema,
   ErrorResponseSchema,
   ServerTaskRelationType,
-  BaseTaskRelationsWithTasksType,
   ServerTaskRelationSchema,
-  BaseTaskRelationsSchema,
-  BaseTaskRelationsType,
 } from '@/types';
 import {
   SearchUserSchema,
@@ -14,7 +11,6 @@ import {
   RegisterType,
 } from '@/types';
 import { getAxiosInstance } from '@/service/AxiosInstance';
-import {postRelationAndShareWithUserRequestType} from '@groceries/shared_types';
 
 //export const uri = 'http://5.61.90.231';
 import Constants from 'expo-constants';
@@ -94,32 +90,6 @@ export const searchUsers = async (
 };
 
 
-export const shareListWithUser = async ({
-  user_shared_with,
-  task_relations,
-}: postRelationAndShareWithUserRequestType) => {
-  try{
-
-    const postUrl = uri + `/relations/share`;
-    const response = await getAxiosInstance().post(postUrl, {
-      user_shared_with,
-      task_relations,
-    });
-    if (response.status === 200) {
-      console.log('response', response.data);
-      const parsedData = ServerTaskRelationSchema.array().parse(response.data);
-      return parsedData;
-    } else {
-      throw new Error('Something went wrong with response', response.data);
-    }
-  } catch (e) {
-    console.error('Error sharing list with user:', e);
-    if (e instanceof Error) {
-      console.error('Error message:', e.message);
-    }
-    throw e;
-  }
-};
 
 export const getServerRelations = async (): Promise<
   ServerTaskRelationType[]
@@ -137,38 +107,5 @@ export const getServerRelations = async (): Promise<
   } catch (e) {
     console.log(e);
     return [];
-  }
-};
-
-
-export const changeRelationNameOnServer = async (
-  relationId: string,
-  newName: string
-): Promise<BaseTaskRelationsType> => {
-  try {
-    const postUrl = uri + `/relations/${relationId}`;
-    const response = await getAxiosInstance().patch(postUrl, { relation_id: relationId, new_name: newName });
-    const parsedResponse = BaseTaskRelationsSchema.parse(response.data);
-    return parsedResponse;
-  } catch (e) {
-    console.error('Error changing relation name on server:', e);
-    throw e;
-  }
-}
-
-
-export const removeRelationFromServer = async (
-  relationId: string
-): Promise<[boolean, string]> => {
-  try {
-    const postUrl = uri + `/relations/${relationId}`;
-    const response = await getAxiosInstance().delete(postUrl);
-    if (response.status === 200) {
-      return [true, relationId];
-    }
-    return [false, relationId];
-  } catch (e) {
-    console.error('Error removing relation from server:', e);
-    throw e;
   }
 };

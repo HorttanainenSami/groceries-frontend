@@ -1,42 +1,56 @@
 import { useRelationContext } from '@/contexts/RelationContext';
-import {
-  changeRelationNameOnServer,
-  getServerRelations,
-  removeRelationFromServer,
-  shareListWithUser,
-} from '@/service/database';
+import useRelationsSocket from './useRelationsSocket';
 import {
   changeRelationName,
   createTasksRelations,
-  deleteRelationsWithTasks,
+  deleteRelationWithTasks,
   getTaskRelations,
 } from '@/service/LocalDatabase';
-import {
-  BaseTaskRelationsType,
-  BaseTaskRelationsWithTasksType,
-  SearchUserType,
-  ServerTaskRelationType,
-} from '@/types';
-import { postRelationAndShareWithUserRequestType } from '@groceries/shared_types';
-import React from 'react';
 
-type ShareRelationType = {
-  user: SearchUserType;
-  relations: BaseTaskRelationsWithTasksType[];
-};
+import React from 'react';
+import { ClientToServerRelatiosShare,
+  LocalRelationType,
+  ServerRelationType,
+  ServerRelationWithTasksType, } from '@groceries/shared_types';
+
 const useRelationStorage = () => {
   const { relations, setRelations } = useRelationContext();
+  
   const [loading, setLoading] = React.useState(false);
+
+  const handleChangeNameBroadcast = React.useCallback((broadcastedRelation : ServerRelationType) => {
+    setRelations(prev => prev.map(rel => rel.id ===broadcastedRelation.id?broadcastedRelation:rel))
+  },[setRelations])
+
+  const handleDeleteBroadcast = React.useCallback((deletedRelations : [boolean, string][]) => {
+    setRelations(prev => {
+      const filtered = prev.filter(r => !deletedRelations.map(r => r[1]).includes(r.id));
+      return filtered;
+    })
+  },[setRelations])
+
+  const handleShareBroadcast = React.useCallback((t : ServerRelationWithTasksType[]) => {
+    setRelations(prev => [...prev, ...t])
+  },[setRelations])
+
+  const { 
+    emitChangeRelationName,
+    emitDeleteRelation,
+    emitGetRelations,
+    emitShareWithUser
+  } = useRelationsSocket({onChangeName: handleChangeNameBroadcast, onDelete: handleDeleteBroadcast, onShare: handleShareBroadcast});
 
   const getRelations = async () => {
     setLoading(true);
-    const response = await Promise.all([
-      getTaskRelations(),
-      getServerRelations(),
-    ]);
-    console.log(JSON.stringify(response, null, 2));
-    setRelations([...response[0], ...response[1]]);
-    setLoading(false);
+    try {
+      const [local, server] = await Promise.all([getTaskRelations(), emitGetRelations()]);
+      setRelations([...local,...server]);
+
+    } catch (error) {
+      console.error('Error getting relations:', error);
+    } finally {
+      setLoading(false);
+    }
   };
   const refresh = async () => getRelations();
 
@@ -45,26 +59,21 @@ const useRelationStorage = () => {
     refresh();
   };
   const removeRelations = async (
-    relations: BaseTaskRelationsType[]
-  ): Promise<[boolean, string][]> => {
-    const removeAll = await Promise.all(
-      relations.map(async (relation) => {
-        if (relation.relation_location === 'Local') {
-          return deleteRelationsWithTasks(relation.id);
-        } else {
-          return removeRelationFromServer(relation.id);
-        }
-      })
-    );
-    const removed = removeAll.filter(([res, ]) => res === true).map(([, id]) => id);
-    const initialRelations = relations.filter(r => removed.includes(r.id) );
-    setRelations(initialRelations);
-    return removeAll;
+    relations: (LocalRelationType|ServerRelationType)[]
+  )=> {
+    const local = relations.filter(i => i.relation_location==='Local')
+    const server = relations.filter(i => i.relation_location==='Server')
+    const removeAll =  await Promise.all([deleteRelationWithTasks(local), emitDeleteRelation(server)])
+    const response = [...removeAll[0], ...removeAll[1]];
+    const removed =response.filter(([res, ]) => res === true).map(([, id]) => id);
+    const remainingRelations = relations.filter(r => !removed.includes(r.id) );
+    setRelations(remainingRelations);
+    return response;
   };
   const editRelationsName = async (
     id: string,
     newName: string
-  ): Promise<BaseTaskRelationsType | ServerTaskRelationType | null> => {
+  ): Promise<LocalRelationType | ServerRelationType | null> => {
     const relation = relations.find((r) => r.id === id);
     if (!relation) {
       console.error('Relation not found for id:', id);
@@ -75,7 +84,7 @@ const useRelationStorage = () => {
     const db =
       relation.relation_location === 'Local'
         ? await changeRelationName(id, newName)
-        : await changeRelationNameOnServer(id, newName);
+        : await emitChangeRelationName({id, name: newName});
 
     console.log('Response from changeRelationName (db):', db);
     if (!db) {
@@ -91,32 +100,29 @@ const useRelationStorage = () => {
   };
 
   const shareRelation = async ({
-    user_shared_with,
     task_relations,
-  }: postRelationAndShareWithUserRequestType) => {
+    user_shared_with,
+  }: ClientToServerRelatiosShare) => {
     try {
-      const response = await shareListWithUser({
+      const serverResponse = await emitShareWithUser({
         user_shared_with,
         task_relations,
       });
-      console.log('response from server', JSON.stringify(response, null, 2));
-      if (!response) return;
-      const deleteLocalRelationsIds = task_relations.map(
-        (relations) => relations.id
-      );
+      
+      const relations = Array.isArray(task_relations)?task_relations: [task_relations];
+      const localRelations = relations.filter(i => i.relation_location==='Local') as LocalRelationType[];
 
-      const promises = await Promise.all(
-        deleteLocalRelationsIds.map((id) => deleteRelationsWithTasks(id))
-      );
-      const successfulDeletes = promises
+      const deleted = localRelations.length ===0 ? []: await deleteRelationWithTasks(localRelations);
+    
+      const successfulDeletes = deleted
         .filter((result) => result[0] === true)
         .map((result) => result[1]);
-      console.log('successful deletes', successfulDeletes);
-      const remainingRelations = relations.filter(
-        (r) => !successfulDeletes.includes(r.id)
-      );
-      console.log('deleted', remainingRelations);
-      setRelations([...remainingRelations, ...response]);
+
+      
+      setRelations(prev => {
+        const removed = prev.filter(i => !successfulDeletes.includes(i.id));
+        return [...removed, ...serverResponse];
+      });
     } catch (e) {
       console.log('error occurred', e);
       if (e instanceof Error) {

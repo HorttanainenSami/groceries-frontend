@@ -1,10 +1,10 @@
-import { BaseTaskRelationsType, ServerTaskRelationType } from '@/types';
+import { ServerRelationType, LocalRelationType } from '@groceries/shared_types';
 import React, { createContext } from 'react';
 
 type RelationContextType = {
-  relations: BaseTaskRelationsType[] | ServerTaskRelationType[];
+  relations: (LocalRelationType | ServerRelationType)[];
   setRelations: React.Dispatch<
-    React.SetStateAction<BaseTaskRelationsType[] | ServerTaskRelationType[]>
+    React.SetStateAction<(LocalRelationType | ServerRelationType)[]>
   >;
 };
 
@@ -23,7 +23,7 @@ export const useRelationContext = () => {
   return context;
 };
 export const RelationProvider = ({ children }: React.PropsWithChildren) => {
-  const [relations, setRelations] = React.useState<BaseTaskRelationsType[]>([]);
+  const [relations, setRelations] = React.useState<(LocalRelationType | ServerRelationType)[]>([]);
 
   return (
     <RelationContext.Provider

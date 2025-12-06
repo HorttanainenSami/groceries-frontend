@@ -1,6 +1,7 @@
-import { io, Socket } from 'socket.io-client';
+import { io } from 'socket.io-client';
 import { uri } from '@/service/database';
-let socket: Socket | null = null;
+import { SocketClientType } from '@groceries/shared_types';
+let socket: SocketClientType | null = null;
 
 export const socketSingleton = () => {
   if (!socket) {

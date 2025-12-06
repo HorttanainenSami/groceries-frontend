@@ -99,20 +99,24 @@ export const getTaskRelations = async (): Promise<LocalTaskRelationType[]> => {
   }
 };
 
-export const deleteRelationsWithTasks = async (
-  local_id: string
-): Promise<[boolean, string]> => {
+export const deleteRelationWithTasks = async (
+  relations : LocalTaskRelationType[]
+): Promise<[boolean, string][]> => {
   try {
     const db = await getDatabaseSingleton();
-    console.log('deleting relation with id', local_id);
-    const response = await db.runAsync(
-      'DELETE FROM task_relations WHERE id=?;',
-      [local_id]
-    );
-    return [response.changes > 0, local_id];
+   await db.withTransactionAsync( async () => {
+      await Promise.all(relations.map(({id}) => (
+        db.runAsync(
+        'DELETE FROM task_relations WHERE id=?;',
+        [id])
+        )))
+      }
+    )
+    
+    return relations.map(({id}) => [true,id]);
   } catch (e) {
     console.log('error occurred', e);
-    return [false, local_id];
+    return relations.map(({id}) => [false,id]);
   }
 };
 

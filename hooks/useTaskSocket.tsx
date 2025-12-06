@@ -1,149 +1,98 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { useSocketContext } from '@/contexts/SocketContext';
 import {
-  BaseTaskRelationsType,
   ServerTaskRelationsWithTasksType,
   TaskType,
 } from '@/types';
-import { useSocketContext } from '@/contexts/SocketContext';
 
-const useTaskSocket = (
-  setTasks: React.Dispatch<React.SetStateAction<TaskType[]>>
-) => {
-  const { socket, loading } = useSocketContext();
-  const [currentRoom, setCurrentRoom] = useState<string | null>(null);
-  const loadingRef = React.useRef<boolean>(false);
+type UseTaskSocketProps = {
+  onTaskCreated?: (task: TaskType) => void;
+  onTaskEdited?: (task: TaskType) => void;
+  onTaskRemoved?: (tasks: TaskType[]) => void;
+};
+
+const useTaskSocket = (props?: UseTaskSocketProps) => {
+  const { socket } = useSocketContext();
 
   useEffect(() => {
-    if (!socket) {
-      return;
-    }
-    const handleTaskJoined = ({
-      tasks,
-      ...data
-    }: ServerTaskRelationsWithTasksType) => {
-      console.log('task:join:success', data, JSON.stringify(tasks, null, 2));
-      setCurrentRoom(data.id);
-      setTasks(tasks);
-      loadingRef.current = false;
-    };
-    const handleTaskCreated = (data: TaskType) => {
-      console.log('task:created', data);
-      setTasks((prev) => [...prev, data]);
+    if (!socket) return;
+
+    const handleTaskCreated = (payload: { data: TaskType }) => {
+      console.log('task:create broadcast received', payload);
+      props?.onTaskCreated?.(payload.data);
     };
 
-    const handleTaskEdited = (data: TaskType) => {
-      console.log('task:edited', data);
-      setTasks((prev) =>
-        prev.map((task) => (task.id === data.id ? data : task))
-      );
+    const handleTaskEdited = (payload: { edited_task: TaskType }) => {
+      console.log('task:edit broadcast received', payload);
+      props?.onTaskEdited?.(payload.edited_task);
     };
 
-    const handleTasksRemoved = (data: TaskType[]) => {
-      console.log('task:removed', data);
-      const ids = data.map((task) => task.id);
-      setTasks((prev) => prev.filter((task) => !ids.includes(task.id)));
+    const handleTaskRemoved = (payload: { remove_tasks: TaskType[] }) => {
+      console.log('task:remove broadcast received', payload);
+      props?.onTaskRemoved?.(payload.remove_tasks);
     };
 
-    const handleTaskRefresh = (data: any) => {
-      console.log('task:refresh', data);
-      setTasks(data.tasks);
-    };
-    socket.onAnyOutgoing((event, ...args) => {
-      console.log(
-        'ON ANY OUTGOING                      Socket event emitted, ',
-        event,
-        JSON.stringify(args, null, 2)
-      );
-    });
-    socket.onAny((event, ...args) => {
-      console.log(
-        'ON ANY INCOMING                      Socket event received, ',
-        event,
-        JSON.stringify(args, null, 2)
-      );
-    });
-    const reconnectHandler = (attemptNumber: number) => {
-      if (!currentRoom) {
-        console.log('No current room to rejoin');
-        loadingRef.current = false;
-        return;
-      }
-      console.log(`Reconnected to server after ${attemptNumber} attempts`);
-      socket.emit('task:join', currentRoom);
-    };
-    socket.on('task:join:success', handleTaskJoined);
-    socket.on('task:created', handleTaskCreated);
-    socket.on('task:edited', handleTaskEdited);
-    socket.on('task:removed', handleTasksRemoved);
-    socket.on('task:refresh', handleTaskRefresh);
-    socket.on('reconnect', reconnectHandler);
+    socket.on('task:create', handleTaskCreated);
+    socket.on('task:edit', handleTaskEdited);
+    socket.on('task:remove', handleTaskRemoved);
 
     return () => {
-      setCurrentRoom(null);
-      socket.off('task:join:success', handleTaskJoined);
-      socket.off('reconnect', reconnectHandler);
-
-      socket.off('task:created', handleTaskCreated);
-      socket.off('task:edited', handleTaskEdited);
-      socket.off('task:removed', handleTasksRemoved);
-      socket.off('task:refresh', handleTaskRefresh);
+      socket.off('task:create', handleTaskCreated);
+      socket.off('task:edit', handleTaskEdited);
+      socket.off('task:remove', handleTaskRemoved);
     };
-  }, [socket]);
+  }, [socket, props]);
 
-  const emitJoinTaskRoom = (relation: BaseTaskRelationsType) => {
-    loadingRef.current = true;
-    socket?.emit('task:join', relation.id);
-  };
-  const isConnected = () => {
-    if (!currentRoom) {
-      console.log('No relation is set');
-      return false;
-    }
-    if (!socket) {
-      console.log('Socket is not initialized');
-      return false;
-    }
-    return socket.connected;
+  const emitJoinTaskRoom = async (relationId: string) => {
+    return new Promise<ServerTaskRelationsWithTasksType>((resolve, reject) => {
+      socket.emit('task:join', { relation_id: relationId }, (response) => {
+        console.log('task:join', response);
+        response.success
+          ? resolve(response.data)
+          : reject(new Error(response.error));
+      });
+    });
   };
 
-  const emitCreateTask = (task: Omit<TaskType, 'id'>) => {
-    if (!socket) {
-      console.log('Socket is not initialized');
-      return;
-    }
-    socket.emit('task:create', task);
-  };
-  const emitEditTask = (task: TaskType) => {
-    if (!socket) {
-      console.log('Socket is not initialized');
-      return;
-    }
-    socket.emit('task:edit', task);
+  const emitCreateTask = async (task: TaskType) => {
+    return new Promise<TaskType | TaskType[]>((resolve, reject) => {
+      socket.emit('task:create', { new_task: task }, (response) => {
+        console.log('task:created', response);
+        response.success
+          ? resolve(response.data)
+          : reject(new Error(response.error));
+      });
+    });
   };
 
-  const emitRemoveTask = (task: TaskType[]) => {
-    if (!socket) {
-      console.log('Socket is not initialized');
-      return;
-    }
-    socket.emit('task:remove', task);
+  const emitEditTask = async (task: TaskType) => {
+    return new Promise<TaskType>((resolve, reject) => {
+      socket.emit('task:edit', { edited_task: task }, (response) => {
+        console.log('task:edited', response);
+        response.success
+          ? resolve(response.data)
+          : reject(new Error(response.error));
+      });
+    });
   };
-  const emitRefresh = (relation: BaseTaskRelationsType) => {
-    if (!socket) {
-      console.log('Socket is not initialized');
-      return;
-    }
-    socket.emit('task:refresh', relation);
+
+  const emitRemoveTask = async (tasks: TaskType[]) => {
+    return new Promise<TaskType[]>((resolve, reject) => {
+      socket.emit('task:remove', { remove_tasks: tasks }, (response) => {
+        console.log('task:removed', response);
+        response.success
+          ? resolve(response.data)
+          : reject(new Error(response.error));
+      });
+    });
   };
+
   return {
-    loading: loading || loadingRef.current,
-    socket: socket,
-    isConnected: isConnected,
+    emitJoinTaskRoom,
     emitCreateTask,
     emitEditTask,
     emitRemoveTask,
-    emitRefresh,
-    emitJoinTaskRoom,
   };
 };
+
 export default useTaskSocket;

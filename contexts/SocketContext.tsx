@@ -1,19 +1,17 @@
 import React from 'react';
-import { Socket } from 'socket.io-client';
 import { socketSingleton } from '@/service/Socket';
 import useAuth from '@/hooks/useAuth';
-import useAppStateChange from '@/hooks/useAppStateChange';
+import { SocketClientType } from '@groceries/shared_types';
+import { Socket } from 'socket.io-client';
 
 type SocketContextProps = {
-  socket: Socket | null;
-  loading: boolean;
-  waitConnection: () => Promise<void>;
+  socket: SocketClientType;
+  connected: boolean;
 };
 
 const socketContextValues = {
-  socket: null as Socket | null,
-  loading: false,
-  waitConnection: () => new Promise<void>((resolve) => resolve()),
+  socket: socketSingleton(),
+  connected: false,
 };
 
 const SocketContext =
@@ -28,101 +26,65 @@ export const useSocketContext = () => {
 };
 
 export const SocketProvider = ({ children }: React.PropsWithChildren) => {
-  const [socket, setSocket] = React.useState<Socket | null>(null);
-  const [loading, setLoading] = React.useState<boolean>(false);
-  const active = useAppStateChange();
+  const [socket] = React.useState(() => socketSingleton()); 
+  const [connected, setConnected] = React.useState(false);
   const { user, logout } = useAuth();
 
-  const waitConnection = () => (
-    new Promise<void>((resolve) => {
-      if (!loading) {
-        resolve();
-      } else {
-        let count = 0
-        const interval = setInterval(() => {
-          if (!loading|| count > 5) {
-            clearInterval(interval);
-            resolve();
-          }
-          console.log(`Waiting for socket connection... ${count}s`);
-          count++;
-        }, 1000);
-        
-      }
-    }
-  ))
-  React.useEffect(()=> {
-    //reconnectiong logic
-    if(active && socket &&  socket.disconnected){
-      socket.connect();
-    }
-  }, [active, socket]);
+
 
   React.useEffect(() => {
+    socket.auth = {token: user?.token};
+    if(!socket.connected){
+      socket.connect()
+    }
+
     
-    console.log('Initializing socket to context');
-    setLoading(true);
-    const ws = socketSingleton();
-    setSocket(ws);
-    ws.auth = {token: user?.token};
-    ws.connect();
-    const errorHandler = (err: Error) => {
-      console.log('*WEBSOCKET ERROR HEREREEEEEEEE*', err);
+     return () => {
+      socket.disconnect();
+     }
+  }, [user?.token, socket])
+
+  
+
+  React.useEffect(() => {
+    const connectHandler = () => {
+      console.log('Socket connected');
+      setConnected(true);
+    };
+    const disconnectHandler = (reason: Socket.DisconnectReason) => {
+      console.log('Socket disconnected emitter ', reason);
+      setConnected(false);
+    }
+   
+  
+    
+    const connectErrorHandler = async (err:Error) => {
+      console.error('Connection error:', err.stack, err.message);
       if (err.message === 'Invalid token' || err.message === 'jwt expired') {
         console.error('Invalid token, logging out');
         logout();
       }
     }
-    const connectHandler = () => {
-      console.log('Socket connected');
-      setLoading(false);
-    };
-    const disconnectHandler = (reason: Socket.DisconnectReason) => {
-      console.log('Socket disconnected emitter ', reason);
-      setLoading(false);
-    }
-   
-    const reconnectFailedHadler = () => {
-      console.error('Reconnection failed after maximum attempts');
-      // Notify the user or retry manually
-    }
-    
-    const connectErrorHandler = async (err:Error) => {
-      console.error('Connection error:', err.stack, err.message);
-      setLoading(false);
-    }
-    ws.on('connect', connectHandler);
-    ws.on('disconnect', disconnectHandler);
-    ws.on('reconnect_failed',reconnectFailedHadler);
-    ws.on('auth:error', errorHandler );
-    ws.on('connect_error', connectErrorHandler);
-    ws.on('token:error',errorHandler);
+    socket.on('connect', connectHandler);
+    socket.on('disconnect', disconnectHandler);
+    socket.on('connect_error', connectErrorHandler);
     return () => {
-      ws.off('connect', connectHandler);
-      ws.off('disconnect', disconnectHandler);
-      ws.off('reconnect_failed', reconnectFailedHadler);
-      ws.off('error', errorHandler);
-      ws.off('connect_error', connectErrorHandler);
-      console.log('Socket event listeners cleaned up');
-      ws.disconnect();
-      console.log('Socket disconnected and cleaned up');
-      ws.off('token:error', errorHandler);
-
-      setLoading(false);
+      socket.off('connect', connectHandler);
+      socket.off('disconnect', disconnectHandler);
+      socket.off('connect_error', connectErrorHandler);
     };
     
-  }, [user?.token]);
+  }, [logout, socket]);
 
 
-  
-
+  const contextValue = React.useMemo(() => ({
+      socket,
+      connected,
+  }),[socket,connected])
   return (
     <SocketContext.Provider
-      value={{
-        socket,
-        loading,
-        waitConnection
-      }}>
+      value={contextValue}
+      >
       {children}
     </SocketContext.Provider>
   );

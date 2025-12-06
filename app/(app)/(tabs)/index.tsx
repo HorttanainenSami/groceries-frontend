@@ -5,8 +5,6 @@ import IconButton from '@/components/IconButton';
 import { getTasksById } from '@/service/LocalDatabase';
 import {
   SearchUserType,
-  BaseTaskRelationsType,
-  ServerTaskRelationType,
 } from '@/types';
 import ShareRelationsWithUser from '@/components/ShareRelationsWithUsersModal';
 import CheckboxWithText from '@/components/CheckboxWithText';
@@ -15,6 +13,7 @@ import useAlert from '@/hooks/useAlert';
 import useRelationStorage from '@/hooks/useRelationStorage';
 import RelationCreateModal from '@/components/RelationCreateModal';
 import React from 'react';
+import { LocalRelationType, RelationType, ServerRelationType } from '@groceries/shared_types';
 
 function formatDate(date: string) {
   const d = new Date(date);
@@ -28,7 +27,7 @@ function formatDate(date: string) {
 export default function Index() {
   const navigation = useNavigation();
   const [selectedRelations, toggleSelected] =
-    useToggleList<BaseTaskRelationsType>();
+    useToggleList<RelationType>();
   const [friendsModalVisible, setFriendsModalVisible] = useState(false);
   const [relationModalVisible, setRelationModalVisible] = useState(false);
   const { addAlert } = useAlert();
@@ -79,7 +78,7 @@ export default function Index() {
   };
 
   const removeRelationsFromDevices = async (
-    relations: BaseTaskRelationsType[]
+    relations: RelationType[]
   ) => {
     try {
       const removed = await removeRelations(relations);
@@ -159,32 +158,32 @@ export default function Index() {
         renderItem={({
           item,
         }: {
-          item: BaseTaskRelationsType | ServerTaskRelationType;
+          item: RelationType;
         }) => {
           if (showSelectionMode) {
             return (
               <SelectModeTaskListItem
-                {...(item as BaseTaskRelationsType)}
+                {...(item as RelationType)}
                 isChecked={!!selectedRelations.find((i) => i.id === item.id)}
-                toggle={() => toggleSelected(item as BaseTaskRelationsType)}
+                toggle={() => toggleSelected(item as RelationType)}
               />
             );
           }
-          if ((item as ServerTaskRelationType).relation_location === 'Server')
+          if (item.relation_location === 'Server')
             return (
               <ServerTaskListItem
                 key={item.id}
-                {...(item as ServerTaskRelationType)}
+                {...item}
                 onLongPress={() =>
-                  toggleSelected(item as BaseTaskRelationsType)
+                  toggleSelected(item)
                 }
               />
             );
           return (
             <TaskListItem
               key={item.id}
-              {...(item as BaseTaskRelationsType)}
-              onLongPress={() => toggleSelected(item as BaseTaskRelationsType)}
+              {...item}
+              onLongPress={() => toggleSelected(item)}
             />
           );
         }}
@@ -208,7 +207,7 @@ export default function Index() {
     </View>
   );
 }
-type TaskListItemProps = BaseTaskRelationsType & {
+type TaskListItemProps = LocalRelationType & {
   onLongPress: (id: string) => void;
 };
 const TaskListItem = ({ onLongPress, ...task }: TaskListItemProps) => {
@@ -225,7 +224,7 @@ const TaskListItem = ({ onLongPress, ...task }: TaskListItemProps) => {
     </Pressable>
   );
 };
-type ServerTaskListItemProps = ServerTaskRelationType & {
+type ServerTaskListItemProps = ServerRelationType & {
   onLongPress: (id: string) => void;
 };
 
@@ -233,7 +232,7 @@ const ServerTaskListItem = ({
   onLongPress,
   ...task
 }: ServerTaskListItemProps) => {
-  const { id, name, created_at, shared_with_name, my_permission } = task;
+  const { id, name, created_at, shared_with, permission } = task;
   const route = useRouter();
 
   return (
@@ -243,10 +242,10 @@ const ServerTaskListItem = ({
       <View style={styles.serverTaskContent}>
         <View style={{ flex: 1 }}>
           <Text style={styles.serverTaskName}>{name}</Text>
-          {shared_with_name && (
+          {shared_with && (
             <Text style={styles.sharedWith}>
               Jaettu:{' '}
-              <Text style={styles.sharedWithNames}>{shared_with_name}</Text>
+              <Text style={styles.sharedWithNames}>{shared_with.map(i => i.name)}</Text>
             </Text>
           )}
         </View>
@@ -254,10 +253,10 @@ const ServerTaskListItem = ({
           <View
             style={[
               styles.permissionBadge,
-              my_permission === 'edit' ? styles.editBadge : styles.viewBadge,
+              permission === 'edit' ? styles.editBadge : styles.viewBadge,
             ]}>
             <Text style={styles.permissionBadgeText}>
-              {PermissionLabels[my_permission] || 'Tuntematon'}
+              {PermissionLabels[permission] || 'Tuntematon'}
             </Text>
           </View>
           <Text style={styles.serverTaskDate}>{formatDate(created_at)}</Text>
@@ -271,7 +270,7 @@ export const PermissionLabels: Record<string, string> = {
   owner: 'Omistaja',
   view: 'Katsoja',
 };
-type SelectModeTaskListItemProps = BaseTaskRelationsType & {
+type SelectModeTaskListItemProps = RelationType & {
   isChecked: boolean;
   toggle: () => void;
 };

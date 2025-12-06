@@ -4,32 +4,49 @@ import useTaskSocket from '@/hooks/useTaskSocket';
 import React from 'react';
 import { BaseTaskRelationsType, TaskType } from '@/types';
 import { useTaskContext } from '@/contexts/taskContext';
-import { useSocketContext } from '@/contexts/SocketContext';
 
 const useTaskStorage = () => {
   const { relation, setTasks, tasks, setRelation } = useTaskContext();
   const loading = React.useRef<boolean>(false);
   const { user } = useAuth();
   const localTasks = useLocalTasks();
-  const { waitConnection } = useSocketContext();
+
+  const handleTaskCreatedBroadcast = React.useCallback((task: TaskType) => {
+    setTasks((prev) => [...prev, task]);
+  }, [setTasks]);
+
+  const handleTaskEditedBroadcast = React.useCallback((task: TaskType) => {
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? task : t)));
+  }, [setTasks]);
+
+  const handleTaskRemovedBroadcast = React.useCallback((tasks: TaskType[]) => {
+    const removedIds = tasks.map((t) => t.id);
+    setTasks((prev) => prev.filter((t) => !removedIds.includes(t.id)));
+  }, [setTasks]);
+
   const {
-    loading: socketLoading,
-    socket,
-    isConnected,
     emitCreateTask,
     emitEditTask,
     emitRemoveTask,
     emitJoinTaskRoom,
-  } = useTaskSocket(setTasks);
+  } = useTaskSocket({
+    onTaskCreated: handleTaskCreatedBroadcast,
+    onTaskEdited: handleTaskEditedBroadcast,
+    onTaskRemoved: handleTaskRemovedBroadcast,
+  });
 
   const isLocal = (relation: BaseTaskRelationsType) =>
     relation.relation_location === 'Local';
 
   const refresh = async (relation: BaseTaskRelationsType) => {
     setRelation(relation);
-    loading && waitConnection();
     if (!isLocal(relation)) {
-      emitJoinTaskRoom(relation);
+      try {
+        const response = await emitJoinTaskRoom(relation.id);
+        setTasks(response.tasks);
+      } catch (error) {
+        console.error('Failed to join task room:', error);
+      }
       return;
     }
     const refreshedTasks = await localTasks.refresh(relation.id);
@@ -40,19 +57,24 @@ const useTaskStorage = () => {
     if(tasks.length !== reorderedTasks.length){
       return;
     }
-    if(isConnected()){
+    if (relation === null) return;
+    if(!isLocal(relation)){
       //emitReorderTasks(reorderedTasks);
       return;
     }
     await localTasks.reorderTasksInDb(reorderedTasks);
-
-
   }
   const editTask = async (newTasks: TaskType) => {
     if (relation === null) return;
-    socketLoading && waitConnection();
-    if (isConnected()) {
-      emitEditTask(newTasks);
+    if (!isLocal(relation)) {
+      try {
+        const editedTask = await emitEditTask(newTasks);
+        setTasks((prev) =>
+          prev.map((task) => (task.id === newTasks.id ? editedTask : task))
+        );
+      } catch (error) {
+        console.error('Failed to edit task:', error);
+      }
       return;
     }
     const editedTask = await localTasks.editTaskToDb(newTasks);
@@ -62,11 +84,22 @@ const useTaskStorage = () => {
   };
   const storeTask = async (newTasks: Omit<TaskType, 'id'>) => {
     if (relation === null) return;
-    const initNewTask = { ...newTasks, relation_id: relation.id };
-    socketLoading && waitConnection();
+    const initNewTask = { ...newTasks, task_relations_id: relation.id };
 
-    if (isConnected()) {
-      emitCreateTask(initNewTask);
+    if (!isLocal(relation)) {
+      console.log(initNewTask)
+      try {
+        const response = await emitCreateTask(initNewTask as TaskType);
+        if (Array.isArray(response)) {
+          setTasks((prev) => [...prev, ...response]);
+          return response[0];
+        } else {
+          setTasks((prev) => [...prev, response]);
+          return response;
+        }
+      } catch (error) {
+        console.error('Failed to create task:', error);
+      }
       return;
     }
     const storedTask = await localTasks.addTaskToDb(initNewTask);
@@ -86,10 +119,14 @@ const useTaskStorage = () => {
           completed_at: new Date().toISOString(),
           completed_by: user.id,
         };
-    socketLoading && waitConnection();
 
-    if (isConnected()) {
-      emitEditTask(initToggledTask);
+    if (!isLocal(relation)) {
+      try {
+        const toggledTask = await emitEditTask(initToggledTask);
+        setTasks((prev) => prev.map((t) => (t.id === task.id ? toggledTask : t)));
+      } catch (error) {
+        console.error('Failed to toggle task:', error);
+      }
       return;
     }
     const toggledTask = await localTasks.toggleTaskInDb(initToggledTask);
@@ -98,10 +135,15 @@ const useTaskStorage = () => {
   const removeTask = async (task: TaskType | TaskType[]) => {
     if (!relation) return;
     const tasksArray = Array.isArray(task) ? task : [task];
-    socketLoading && waitConnection();
 
-    if (isConnected()) {
-      emitRemoveTask(tasksArray);
+    if (!isLocal(relation)) {
+      try {
+        const removedTasks = await emitRemoveTask(tasksArray);
+        const responseIds = removedTasks.map((task) => task.id);
+        setTasks((prev) => prev.filter((task) => !responseIds.includes(task.id)));
+      } catch (error) {
+        console.error('Failed to remove task:', error);
+      }
       return;
     }
     const response = await localTasks.removeTaskFromDb(tasksArray);
