@@ -1,9 +1,6 @@
 import { useEffect } from 'react';
 import { useSocketContext } from '@/contexts/SocketContext';
-import {
-  ServerTaskRelationsWithTasksType,
-  TaskType,
-} from '@/types';
+import { ServerTaskRelationsWithTasksType, TaskType } from '@/types';
 
 type UseTaskSocketProps = {
   onTaskCreated?: (task: TaskType) => void;
@@ -47,9 +44,11 @@ const useTaskSocket = (props?: UseTaskSocketProps) => {
     return new Promise<ServerTaskRelationsWithTasksType>((resolve, reject) => {
       socket.emit('task:join', { relation_id: relationId }, (response) => {
         console.log('task:join', response);
-        response.success
-          ? resolve(response.data)
-          : reject(new Error(response.error));
+        if (response.success) {
+          resolve(response.data);
+        } else {
+          reject(new Error(response.error));
+        }
       });
     });
   };
@@ -58,9 +57,11 @@ const useTaskSocket = (props?: UseTaskSocketProps) => {
     return new Promise<TaskType | TaskType[]>((resolve, reject) => {
       socket.emit('task:create', { new_task: task }, (response) => {
         console.log('task:created', response);
-        response.success
-          ? resolve(response.data)
-          : reject(new Error(response.error));
+        if (response.success) {
+          resolve(response.data);
+        } else {
+          reject(new Error(response.error));
+        }
       });
     });
   };
@@ -69,9 +70,11 @@ const useTaskSocket = (props?: UseTaskSocketProps) => {
     return new Promise<TaskType>((resolve, reject) => {
       socket.emit('task:edit', { edited_task: task }, (response) => {
         console.log('task:edited', response);
-        response.success
-          ? resolve(response.data)
-          : reject(new Error(response.error));
+        if (response.success) {
+          resolve(response.data);
+        } else {
+          reject(new Error(response.error));
+        }
       });
     });
   };
@@ -80,9 +83,11 @@ const useTaskSocket = (props?: UseTaskSocketProps) => {
     return new Promise<TaskType[]>((resolve, reject) => {
       socket.emit('task:remove', { remove_tasks: tasks }, (response) => {
         console.log('task:removed', response);
-        response.success
-          ? resolve(response.data)
-          : reject(new Error(response.error));
+        if (response.success) {
+          resolve(response.data);
+        } else {
+          reject(new Error(response.error));
+        }
       });
     });
   };

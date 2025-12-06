@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 export default function useToggleList<T extends { id: string }>(): [
   T[],
-  (item: T | undefined) => void
+  (item: T | undefined) => void,
 ] {
   const [selectedItems, setSelectedItems] = useState<T[]>([]);
 

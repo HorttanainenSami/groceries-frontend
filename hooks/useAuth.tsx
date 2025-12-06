@@ -11,8 +11,7 @@ import { useAuthContext } from '@/contexts/AuthenticationContext';
 const useAuth = () => {
   const { user, setUser } = useAuthContext();
   const { addAlert } = useAlert();
-  const { getUserFromStorage, storeUserInStorage, removeUserFromStorage } =
-    useStorage();
+  const { getUserFromStorage, storeUserInStorage, removeUserFromStorage } = useStorage();
 
   useLayoutEffect(() => {
     const tokenBearer = getAxiosInstance().interceptors.request.use(

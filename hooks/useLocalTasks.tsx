@@ -5,7 +5,7 @@ import {
   toggleTask,
   editTask,
   removeTask,
-  reorderTasks
+  reorderTasks,
 } from '@/service/LocalDatabase';
 const useLocalTasks = () => {
   const refresh = async (id: string) => {
@@ -13,9 +13,7 @@ const useLocalTasks = () => {
     return result;
   };
 
-  const addTaskToDb = async (
-    newTask: Omit<TaskType, 'id'>
-  ): Promise<TaskType> => {
+  const addTaskToDb = async (newTask: Omit<TaskType, 'id'>): Promise<TaskType> => {
     console.log('newTask', newTask);
     const response = await createTasks(newTask);
     if (!response) throw new Error('Failed to create task');
@@ -28,9 +26,7 @@ const useLocalTasks = () => {
     return response;
   };
 
-  const removeTaskFromDb = async (
-    removeItems: TaskType[]
-  ): Promise<TaskType[]> => {
+  const removeTaskFromDb = async (removeItems: TaskType[]): Promise<TaskType[]> => {
     const promises = removeItems.map(({ id }) => removeTask(id));
     const response = await Promise.all(promises);
     return response.filter((t) => t !== null) as TaskType[];
@@ -44,16 +40,16 @@ const useLocalTasks = () => {
     });
   };
 
-  const reorderTasksInDb = async (reorderedTasks: TaskType[]): Promise<TaskType[]> => await reorderTasks(reorderedTasks);
-  
- 
+  const reorderTasksInDb = async (reorderedTasks: TaskType[]): Promise<TaskType[]> =>
+    await reorderTasks(reorderedTasks);
+
   return {
     refresh,
     removeTaskFromDb,
     addTaskToDb,
     editTaskToDb,
     toggleTaskInDb,
-    reorderTasksInDb
+    reorderTasksInDb,
   };
 };
 

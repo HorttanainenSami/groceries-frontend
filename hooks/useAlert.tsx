@@ -1,17 +1,13 @@
-import {
-  useAlertContext,
-  AlertType,
-  alertSchema,
-} from '@/contexts/AlertContext';
+import { useAlertContext, AlertType, alertSchema } from '@/contexts/AlertContext';
 import { useEffect, useState } from 'react';
 import { z } from 'zod';
 
-const addAlertPropsSchema = z.object({
+const _AddAlertPropsSchema = z.object({
   message: z.string(),
   type: z.enum(['error', 'warn', 'success', 'info']),
   timer: z.number().min(1000).max(10000).optional(),
 });
-export type addAlertProps = z.infer<typeof addAlertPropsSchema>;
+export type AddAlertProps = z.infer<typeof _AddAlertPropsSchema>;
 
 export interface AlertDisplayType {
   Alert: AlertType;
@@ -20,9 +16,7 @@ export interface AlertDisplayType {
 
 const useAlert = () => {
   const { alerts, setAlerts } = useAlertContext();
-  const [alertsDisplaying, setAlertsDisplaying] = useState<AlertDisplayType[]>(
-    []
-  );
+  const [alertsDisplaying, setAlertsDisplaying] = useState<AlertDisplayType[]>([]);
   const maxAlerts = 2;
 
   useEffect(() => {
@@ -38,21 +32,15 @@ const useAlert = () => {
     const alertTimer = setTimeout(() => {
       cleanSelf(initAlert.id);
     }, initAlert.timer);
-    setAlertsDisplaying((prevAlerts) => [
-      ...prevAlerts,
-      { Alert: initAlert, timer: alertTimer },
-    ]);
+    setAlertsDisplaying((prevAlerts) => [...prevAlerts, { Alert: initAlert, timer: alertTimer }]);
   };
   const cleanSelf = (id: string) => {
     const alertObject = alertsDisplaying.find((a) => a.Alert.id === id);
     clearTimeout(alertObject?.timer);
-    setAlertsDisplaying((prevAlerts) =>
-      prevAlerts.filter((a) => a.Alert.id !== id)
-    );
+    setAlertsDisplaying((prevAlerts) => prevAlerts.filter((a) => a.Alert.id !== id));
   };
-  const addAlert = ({ message, type, timer = 10000 }: addAlertProps) => {
-    const id =
-      Date.now().toString() + Math.random().toString(36).substring(2, 15);
+  const addAlert = ({ message, type, timer = 10000 }: AddAlertProps) => {
+    const id = Date.now().toString() + Math.random().toString(36).substring(2, 15);
     const newAlert = { id, message, type, timer };
 
     const parsedAlert = alertSchema.parse(newAlert);
@@ -82,7 +70,7 @@ const useAlert = () => {
     cleanSelf,
     getFromQueue,
     displayAlert,
-  }
+  };
 };
 
 export default useAlert;

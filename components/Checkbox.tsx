@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { StyleSheet, View, Text, Pressable } from 'react-native';
 type CheckboxtWithText = {
   isChecked: boolean;
@@ -7,9 +7,7 @@ type CheckboxtWithText = {
 const Checkbox = ({ isChecked, toggle }: CheckboxtWithText) => {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', padding: 20 }}>
-      <Pressable
-        onPress={toggle}
-        style={[styles.checkbox, isChecked && styles.checkboxActive]}>
+      <Pressable onPress={toggle} style={[styles.checkbox, isChecked && styles.checkboxActive]}>
         {isChecked && <Text style={styles.checkmark}>✓</Text>}
       </Pressable>
     </View>

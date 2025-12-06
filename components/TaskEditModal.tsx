@@ -11,12 +11,7 @@ type TaskEditModalProps = {
   onDelete: (a: TaskType) => void;
   task: TaskType | null;
 };
-const TaskEditModal = ({
-  onClose,
-  onAccept,
-  task,
-  onDelete,
-}: TaskEditModalProps) => {
+const TaskEditModal = ({ onClose, onAccept, task, onDelete }: TaskEditModalProps) => {
   const [text, setText] = useState('');
   const inputRef = React.useRef<TextInput | null>(null);
 
@@ -50,11 +45,7 @@ const TaskEditModal = ({
   };
 
   return (
-    <Modal
-      visible={!!task}
-      onClose={handleClose}
-      onAccept={handleAccept}
-      title="Muokkaa tehtävää">
+    <Modal visible={!!task} onClose={handleClose} onAccept={handleAccept} title="Muokkaa tehtävää">
       <View style={styles.container}>
         <TextInputComponent
           ref={inputRef}
@@ -63,11 +54,7 @@ const TaskEditModal = ({
           value={text}
           onChangeText={setText}
         />
-        <IconButton
-          style={styles.deleteButton}
-          onPress={handleDelete}
-          icon="trash"
-        />
+        <IconButton style={styles.deleteButton} onPress={handleDelete} icon="trash" />
       </View>
     </Modal>
   );

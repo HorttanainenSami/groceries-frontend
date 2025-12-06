@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-  Modal,
-  View,
-  Text,
-  StyleSheet,
-} from 'react-native';
+import { Modal, View, Text, StyleSheet } from 'react-native';
 import IconButton from './IconButton';
 
 export type ModalProps = React.PropsWithChildren & {
@@ -14,13 +9,7 @@ export type ModalProps = React.PropsWithChildren & {
   title: string;
 };
 
-const TaskCreateModal = ({
-  children,
-  title,
-  visible,
-  onClose,
-  onAccept,
-}: ModalProps) => {
+const TaskCreateModal = ({ children, title, visible, onClose, onAccept }: ModalProps) => {
   const handleAccept = () => {
     onAccept();
     handleClose();
@@ -30,11 +19,7 @@ const TaskCreateModal = ({
   };
 
   return (
-    <Modal
-      transparent={true}
-      visible={visible}
-      animationType="fade"
-      onRequestClose={onClose}>
+    <Modal transparent={true} visible={visible} animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
         <View style={styles.modalContainer}>
           <View style={styles.header}>
@@ -77,7 +62,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 15,
   },
-
 });
 
 export default TaskCreateModal;

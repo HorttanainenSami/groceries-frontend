@@ -1,10 +1,4 @@
-import {
-  StyleSheet,
-  Pressable,
-  FlatList,
-  Text,
-  View,
-} from 'react-native';
+import { StyleSheet, Pressable, FlatList, Text, View } from 'react-native';
 import Checkbox from '@/components/Checkbox';
 import IconButton from '@/components/IconButton';
 import { useEffect, useState } from 'react';
@@ -38,9 +32,7 @@ export default function SelectTasks() {
 
   const toggleTask = (id: string) => {
     setSelectedTasks((prev) =>
-      prev.map((task) =>
-        task.id === id ? { ...task, selected: !task.selected } : task
-      )
+      prev.map((task) => (task.id === id ? { ...task, selected: !task.selected } : task))
     );
   };
 
@@ -59,17 +51,10 @@ export default function SelectTasks() {
         renderItem={({ item }) => (
           <Pressable onPress={() => toggleTask(item.id)}>
             <View style={styles.itemContainer}>
-              <Text
-                style={[
-                  styles.text,
-                  item.selected && styles.textCheckboxActive,
-                ]}>
+              <Text style={[styles.text, item.selected && styles.textCheckboxActive]}>
                 {item.task}
               </Text>
-              <Checkbox
-                isChecked={item.selected}
-                toggle={() => toggleTask(item.id)}
-              />
+              <Checkbox isChecked={item.selected} toggle={() => toggleTask(item.id)} />
             </View>
           </Pressable>
         )}

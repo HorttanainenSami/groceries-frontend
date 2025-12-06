@@ -3,9 +3,7 @@ import React, { createContext } from 'react';
 
 type RelationContextType = {
   relations: (LocalRelationType | ServerRelationType)[];
-  setRelations: React.Dispatch<
-    React.SetStateAction<(LocalRelationType | ServerRelationType)[]>
-  >;
+  setRelations: React.Dispatch<React.SetStateAction<(LocalRelationType | ServerRelationType)[]>>;
 };
 
 const RelationContext = createContext<RelationContextType>({
@@ -16,9 +14,7 @@ const RelationContext = createContext<RelationContextType>({
 export const useRelationContext = () => {
   const context = React.useContext(RelationContext);
   if (!context) {
-    throw new Error(
-      'useRelationContext must be used within a RelationProvider'
-    );
+    throw new Error('useRelationContext must be used within a RelationProvider');
   }
   return context;
 };
@@ -30,7 +26,8 @@ export const RelationProvider = ({ children }: React.PropsWithChildren) => {
       value={{
         relations,
         setRelations,
-      }}>
+      }}
+    >
       {children}
     </RelationContext.Provider>
   );

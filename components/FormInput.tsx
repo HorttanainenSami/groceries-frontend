@@ -1,13 +1,8 @@
-import {
-  UseControllerProps,
-  useController,
-  FieldValues,
-} from 'react-hook-form';
+import { UseControllerProps, useController, FieldValues } from 'react-hook-form';
 import { Text, View, StyleSheet, TextInputProps } from 'react-native';
 import TextInputComponent from './TextInputComponent';
 
-export type RHFTextInputProps<TFieldValues extends FieldValues> =
-  UseControllerProps<TFieldValues>;
+export type RHFTextInputProps<TFieldValues extends FieldValues> = UseControllerProps<TFieldValues>;
 export type FormInputProps<TFieldValues extends FieldValues> = TextInputProps &
   RHFTextInputProps<TFieldValues> & {
     label?: string;

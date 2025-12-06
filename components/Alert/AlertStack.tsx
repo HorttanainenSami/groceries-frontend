@@ -12,12 +12,12 @@ const AlertStack = () => {
   }, []);
   return (
     <View style={styles.alertContainer} pointerEvents="box-none">
-      {alerts.map((AlertObject) => (
-      <AnimatedAlert
-        key={AlertObject.Alert.id}
-        {...AlertObject}
-        onClose={() => removeAlert(AlertObject.Alert.id)}
-      />
+      {alerts.map((alertObject) => (
+        <AnimatedAlert
+          key={alertObject.Alert.id}
+          {...alertObject}
+          onClose={() => removeAlert(alertObject.Alert.id)}
+        />
       ))}
     </View>
   );
@@ -47,10 +47,9 @@ const AnimatedAlert = (props: React.ComponentProps<typeof Alert>) => {
     }).start();
   }, []);
 
-
   return (
     <Animated.View style={{ opacity }}>
-      <Alert {...props}/>
+      <Alert {...props} />
     </Animated.View>
   );
 };

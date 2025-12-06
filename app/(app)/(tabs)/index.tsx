@@ -3,9 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useNavigation } from 'expo-router';
 import IconButton from '@/components/IconButton';
 import { getTasksById } from '@/service/LocalDatabase';
-import {
-  SearchUserType,
-} from '@/types';
+import { SearchUserType } from '@/types';
 import ShareRelationsWithUser from '@/components/ShareRelationsWithUsersModal';
 import CheckboxWithText from '@/components/CheckboxWithText';
 import useToggleList from '@/hooks/useToggleList';
@@ -26,35 +24,22 @@ function formatDate(date: string) {
 
 export default function Index() {
   const navigation = useNavigation();
-  const [selectedRelations, toggleSelected] =
-    useToggleList<RelationType>();
+  const [selectedRelations, toggleSelected] = useToggleList<RelationType>();
   const [friendsModalVisible, setFriendsModalVisible] = useState(false);
   const [relationModalVisible, setRelationModalVisible] = useState(false);
   const { addAlert } = useAlert();
-  const {
-    refresh,
-    relations,
-    loading,
-    shareRelation,
-    addRelationLocal,
-    removeRelations,
-  } = useRelationStorage();
+  const { refresh, relations, loading, shareRelation, addRelationLocal, removeRelations } =
+    useRelationStorage();
 
   useEffect(() => {
     if (selectedRelations.length !== 0) {
       navigation.setOptions({
         title: 'Valitse toiminto',
         headerLeft: () => (
-          <IconButton
-            onPress={() => toggleSelected(undefined)}
-            icon="arrow-back"
-          />
+          <IconButton onPress={() => toggleSelected(undefined)} icon="arrow-back" />
         ),
         headerRight: () => (
-          <IconButton
-            onPress={() => removeRelationsFromDevices(selectedRelations)}
-            icon="trash"
-          />
+          <IconButton onPress={() => removeRelationsFromDevices(selectedRelations)} icon="trash" />
         ),
         tabBarStyle: { display: 'none' },
       });
@@ -77,17 +62,13 @@ export default function Index() {
     setFriendsModalVisible(false);
   };
 
-  const removeRelationsFromDevices = async (
-    relations: RelationType[]
-  ) => {
+  const removeRelationsFromDevices = async (relations: RelationType[]) => {
     try {
       const removed = await removeRelations(relations);
       refresh();
-      removed.forEach(([success, id]) => {
+      removed.forEach(([success]) => {
         addAlert({
-          message: success
-            ? 'Lista poistettu onnistuneesti!'
-            : 'Listan poistossa virhe!',
+          message: success ? 'Lista poistettu onnistuneesti!' : 'Listan poistossa virhe!',
           type: success ? 'success' : 'error',
         });
       });
@@ -106,7 +87,7 @@ export default function Index() {
           tasks: await getTasksById(relation.id),
         }))
       );
-      await shareRelation({ user_shared_with:user.id, task_relations: relationsWithTasks });
+      await shareRelation({ user_shared_with: user.id, task_relations: relationsWithTasks });
       addAlert({ message: 'Jaettu onnistuneesti!', type: 'success' });
     } catch (e) {
       console.log('error occurred', e);
@@ -130,17 +111,13 @@ export default function Index() {
       const bDate = new Date(b.created_at);
       return bDate.getTime() - aDate.getTime();
     });
-  }, [relations])
+  }, [relations]);
   return (
     <View style={styles.container}>
       {showSelectionMode && (
         <View style={styles.selectionBanner}>
-          <Text style={styles.selectionText}>
-            {selectedRelations.length} valittu
-          </Text>
-          <Pressable
-            style={styles.shareButton}
-            onPress={() => setFriendsModalVisible(true)}>
+          <Text style={styles.selectionText}>{selectedRelations.length} valittu</Text>
+          <Pressable style={styles.shareButton} onPress={() => setFriendsModalVisible(true)}>
             <Text style={styles.shareButtonText}>Kutsu kaveri</Text>
           </Pressable>
         </View>
@@ -155,11 +132,7 @@ export default function Index() {
             <Text style={styles.emptyText}>Ei listoja vielä</Text>
           </View>
         }
-        renderItem={({
-          item,
-        }: {
-          item: RelationType;
-        }) => {
+        renderItem={({ item }: { item: RelationType }) => {
           if (showSelectionMode) {
             return (
               <SelectModeTaskListItem
@@ -174,18 +147,10 @@ export default function Index() {
               <ServerTaskListItem
                 key={item.id}
                 {...item}
-                onLongPress={() =>
-                  toggleSelected(item)
-                }
+                onLongPress={() => toggleSelected(item)}
               />
             );
-          return (
-            <TaskListItem
-              key={item.id}
-              {...item}
-              onLongPress={() => toggleSelected(item)}
-            />
-          );
+          return <TaskListItem key={item.id} {...item} onLongPress={() => toggleSelected(item)} />;
         }}
       />
       <Pressable style={styles.fab} onPress={openRelationCreateModal}>
@@ -216,7 +181,8 @@ const TaskListItem = ({ onLongPress, ...task }: TaskListItemProps) => {
   return (
     <Pressable
       onPress={() => route.push(`/tasksRelations/${id}`)}
-      onLongPress={() => onLongPress(id)}>
+      onLongPress={() => onLongPress(id)}
+    >
       <View style={styles.taskListItem}>
         <Text style={styles.taskName}>{name}</Text>
         <Text style={styles.taskDate}>{formatDate(created_at)}</Text>
@@ -228,24 +194,21 @@ type ServerTaskListItemProps = ServerRelationType & {
   onLongPress: (id: string) => void;
 };
 
-const ServerTaskListItem = ({
-  onLongPress,
-  ...task
-}: ServerTaskListItemProps) => {
+const ServerTaskListItem = ({ onLongPress, ...task }: ServerTaskListItemProps) => {
   const { id, name, created_at, shared_with, permission } = task;
   const route = useRouter();
 
   return (
     <Pressable
       onPress={() => route.push(`/tasksRelations/${id}`)}
-      onLongPress={() => onLongPress(id)}>
+      onLongPress={() => onLongPress(id)}
+    >
       <View style={styles.serverTaskContent}>
         <View style={{ flex: 1 }}>
           <Text style={styles.serverTaskName}>{name}</Text>
           {shared_with && (
             <Text style={styles.sharedWith}>
-              Jaettu:{' '}
-              <Text style={styles.sharedWithNames}>{shared_with.map(i => i.name)}</Text>
+              Jaettu: <Text style={styles.sharedWithNames}>{shared_with.map((i) => i.name)}</Text>
             </Text>
           )}
         </View>
@@ -254,7 +217,8 @@ const ServerTaskListItem = ({
             style={[
               styles.permissionBadge,
               permission === 'edit' ? styles.editBadge : styles.viewBadge,
-            ]}>
+            ]}
+          >
             <Text style={styles.permissionBadgeText}>
               {PermissionLabels[permission] || 'Tuntematon'}
             </Text>
@@ -274,11 +238,7 @@ type SelectModeTaskListItemProps = RelationType & {
   isChecked: boolean;
   toggle: () => void;
 };
-const SelectModeTaskListItem = ({
-  isChecked,
-  toggle,
-  ...task
-}: SelectModeTaskListItemProps) => {
+const SelectModeTaskListItem = ({ isChecked, toggle, ...task }: SelectModeTaskListItemProps) => {
   const { name, created_at } = task;
   return (
     <View style={styles.taskListItem}>

@@ -22,7 +22,7 @@ const ShareRelationsWithUsersModal = ({
   const [users, setUsers] = useState<SearchUserType[]>([]);
   const [selectedUser, setSelectedUser] = useState<SearchUserType>();
   const { user } = useAuth();
-  const {addAlert} = useAlert();
+  const { addAlert } = useAlert();
 
   const [query, setQuery] = useState('');
   const [tab, setTab] = useState<'all' | 'friends'>('friends');
@@ -52,27 +52,24 @@ const ShareRelationsWithUsersModal = ({
       visible={visible}
       onClose={onClose}
       onAccept={handleAccept}
-      title="Kutsu käyttäjä listaan">
+      title="Kutsu käyttäjä listaan"
+    >
       <View style={styles.modalContainer}>
         <View style={styles.tabContainer}>
           {['friends', 'all'].map((key) => (
             <Pressable
               key={key}
               onPress={() => setTab(key as any)}
-              style={[styles.tab, tab === key && styles.activeTab]}>
-              <Text
-                style={[styles.tabText, tab === key && styles.activeTabText]}>
+              style={[styles.tab, tab === key && styles.activeTab]}
+            >
+              <Text style={[styles.tabText, tab === key && styles.activeTabText]}>
                 {key === 'friends' ? 'Kaverit' : 'Kaikki'}
               </Text>
             </Pressable>
           ))}
         </View>
 
-        <TextInputComponent
-          placeholder="Hae käyttäjiä..."
-          value={query}
-          onChangeText={setQuery}
-        />
+        <TextInputComponent placeholder="Hae käyttäjiä..." value={query} onChangeText={setQuery} />
 
         <FlatList
           data={users}

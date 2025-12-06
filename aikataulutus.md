@@ -1,3 +1,4 @@
+6.12.25 1h eslinterin ja prettierin conffaus ja virheilmoitusten korjaaminen 
 6.12.25 3h Socketin käyttö myös relaation haussa, serverin tyyppien käyttöönotto
 25.11.25 1h tyypitysten korjausta
 18.11.25 4h Lokaalin ruokalistan sisällön uudelleen järjestämisen mahdollisuus
@@ -22,4 +23,4 @@
 18.1.25 3h listojen pysyväis tallennus ja muokkaus
 7.1.25 3h ohjelman alustus ja tehtävä listan luominen
 7.1.25 1h tehtävän muokkaus modal näkymän toiminta, modaalin avaamisen yhteydessä näppäimistö aukeaa ja ohjelmisto fokusoituu tekstikenttään
-75h
+76h

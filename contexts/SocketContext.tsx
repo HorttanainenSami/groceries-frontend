@@ -14,8 +14,7 @@ const socketContextValues = {
   connected: false,
 };
 
-const SocketContext =
-  React.createContext<SocketContextProps>(socketContextValues);
+const SocketContext = React.createContext<SocketContextProps>(socketContextValues);
 
 export const useSocketContext = () => {
   const context = React.useContext(SocketContext);
@@ -26,25 +25,20 @@ export const useSocketContext = () => {
 };
 
 export const SocketProvider = ({ children }: React.PropsWithChildren) => {
-  const [socket] = React.useState(() => socketSingleton()); 
+  const [socket] = React.useState(() => socketSingleton());
   const [connected, setConnected] = React.useState(false);
   const { user, logout } = useAuth();
 
-
-
   React.useEffect(() => {
-    socket.auth = {token: user?.token};
-    if(!socket.connected){
-      socket.connect()
+    socket.auth = { token: user?.token };
+    if (!socket.connected) {
+      socket.connect();
     }
 
-    
-     return () => {
+    return () => {
       socket.disconnect();
-     }
-  }, [user?.token, socket])
-
-  
+    };
+  }, [user?.token, socket]);
 
   React.useEffect(() => {
     const connectHandler = () => {
@@ -54,17 +48,15 @@ export const SocketProvider = ({ children }: React.PropsWithChildren) => {
     const disconnectHandler = (reason: Socket.DisconnectReason) => {
       console.log('Socket disconnected emitter ', reason);
       setConnected(false);
-    }
-   
-  
-    
-    const connectErrorHandler = async (err:Error) => {
+    };
+
+    const connectErrorHandler = async (err: Error) => {
       console.error('Connection error:', err.stack, err.message);
       if (err.message === 'Invalid token' || err.message === 'jwt expired') {
         console.error('Invalid token, logging out');
         logout();
       }
-    }
+    };
     socket.on('connect', connectHandler);
     socket.on('disconnect', disconnectHandler);
     socket.on('connect_error', connectErrorHandler);
@@ -73,19 +65,14 @@ export const SocketProvider = ({ children }: React.PropsWithChildren) => {
       socket.off('disconnect', disconnectHandler);
       socket.off('connect_error', connectErrorHandler);
     };
-    
   }, [logout, socket]);
 
-
-  const contextValue = React.useMemo(() => ({
+  const contextValue = React.useMemo(
+    () => ({
       socket,
       connected,
-  }),[socket,connected])
-  return (
-    <SocketContext.Provider
-      value={contextValue}
-      >
-      {children}
-    </SocketContext.Provider>
+    }),
+    [socket, connected]
   );
+  return <SocketContext.Provider value={contextValue}>{children}</SocketContext.Provider>;
 };

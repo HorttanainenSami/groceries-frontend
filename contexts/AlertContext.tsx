@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { z } from 'zod';
 
 export const alertSchema = z.object({
@@ -9,7 +9,6 @@ export const alertSchema = z.object({
 });
 
 export type AlertType = z.infer<typeof alertSchema>;
-
 
 interface AlertContextType {
   alerts: AlertType[];
@@ -28,12 +27,6 @@ export const useAlertContext = (): AlertContextType => {
 
 export const AlertContextProvider = ({ children }: React.PropsWithChildren) => {
   const [alerts, setAlerts] = useState<AlertType[]>([]);
- 
 
-  return (
-    <AlertContext.Provider
-      value={{ alerts, setAlerts}}>
-      {children}
-    </AlertContext.Provider>
-  );
+  return <AlertContext.Provider value={{ alerts, setAlerts }}>{children}</AlertContext.Provider>;
 };

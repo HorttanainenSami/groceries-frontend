@@ -1,5 +1,5 @@
 import { openDatabaseAsync, SQLiteDatabase } from 'expo-sqlite';
-import { editTaskProps, LocalTaskRelationType, TaskType } from '@/types';
+import { EditTaskProps, LocalTaskRelationType, TaskType } from '@/types';
 import * as Crypto from 'expo-crypto';
 
 export const initDb = async () => {
@@ -32,7 +32,7 @@ export const initDb = async () => {
   );`);
 };
 
-export type createTasksType = {
+export type CreateTasksType = {
   name: string;
 };
 
@@ -48,7 +48,7 @@ const getDatabaseSingleton = async (): Promise<SQLiteDatabase> => {
   }
   return databaseInstance;
 };
-export const createTasksRelations = async ({ name }: createTasksType) => {
+export const createTasksRelations = async ({ name }: CreateTasksType) => {
   try {
     const db = await getDatabaseSingleton();
     const result = await db.runAsync(
@@ -89,9 +89,7 @@ export const changeRelationName = async (
 export const getTaskRelations = async (): Promise<LocalTaskRelationType[]> => {
   try {
     const db = await getDatabaseSingleton();
-    const result = await db.getAllAsync<LocalTaskRelationType>(
-      'SELECT * FROM task_relations;'
-    );
+    const result = await db.getAllAsync<LocalTaskRelationType>('SELECT * FROM task_relations;');
     return result;
   } catch (e) {
     console.log('error occurred', e);
@@ -100,23 +98,20 @@ export const getTaskRelations = async (): Promise<LocalTaskRelationType[]> => {
 };
 
 export const deleteRelationWithTasks = async (
-  relations : LocalTaskRelationType[]
+  relations: LocalTaskRelationType[]
 ): Promise<[boolean, string][]> => {
   try {
     const db = await getDatabaseSingleton();
-   await db.withTransactionAsync( async () => {
-      await Promise.all(relations.map(({id}) => (
-        db.runAsync(
-        'DELETE FROM task_relations WHERE id=?;',
-        [id])
-        )))
-      }
-    )
-    
-    return relations.map(({id}) => [true,id]);
+    await db.withTransactionAsync(async () => {
+      await Promise.all(
+        relations.map(({ id }) => db.runAsync('DELETE FROM task_relations WHERE id=?;', [id]))
+      );
+    });
+
+    return relations.map(({ id }) => [true, id]);
   } catch (e) {
     console.log('error occurred', e);
-    return relations.map(({id}) => [false,id]);
+    return relations.map(({ id }) => [false, id]);
   }
 };
 
@@ -140,9 +135,7 @@ export const createTasks = async ({
 };
 export const debug = async () => {
   const db = await getDatabaseSingleton();
-  const result2 = await db.getAllAsync<LocalTaskRelationType>(
-    'SELECT * FROM task_relations;'
-  );
+  const result2 = await db.getAllAsync<LocalTaskRelationType>('SELECT * FROM task_relations;');
 
   const tasks = await Promise.all(
     result2.map(async (relation) => {
@@ -171,10 +164,7 @@ export const getTasksById = async (id: string): Promise<TaskType[]> => {
     return [];
   }
 };
-export const editTask = async ({
-  id,
-  task,
-}: editTaskProps): Promise<TaskType | null> => {
+export const editTask = async ({ id, task }: EditTaskProps): Promise<TaskType | null> => {
   try {
     const db = await getDatabaseSingleton();
     const result = await db.getFirstAsync<TaskType>(
@@ -188,7 +178,7 @@ export const editTask = async ({
     return null;
   }
 };
-type toggleTaskProps = {
+type ToggleTaskProps = {
   id: string;
   completed_at: string | null;
   completed_by: string | null;
@@ -197,7 +187,7 @@ export const toggleTask = async ({
   id,
   completed_by,
   completed_at,
-}: toggleTaskProps): Promise<TaskType> => {
+}: ToggleTaskProps): Promise<TaskType> => {
   try {
     const db = await getDatabaseSingleton();
     const result = await db.getFirstAsync<TaskType>(
@@ -206,7 +196,7 @@ export const toggleTask = async ({
       completed_by,
       id
     );
-    if(!result) throw new Error('Task not found');
+    if (!result) throw new Error('Task not found');
     return result;
   } catch (e) {
     console.log('error occurred', e);
@@ -216,10 +206,7 @@ export const toggleTask = async ({
 export const removeTask = async (id: string): Promise<TaskType | null> => {
   try {
     const db = await getDatabaseSingleton();
-    const result = await db.getFirstAsync<TaskType>(
-      'DELETE FROM tasks WHERE id=? RETURNING *',
-      id
-    );
+    const result = await db.getFirstAsync<TaskType>('DELETE FROM tasks WHERE id=? RETURNING *', id);
     console.log(result);
     return result;
   } catch (e) {
@@ -227,23 +214,23 @@ export const removeTask = async (id: string): Promise<TaskType | null> => {
     return null;
   }
 };
-export const reorderTasks = async (tasks : TaskType[]) :Promise<TaskType[]> => {
-  if(tasks.length===0) return getTasksById(tasks[0].task_relations_id)
+export const reorderTasks = async (tasks: TaskType[]): Promise<TaskType[]> => {
+  if (tasks.length === 0) return getTasksById(tasks[0].task_relations_id);
   console.log('reorder');
-  try{
+  try {
     const db = await getDatabaseSingleton();
     await db.withTransactionAsync(async () => {
-      for(const {order_idx, id} of tasks){
+      for (const { order_idx, id } of tasks) {
         await db.runAsync(
           'UPDATE tasks SET order_idx = ? WHERE id=? RETURNING *',
-          order_idx||null,
+          order_idx || null,
           id
         );
       }
-    })
+    });
     return getTasksById(tasks[0].task_relations_id);
-  }catch(e){
+  } catch (e) {
     console.log(e);
     return getTasksById(tasks[0].task_relations_id);
   }
-}
+};

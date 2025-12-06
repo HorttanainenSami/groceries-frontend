@@ -32,11 +32,11 @@ const RelationCreateModal = ({
     return () => {
       inputRef.current = null;
       clearTimeout(timeout);
-    }
+    };
   }, [visible]);
 
   const handleAccept = () => {
-    if(text.length === 0) {
+    if (text.length === 0) {
       console.log('Empty text, setting default value');
       handleClose();
       return;
@@ -50,11 +50,7 @@ const RelationCreateModal = ({
   };
 
   return (
-    <Modal
-      visible={visible}
-      onClose={handleClose}
-      onAccept={handleAccept}
-      title={title}>
+    <Modal visible={visible} onClose={handleClose} onAccept={handleAccept} title={title}>
       <View style={{ width: '90%', paddingVertical: 16 }}>
         <TextInputComponent
           ref={inputRef}

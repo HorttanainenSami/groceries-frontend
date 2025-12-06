@@ -11,7 +11,7 @@ import React from 'react';
 export default function RegisterScreen() {
   const router = useRouter();
   const { signup, user } = useAuth();
-  const {addAlert} = useAlert();
+  const { addAlert } = useAlert();
 
   const {
     handleSubmit,
@@ -27,10 +27,10 @@ export default function RegisterScreen() {
     },
   });
   React.useLayoutEffect(() => {
-    if(user) {
+    if (user) {
       router.navigate('/'); // Redirect to home if user is already logged in
     }
-  }, [user])
+  }, [user]);
   const onSubmit = async (credentials: RegisterType) => {
     try {
       await signup(credentials);
@@ -84,18 +84,15 @@ export default function RegisterScreen() {
             Keyboard.dismiss();
             onSubmit(data);
           })}
-          disabled={isSubmitting}>
+          disabled={isSubmitting}
+        >
           <Text style={styles.buttonText}>Rekisteröidy</Text>
         </Pressable>
       </View>
 
       <View style={styles.divider} />
-      <Pressable
-        style={styles.linkButton}
-        onPress={() => router.navigate('/signin')}>
-        <Text style={styles.linkText}>
-          Onko sinulla jo tili? Kirjaudu sisään
-        </Text>
+      <Pressable style={styles.linkButton} onPress={() => router.navigate('/signin')}>
+        <Text style={styles.linkText}>Onko sinulla jo tili? Kirjaudu sisään</Text>
       </Pressable>
     </View>
   );

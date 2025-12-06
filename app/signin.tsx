@@ -11,11 +11,11 @@ import React from 'react';
 export default function LoginScreen() {
   const router = useRouter();
   const { login, user } = useAuth();
-  const {addAlert} = useAlert();
+  const { addAlert } = useAlert();
   const {
     handleSubmit,
     control,
-    formState: { errors, isSubmitting },
+    formState: { isSubmitting },
   } = useForm<LoginType>({
     resolver: zodResolver(LoginSchema),
     defaultValues: {
@@ -23,16 +23,17 @@ export default function LoginScreen() {
       password: '',
     },
   });
-React.useLayoutEffect(() => {
-    if(user) {
+  React.useLayoutEffect(() => {
+    if (user) {
       router.navigate('/'); // Redirect to home if user is already logged in
     }
-  }, [user])
+  }, [user]);
   const onSubmit = async (credentials: LoginType) => {
     try {
       await login(credentials);
       router.navigate('/');
     } catch (e) {
+      console.error(e);
       addAlert({
         message: 'Tarkista sähköposti ja salasana.',
         type: 'error',
@@ -66,18 +67,15 @@ React.useLayoutEffect(() => {
             Keyboard.dismiss();
             onSubmit(data);
           })}
-          disabled={isSubmitting}>
+          disabled={isSubmitting}
+        >
           <Text style={styles.buttonText}>Kirjaudu</Text>
         </Pressable>
       </View>
 
       <View style={styles.divider} />
-      <Pressable
-        style={styles.linkButton}
-        onPress={() => router.navigate('/register')}>
-        <Text style={styles.linkText}>
-          Eikö sinulla ole tiliä? Luo uusi tili
-        </Text>
+      <Pressable style={styles.linkButton} onPress={() => router.navigate('/register')}>
+        <Text style={styles.linkText}>Eikö sinulla ole tiliä? Luo uusi tili</Text>
       </Pressable>
     </View>
   );

@@ -8,11 +8,7 @@ type TaskCreateModalProps = {
   onClose: () => void;
   onAccept: (a: string) => void;
 };
-const TaskCreateModal = ({
-  visible,
-  onClose,
-  onAccept,
-}: TaskCreateModalProps) => {
+const TaskCreateModal = ({ visible, onClose, onAccept }: TaskCreateModalProps) => {
   const [text, setText] = useState('');
   const inputRef = React.useRef<TextInput | null>(null);
 
@@ -35,11 +31,7 @@ const TaskCreateModal = ({
   };
 
   return (
-    <Modal
-      visible={visible}
-      onClose={handleClose}
-      onAccept={handleAccept}
-      title="Uusi tehtävä">
+    <Modal visible={visible} onClose={handleClose} onAccept={handleAccept} title="Uusi tehtävä">
       <View style={{ width: '90%', paddingVertical: 16 }}>
         <TextInputComponent
           ref={inputRef}

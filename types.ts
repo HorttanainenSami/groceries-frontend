@@ -6,7 +6,7 @@ export const LoginResponseSchema = z.object({
   token: z.string(),
 });
 
-export type loginResponse = z.infer<typeof LoginResponseSchema>;
+export type LoginResponse = z.infer<typeof LoginResponseSchema>;
 
 export const ErrorResponseSchema = z.object({
   error: z.string(),
@@ -49,27 +49,17 @@ export type ServerTaskRelationType = z.infer<typeof ServerTaskRelationSchema>;
 export const BaseTaskRelationsWithTasksSchema = BaseTaskRelationsSchema.extend({
   tasks: z.array(BaseTaskSchema),
 });
-export type BaseTaskRelationsWithTasksType = z.infer<
-  typeof BaseTaskRelationsWithTasksSchema
->;
-export const LocalTaskRelationsWithTasks =
-  BaseTaskRelationsWithTasksSchema.extend({
-    relation_location: z.literal('Local').default('Local'),
-  });
-export type LocalTaskRelationsWithTasksType = z.infer<
-  typeof LocalTaskRelationsWithTasks
->;
-export const ServerTaskRelationsWithTasksSchema =
-  BaseTaskRelationsSchema.extend({
-    relation_location: z.literal('Server').default('Server'),
-    tasks: z.array(BaseTaskSchema),
-  });
-export type ServerTaskRelationsWithTasksType = z.infer<
-  typeof ServerTaskRelationsWithTasksSchema
->;
-export type LocalRelationsWithTasksType = z.infer<
-  typeof LocalTaskRelationsWithTasks
->;
+export type BaseTaskRelationsWithTasksType = z.infer<typeof BaseTaskRelationsWithTasksSchema>;
+export const LocalTaskRelationsWithTasks = BaseTaskRelationsWithTasksSchema.extend({
+  relation_location: z.literal('Local').default('Local'),
+});
+export type LocalTaskRelationsWithTasksType = z.infer<typeof LocalTaskRelationsWithTasks>;
+export const ServerTaskRelationsWithTasksSchema = BaseTaskRelationsSchema.extend({
+  relation_location: z.literal('Server').default('Server'),
+  tasks: z.array(BaseTaskSchema),
+});
+export type ServerTaskRelationsWithTasksType = z.infer<typeof ServerTaskRelationsWithTasksSchema>;
+export type LocalRelationsWithTasksType = z.infer<typeof LocalTaskRelationsWithTasks>;
 
 export type TaskType = z.infer<typeof BaseTaskSchema>;
 
@@ -79,7 +69,7 @@ export const LoginSchema = z.object({
 });
 export type LoginType = z.infer<typeof LoginSchema>;
 
-export type editTaskProps = Pick<TaskType, 'id' | 'task'>;
+export type EditTaskProps = Pick<TaskType, 'id' | 'task'>;
 
 export const RegisterSchema = z
   .object({

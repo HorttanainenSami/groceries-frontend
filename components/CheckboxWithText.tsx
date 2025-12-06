@@ -1,25 +1,19 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, Text, Pressable } from 'react-native';
+import React from 'react';
+import { StyleSheet, Text, Pressable } from 'react-native';
 import Checkbox from './Checkbox';
 type CheckboxWithTextProps = {
   checked: boolean;
   text: string;
   onToggle: () => void;
 };
-const CheckboxWithText = ({
-  checked,
-  text,
-  onToggle,
-}: CheckboxWithTextProps) => {
+const CheckboxWithText = ({ checked, text, onToggle }: CheckboxWithTextProps) => {
   const handleToggle = () => {
     onToggle();
   };
   return (
     <Pressable onPress={handleToggle} style={styles.container}>
       <Checkbox isChecked={checked} toggle={handleToggle} />
-      <Text style={[styles.text, checked && styles.textCheckboxActive]}>
-        {text}
-      </Text>
+      <Text style={[styles.text, checked && styles.textCheckboxActive]}>{text}</Text>
     </Pressable>
   );
 };

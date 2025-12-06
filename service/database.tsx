@@ -4,12 +4,7 @@ import {
   ServerTaskRelationType,
   ServerTaskRelationSchema,
 } from '@/types';
-import {
-  SearchUserSchema,
-  SearchUserType,
-  LoginType,
-  RegisterType,
-} from '@/types';
+import { SearchUserSchema, SearchUserType, LoginType, RegisterType } from '@/types';
 import { getAxiosInstance } from '@/service/AxiosInstance';
 
 //export const uri = 'http://5.61.90.231';
@@ -38,8 +33,7 @@ export const loginAPI = async (credentials: LoginType) => {
 };
 
 export const signupAPI = async (credentials: RegisterType) => {
-  try{
-
+  try {
     console.log('credentials: ', credentials);
     const response = await getAxiosInstance().post(uri + '/signup', credentials);
     const parsedResponse = LoginResponseSchema.safeParse(response.data);
@@ -50,10 +44,7 @@ export const signupAPI = async (credentials: RegisterType) => {
   }
 };
 
-const buildQueryString = (
-  baseUrl: string,
-  params: Record<string, string | undefined>
-): string => {
+const buildQueryString = (baseUrl: string, params: Record<string, string | undefined>): string => {
   const query = new URLSearchParams();
 
   Object.entries(params).forEach(([key, value]) => {
@@ -69,8 +60,7 @@ export const searchUsers = async (
   searchParams: string,
   friends?: boolean
 ): Promise<SearchUserType[]> => {
-  try{
-
+  try {
     const baseUrl = uri + `/user/search`;
     const url = buildQueryString(baseUrl, {
       name: searchParams,
@@ -89,19 +79,13 @@ export const searchUsers = async (
   }
 };
 
-
-
-export const getServerRelations = async (): Promise<
-  ServerTaskRelationType[]
-> => {
+export const getServerRelations = async (): Promise<ServerTaskRelationType[]> => {
   try {
     const getUrl = uri + '/relations';
     console.log('connecting to server relations', getUrl);
     const response = await getAxiosInstance().get(getUrl);
     console.log(JSON.stringify(response.data, null, 2));
-    const parsedResponse = ServerTaskRelationSchema.array().parse(
-      response.data
-    );
+    const parsedResponse = ServerTaskRelationSchema.array().parse(response.data);
     console.log(JSON.stringify(parsedResponse, null, 2));
     return parsedResponse;
   } catch (e) {
