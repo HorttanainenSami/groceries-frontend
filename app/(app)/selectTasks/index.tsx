@@ -4,7 +4,7 @@ import IconButton from '@/components/IconButton';
 import { useEffect, useState } from 'react';
 import { useRouter, useNavigation, useLocalSearchParams } from 'expo-router';
 import useTaskStorage from '@/hooks/useTaskStorage';
-import { TaskType } from '@/types';
+import { TaskType } from '@groceries/shared_types';
 
 type SelectedTask = TaskType & {
   selected: boolean;

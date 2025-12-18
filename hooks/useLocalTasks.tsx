@@ -1,4 +1,3 @@
-import { TaskType } from '@/types';
 import {
   createTasks,
   getTasksById,
@@ -7,6 +6,7 @@ import {
   removeTask,
   reorderTasks,
 } from '@/service/LocalDatabase';
+import { TaskType } from '@groceries/shared_types';
 const useLocalTasks = () => {
   const refresh = async (id: string) => {
     const result = await getTasksById(id);

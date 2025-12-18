@@ -1,11 +1,11 @@
+import { RelationType, TaskType } from '@groceries/shared_types';
 import React, { createContext, useContext, PropsWithChildren, useState } from 'react';
-import { BaseTaskRelationsType, TaskType } from '@/types';
 
 type TaskContextProps = {
-  relation: BaseTaskRelationsType | null;
+  relation: RelationType | null;
   tasks: TaskType[];
   setTasks: React.Dispatch<React.SetStateAction<TaskType[]>>;
-  setRelation: React.Dispatch<React.SetStateAction<BaseTaskRelationsType | null>>;
+  setRelation: React.Dispatch<React.SetStateAction<RelationType | null>>;
 };
 export const TaskContext = createContext<TaskContextProps>({
   relation: null,
@@ -23,7 +23,7 @@ export const useTaskContext = () => {
 };
 
 export const TaskContextProvider = ({ children }: PropsWithChildren) => {
-  const [relation, setRelation] = useState<BaseTaskRelationsType | null>(null);
+  const [relation, setRelation] = useState<RelationType | null>(null);
   const [tasks, setTasks] = useState<TaskType[]>([]);
 
   return (

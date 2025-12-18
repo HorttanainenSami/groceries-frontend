@@ -1,10 +1,16 @@
 import {
-  LoginResponseSchema,
   ErrorResponseSchema,
-  ServerTaskRelationType,
-  ServerTaskRelationSchema,
+  SearchUserSchema,
+  SearchUserType,
+  LoginType,
+  RegisterType,
 } from '@/types';
-import { SearchUserSchema, SearchUserType, LoginType, RegisterType } from '@/types';
+import {
+  ServerRelationType,
+  ServerRelationSchema,
+  loginReponseSchema,
+  registerResponseSchema,
+} from '@groceries/shared_types';
 import { getAxiosInstance } from '@/service/AxiosInstance';
 
 //export const uri = 'http://5.61.90.231';
@@ -17,7 +23,7 @@ export const loginAPI = async (credentials: LoginType) => {
     const url = uri + '/login';
     const response = await getAxiosInstance().post(url, credentials);
     console.log('response ', response);
-    const parsedResponse = LoginResponseSchema.safeParse(response.data);
+    const parsedResponse = loginReponseSchema.safeParse(response.data);
     if (parsedResponse.success) return parsedResponse.data;
     throw new Error('Something went wrong with response');
   } catch (e) {
@@ -36,7 +42,7 @@ export const signupAPI = async (credentials: RegisterType) => {
   try {
     console.log('credentials: ', credentials);
     const response = await getAxiosInstance().post(uri + '/signup', credentials);
-    const parsedResponse = LoginResponseSchema.safeParse(response.data);
+    const parsedResponse = registerResponseSchema.safeParse(response.data);
     if (parsedResponse.success) return parsedResponse.data;
   } catch (e) {
     console.error('Error during signup:', e);
@@ -79,13 +85,13 @@ export const searchUsers = async (
   }
 };
 
-export const getServerRelations = async (): Promise<ServerTaskRelationType[]> => {
+export const getServerRelations = async (): Promise<ServerRelationType[]> => {
   try {
     const getUrl = uri + '/relations';
     console.log('connecting to server relations', getUrl);
     const response = await getAxiosInstance().get(getUrl);
     console.log(JSON.stringify(response.data, null, 2));
-    const parsedResponse = ServerTaskRelationSchema.array().parse(response.data);
+    const parsedResponse = ServerRelationSchema.array().parse(response.data);
     console.log(JSON.stringify(parsedResponse, null, 2));
     return parsedResponse;
   } catch (e) {

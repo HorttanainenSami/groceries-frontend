@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { TextInput, StyleSheet, View } from 'react-native';
 import IconButton from './IconButton';
-import { TaskType } from '../types';
 import Modal from './Modal';
 import TextInputComponent from './TextInputComponent';
+import { TaskType } from '@groceries/shared_types';
 
 type TaskEditModalProps = {
   onClose: () => void;

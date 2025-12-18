@@ -5,11 +5,11 @@ import TaskEditModal from '@/components/TaskEditModal';
 import { useLayoutEffect, useState } from 'react';
 import { useLocalSearchParams, useNavigation } from 'expo-router';
 import useTaskStorage from '@/hooks/useTaskStorage';
-import { TaskType } from '@/types';
 import useRelationStorage from '@/hooks/useRelationStorage';
 import RelationCreateModal from '@/components/RelationCreateModal';
 import React from 'react';
 import DraggableFlatList, { DragEndParams, ScaleDecorator } from 'react-native-draggable-flatlist';
+import { TaskType } from '@groceries/shared_types';
 
 export default function Index() {
   const [isEditModalVisible, setEditModalVisible] = useState<TaskType | null>(null);
@@ -17,17 +17,8 @@ export default function Index() {
 
   const params = useLocalSearchParams();
   const id = String(params.id);
-  const {
-    removeTask,
-    toggleTask,
-    tasks,
-    setTasks,
-    editTask,
-    loading,
-    refresh,
-    storeTask,
-    reorderTasks,
-  } = useTaskStorage();
+  const { removeTask, toggleTask, tasks, editTask, loading, refresh, storeTask, reorderTasks } =
+    useTaskStorage();
   const { relations, editRelationsName } = useRelationStorage();
   const navigation = useNavigation();
   const [editRelationNameModalVisible, setEditRelationNameModalVisible] = useState(false);
@@ -59,6 +50,7 @@ export default function Index() {
       task_relations_id: id,
       completed_by: null,
       completed_at: null,
+      order_idx: 9999,
     };
     storeTask(newTask);
   };
@@ -77,7 +69,8 @@ export default function Index() {
 
   const updateOrder = ({ data }: DragEndParams<TaskType>) => {
     const ordered = data.map((data, idx) => ({ ...data, order_idx: idx }));
-    setTasks(ordered);
+    console.log(JSON.stringify(data, null, 2));
+    console.log(JSON.stringify(ordered, null, 2));
     reorderTasks(ordered);
   };
 

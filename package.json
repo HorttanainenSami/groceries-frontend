@@ -1,5 +1,5 @@
 {
-  "name": "groceries",
+  "name": "@groceries/app",
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
+    "@groceries/shared_types": "file:../shared_types",
     "@hookform/resolvers": "^3.10.0",
     "@react-native-async-storage/async-storage": "2.1.2",
     "@react-navigation/bottom-tabs": "^7.0.0",

@@ -1,6 +1,7 @@
 import { openDatabaseAsync, SQLiteDatabase } from 'expo-sqlite';
-import { EditTaskProps, LocalTaskRelationType, TaskType } from '@/types';
+import { EditTaskProps } from '@/types';
 import * as Crypto from 'expo-crypto';
+import { LocalRelationType, TaskType } from '@groceries/shared_types';
 
 export const initDb = async () => {
   const db = await getDatabaseSingleton();
@@ -63,10 +64,10 @@ export const createTasksRelations = async ({ name }: CreateTasksType) => {
 export const changeRelationName = async (
   id: string,
   newName: string
-): Promise<LocalTaskRelationType | null> => {
+): Promise<LocalRelationType | null> => {
   try {
     const db = await getDatabaseSingleton();
-    const result = await db.getFirstAsync<LocalTaskRelationType>(
+    const result = await db.getFirstAsync<LocalRelationType>(
       'UPDATE task_relations SET name = ? WHERE id=? RETURNING *',
       newName,
       id
@@ -86,10 +87,10 @@ export const changeRelationName = async (
   }
 };
 
-export const getTaskRelations = async (): Promise<LocalTaskRelationType[]> => {
+export const getTaskRelations = async (): Promise<LocalRelationType[]> => {
   try {
     const db = await getDatabaseSingleton();
-    const result = await db.getAllAsync<LocalTaskRelationType>('SELECT * FROM task_relations;');
+    const result = await db.getAllAsync<LocalRelationType>('SELECT * FROM task_relations;');
     return result;
   } catch (e) {
     console.log('error occurred', e);
@@ -98,7 +99,7 @@ export const getTaskRelations = async (): Promise<LocalTaskRelationType[]> => {
 };
 
 export const deleteRelationWithTasks = async (
-  relations: LocalTaskRelationType[]
+  relations: LocalRelationType[]
 ): Promise<[boolean, string][]> => {
   try {
     const db = await getDatabaseSingleton();
@@ -135,7 +136,7 @@ export const createTasks = async ({
 };
 export const debug = async () => {
   const db = await getDatabaseSingleton();
-  const result2 = await db.getAllAsync<LocalTaskRelationType>('SELECT * FROM task_relations;');
+  const result2 = await db.getAllAsync<LocalRelationType>('SELECT * FROM task_relations;');
 
   const tasks = await Promise.all(
     result2.map(async (relation) => {

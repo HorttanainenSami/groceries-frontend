@@ -1,11 +1,12 @@
 import { useEffect } from 'react';
 import { useSocketContext } from '@/contexts/SocketContext';
-import { ServerTaskRelationsWithTasksType, TaskType } from '@/types';
+import { ServerRelationWithTasksType, TaskType } from '@groceries/shared_types';
 
 type UseTaskSocketProps = {
   onTaskCreated?: (task: TaskType) => void;
   onTaskEdited?: (task: TaskType) => void;
   onTaskRemoved?: (tasks: TaskType[]) => void;
+  onTaskReordered?: (tasks: TaskType[]) => void;
 };
 
 const useTaskSocket = (props?: UseTaskSocketProps) => {
@@ -28,20 +29,26 @@ const useTaskSocket = (props?: UseTaskSocketProps) => {
       console.log('task:remove broadcast received', payload);
       props?.onTaskRemoved?.(payload.remove_tasks);
     };
+    const handleTaskReordered = (payload: { reordered_tasks: TaskType[] }) => {
+      console.log('task:reodred_broadcast_recieved', payload);
+      props?.onTaskReordered?.(payload.reordered_tasks);
+    };
 
     socket.on('task:create', handleTaskCreated);
     socket.on('task:edit', handleTaskEdited);
     socket.on('task:remove', handleTaskRemoved);
+    socket.on('task:reorder', handleTaskReordered);
 
     return () => {
       socket.off('task:create', handleTaskCreated);
       socket.off('task:edit', handleTaskEdited);
       socket.off('task:remove', handleTaskRemoved);
+      socket.off('task:reorder', handleTaskReordered);
     };
   }, [socket, props]);
 
   const emitJoinTaskRoom = async (relationId: string) => {
-    return new Promise<ServerTaskRelationsWithTasksType>((resolve, reject) => {
+    return new Promise<ServerRelationWithTasksType>((resolve, reject) => {
       socket.emit('task:join', { relation_id: relationId }, (response) => {
         console.log('task:join', response);
         if (response.success) {
@@ -78,6 +85,18 @@ const useTaskSocket = (props?: UseTaskSocketProps) => {
       });
     });
   };
+  const emitReorderTask = async (tasks: TaskType[]) => {
+    return new Promise<TaskType[]>((resolve, reject) => {
+      socket.emit('task:reorder', { reodred_tasks: tasks }, (response) => {
+        console.log('task:reordered', response);
+        if (response.success) {
+          resolve(response.data);
+        } else {
+          reject(new Error(response.error));
+        }
+      });
+    });
+  };
 
   const emitRemoveTask = async (tasks: TaskType[]) => {
     return new Promise<TaskType[]>((resolve, reject) => {
@@ -97,6 +116,7 @@ const useTaskSocket = (props?: UseTaskSocketProps) => {
     emitCreateTask,
     emitEditTask,
     emitRemoveTask,
+    emitReorderTask,
   };
 };
 

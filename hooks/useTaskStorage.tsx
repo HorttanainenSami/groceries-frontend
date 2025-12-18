@@ -2,8 +2,8 @@ import useLocalTasks from '@/hooks/useLocalTasks';
 import useAuth from '@/hooks/useAuth';
 import useTaskSocket from '@/hooks/useTaskSocket';
 import React from 'react';
-import { BaseTaskRelationsType, TaskType } from '@/types';
 import { useTaskContext } from '@/contexts/taskContext';
+import { RelationType, TaskType } from '@groceries/shared_types';
 
 const useTaskStorage = () => {
   const { relation, setTasks, tasks, setRelation } = useTaskContext();
@@ -32,16 +32,25 @@ const useTaskStorage = () => {
     },
     [setTasks]
   );
+  const handleTaskReorderedBroadcast = React.useCallback(
+    (tasks: TaskType[]) => {
+      const taskMap = new Map(tasks.map((t) => [t.id, t]));
+      setTasks((prev) => prev.map((t) => taskMap.get(t.id) ?? t));
+    },
+    [setTasks]
+  );
 
-  const { emitCreateTask, emitEditTask, emitRemoveTask, emitJoinTaskRoom } = useTaskSocket({
-    onTaskCreated: handleTaskCreatedBroadcast,
-    onTaskEdited: handleTaskEditedBroadcast,
-    onTaskRemoved: handleTaskRemovedBroadcast,
-  });
+  const { emitCreateTask, emitEditTask, emitRemoveTask, emitJoinTaskRoom, emitReorderTask } =
+    useTaskSocket({
+      onTaskCreated: handleTaskCreatedBroadcast,
+      onTaskEdited: handleTaskEditedBroadcast,
+      onTaskRemoved: handleTaskRemovedBroadcast,
+      onTaskReordered: handleTaskReorderedBroadcast,
+    });
 
-  const isLocal = (relation: BaseTaskRelationsType) => relation.relation_location === 'Local';
+  const isLocal = (relation: RelationType) => relation.relation_location === 'Local';
 
-  const refresh = async (relation: BaseTaskRelationsType) => {
+  const refresh = async (relation: RelationType) => {
     setRelation(relation);
     if (!isLocal(relation)) {
       try {
@@ -61,8 +70,16 @@ const useTaskStorage = () => {
       return;
     }
     if (relation === null) return;
+    const changedTasks = reorderedTasks.filter(
+      (task) => tasks.find((t) => t.id === task.id)?.order_idx !== task.order_idx
+    );
+
+    setTasks(reorderedTasks);
+
     if (!isLocal(relation)) {
-      //emitReorderTasks(reorderedTasks);
+      if (changedTasks.length !== 0) {
+        emitReorderTask(changedTasks);
+      }
       return;
     }
     await localTasks.reorderTasksInDb(reorderedTasks);
