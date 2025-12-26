@@ -1,4 +1,4 @@
-import { StyleSheet, Pressable, Text, View } from 'react-native';
+import { StyleSheet, Pressable, Text, View, TouchableOpacity } from 'react-native';
 import Checkbox from '@/components/Checkbox';
 import TaskCreateModal from '@/components/TaskCreateModal';
 import TaskEditModal from '@/components/TaskEditModal';
@@ -8,8 +8,15 @@ import useTaskStorage from '@/hooks/useTaskStorage';
 import useRelationStorage from '@/hooks/useRelationStorage';
 import RelationCreateModal from '@/components/RelationCreateModal';
 import React from 'react';
-import DraggableFlatList, { DragEndParams, ScaleDecorator } from 'react-native-draggable-flatlist';
+import DraggableFlatList, {
+  DragEndParams,
+  RenderItemParams,
+  ScaleDecorator,
+} from 'react-native-draggable-flatlist';
 import { TaskType } from '@groceries/shared_types';
+import SwipeableItem, { useSwipeableItemParams } from 'react-native-swipeable-item';
+import * as Haptics from 'expo-haptics';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 export default function Index() {
   const [isEditModalVisible, setEditModalVisible] = useState<TaskType | null>(null);
@@ -65,15 +72,44 @@ export default function Index() {
       ),
     });
   };
+
   const cleanEditTask = () => setEditModalVisible(null);
 
   const updateOrder = ({ data }: DragEndParams<TaskType>) => {
+    Haptics.performAndroidHapticsAsync(Haptics.AndroidHaptics.Gesture_End);
     const ordered = data.map((data, idx) => ({ ...data, order_idx: idx }));
     console.log(JSON.stringify(data, null, 2));
     console.log(JSON.stringify(ordered, null, 2));
     reorderTasks(ordered);
   };
 
+  const renderItem = React.useCallback(({ item, drag }: RenderItemParams<TaskType>) => {
+    return (
+      <ScaleDecorator>
+        <SwipeableItem
+          key={item.id}
+          item={item}
+          snapPointsLeft={[65]}
+          renderUnderlayLeft={() => <UnderlayLeft onDelete={() => removeTask(item)} />}
+        >
+          <View style={styles.itemContainer}>
+            <TouchableOpacity onLongPress={drag}>
+              <MaterialIcons name="drag-handle" size={35} color="black" />
+            </TouchableOpacity>
+            <Checkbox isChecked={!!item.completed_at} toggle={() => toggleTask(item)} />
+            <TouchableOpacity
+              onPress={() => setEditModalVisible(item)}
+              style={styles.textPressable}
+            >
+              <Text style={[styles.text, !!item.completed_at && styles.textCheckboxActive]}>
+                {item.task}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </SwipeableItem>
+      </ScaleDecorator>
+    );
+  }, []);
   const relation = relations.find((i) => i.id === id);
   return (
     <View style={styles.container}>
@@ -82,22 +118,9 @@ export default function Index() {
         onDragEnd={updateOrder}
         refreshing={loading}
         keyExtractor={(item) => item.id}
-        renderItem={({ item, drag }) => (
-          <ScaleDecorator>
-            <View style={styles.itemContainer}>
-              <Checkbox isChecked={!!item.completed_at} toggle={() => toggleTask(item)} />
-              <Pressable
-                onPress={() => setEditModalVisible(item)}
-                onLongPress={drag}
-                style={styles.textPressable}
-              >
-                <Text style={[styles.text, !!item.completed_at && styles.textCheckboxActive]}>
-                  {item.task}
-                </Text>
-              </Pressable>
-            </View>
-          </ScaleDecorator>
-        )}
+        activationDistance={20}
+        onDragBegin={() => Haptics.performAndroidHapticsAsync(Haptics.AndroidHaptics.Gesture_Start)}
+        renderItem={renderItem}
       />
 
       <TaskCreateModal
@@ -125,6 +148,24 @@ export default function Index() {
     </View>
   );
 }
+type UnderlayLeftType = {
+  onDelete: () => void;
+};
+const UnderlayLeft = ({ onDelete }: UnderlayLeftType) => {
+  const { close } = useSwipeableItemParams<TaskType>();
+  const handleClick = () => {
+    onDelete();
+    close();
+  };
+  return (
+    <View style={[styles.underlayLeft, styles.row]}>
+      <TouchableOpacity onPress={() => handleClick()}>
+        <MaterialIcons name="delete-forever" size={35} color="black" />
+      </TouchableOpacity>
+    </View>
+  );
+};
+
 const styles = StyleSheet.create({
   fab: {
     backgroundColor: '#28a745',
@@ -137,6 +178,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 4,
+  },
+  row: {
+    flexDirection: 'row',
+    flex: 1,
+    alignItems: 'flex-end',
+    justifyContent: 'flex-end',
+    padding: 15,
+  },
+  toggle: {
+    flexDirection: 'row',
+    flex: 1,
+    alignItems: 'flex-start',
+    justifyContent: 'flex-start',
+    padding: 15,
   },
   fabText: {
     color: '#fff',
@@ -158,6 +213,7 @@ const styles = StyleSheet.create({
     minHeight: 56,
     borderBottomColor: '#eee',
     borderBottomWidth: 1,
+    backgroundColor: 'white',
   },
   textPressable: {
     flex: 1,
@@ -165,7 +221,7 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 18,
-    marginInline: 16,
+    marginHorizontal: 16,
     color: '#000',
   },
   textCheckboxActive: {
@@ -177,5 +233,13 @@ const styles = StyleSheet.create({
     borderTopColor: '#eee',
     borderTopWidth: 1,
     alignItems: 'center',
+  },
+  underlayLeft: {
+    backgroundColor: 'tomato',
+  },
+  dragHandle: {
+    fontSize: 20,
+    color: '#999',
+    paddingHorizontal: 12,
   },
 });

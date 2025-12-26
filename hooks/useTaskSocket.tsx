@@ -50,7 +50,7 @@ const useTaskSocket = (props?: UseTaskSocketProps) => {
   const emitJoinTaskRoom = async (relationId: string) => {
     return new Promise<ServerRelationWithTasksType>((resolve, reject) => {
       socket.emit('task:join', { relation_id: relationId }, (response) => {
-        console.log('task:join', response);
+        console.log('task:join', JSON.stringify(response, null, 2));
         if (response.success) {
           resolve(response.data);
         } else {

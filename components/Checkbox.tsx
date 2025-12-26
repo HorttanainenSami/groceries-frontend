@@ -1,5 +1,7 @@
 import React from 'react';
-import { StyleSheet, View, Text, Pressable } from 'react-native';
+import { StyleSheet, View, Pressable } from 'react-native';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+
 type CheckboxtWithText = {
   isChecked: boolean;
   toggle: () => void;
@@ -8,7 +10,7 @@ const Checkbox = ({ isChecked, toggle }: CheckboxtWithText) => {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', padding: 20 }}>
       <Pressable onPress={toggle} style={[styles.checkbox, isChecked && styles.checkboxActive]}>
-        {isChecked && <Text style={styles.checkmark}>✓</Text>}
+        {isChecked && <MaterialIcons name="check" size={24} color="black" />}
       </Pressable>
     </View>
   );
@@ -16,8 +18,8 @@ const Checkbox = ({ isChecked, toggle }: CheckboxtWithText) => {
 const styles = StyleSheet.create({
   checkmark: { color: 'white', fontSize: 18 },
   checkbox: {
-    width: 24,
-    height: 24,
+    width: 35,
+    height: 35,
     borderWidth: 2,
     borderColor: '#333',
     justifyContent: 'center',
