@@ -13,9 +13,22 @@ import {
 } from '@groceries/shared_types';
 import { getAxiosInstance } from '@/service/AxiosInstance';
 
-//export const uri = 'http://5.61.90.231';
 import Constants from 'expo-constants';
-export const uri = `http:${Constants.experienceUrl.split(':')[1]}:3003`;
+
+const getApiUrl = () => {
+  // In EAS builds, use the API_URL from eas.json
+  if (process.env.API_URL) {
+    return process.env.API_URL;
+  }
+
+  // In expo dev mode, use the dev server IP
+  if (Constants.experienceUrl) {
+    return `http:${Constants.experienceUrl.split(':')[1]}:3003`;
+  }
+  return 'http://localhost:3003';
+};
+
+export const uri = getApiUrl();
 
 export const loginAPI = async (credentials: LoginType) => {
   try {

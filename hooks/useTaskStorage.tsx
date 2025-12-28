@@ -6,7 +6,7 @@ import { useTaskContext } from '@/contexts/taskContext';
 import { RelationType, TaskType } from '@groceries/shared_types';
 
 const useTaskStorage = () => {
-  const { relation, setTasks, tasks, setRelation } = useTaskContext();
+  const { relationRef, setTasks, tasks } = useTaskContext();
   const loading = React.useRef<boolean>(false);
   const { user } = useAuth();
   const localTasks = useLocalTasks();
@@ -51,7 +51,7 @@ const useTaskStorage = () => {
   const isLocal = (relation: RelationType) => relation.relation_location === 'Local';
 
   const refresh = async (relation: RelationType) => {
-    setRelation(relation);
+    relationRef.current = relation;
     if (!isLocal(relation)) {
       try {
         const response = await emitJoinTaskRoom(relation.id);
@@ -69,14 +69,14 @@ const useTaskStorage = () => {
     if (tasks.length !== reorderedTasks.length) {
       return;
     }
-    if (relation === null) return;
+    if (relationRef.current === null) return;
     const changedTasks = reorderedTasks.filter(
       (task) => tasks.find((t) => t.id === task.id)?.order_idx !== task.order_idx
     );
 
     setTasks(reorderedTasks);
 
-    if (!isLocal(relation)) {
+    if (!isLocal(relationRef.current)) {
       if (changedTasks.length !== 0) {
         emitReorderTask(changedTasks);
       }
@@ -85,8 +85,8 @@ const useTaskStorage = () => {
     await localTasks.reorderTasksInDb(reorderedTasks);
   };
   const editTask = async (newTasks: TaskType) => {
-    if (relation === null) return;
-    if (!isLocal(relation)) {
+    if (relationRef.current === null) return;
+    if (!isLocal(relationRef.current)) {
       try {
         const editedTask = await emitEditTask(newTasks);
         setTasks((prev) => prev.map((task) => (task.id === newTasks.id ? editedTask : task)));
@@ -99,10 +99,10 @@ const useTaskStorage = () => {
     setTasks((prev) => prev.map((task) => (task.id === newTasks.id ? editedTask : task)));
   };
   const storeTask = async (newTasks: Omit<TaskType, 'id'>) => {
-    if (relation === null) return;
-    const initNewTask = { ...newTasks, task_relations_id: relation.id };
+    if (relationRef.current === null) return;
+    const initNewTask = { ...newTasks, task_relations_id: relationRef.current.id };
 
-    if (!isLocal(relation)) {
+    if (!isLocal(relationRef.current)) {
       console.log(initNewTask);
       try {
         const response = await emitCreateTask(initNewTask as TaskType);
@@ -127,7 +127,12 @@ const useTaskStorage = () => {
     return true;
   };
   const toggleTask = async (task: TaskType) => {
-    if (!relation || !user?.id) return;
+    console.log(
+      'toggle ',
+      JSON.stringify(task, null, 2),
+      JSON.stringify(relationRef.current, null, 2)
+    );
+    if (!relationRef.current || !user?.id) return;
     const initToggledTask = isToggled(task)
       ? { ...task, completed_at: null, completed_by: null }
       : {
@@ -136,7 +141,7 @@ const useTaskStorage = () => {
           completed_by: user.id,
         };
 
-    if (!isLocal(relation)) {
+    if (!isLocal(relationRef.current)) {
       try {
         const toggledTask = await emitEditTask(initToggledTask);
         setTasks((prev) => prev.map((t) => (t.id === task.id ? toggledTask : t)));
@@ -149,10 +154,10 @@ const useTaskStorage = () => {
     setTasks((prev) => prev.map((t) => (t.id === task.id ? toggledTask : t)));
   };
   const removeTask = async (task: TaskType | TaskType[]) => {
-    if (!relation) return;
+    if (!relationRef.current) return;
     const tasksArray = Array.isArray(task) ? task : [task];
 
-    if (!isLocal(relation)) {
+    if (!isLocal(relationRef.current)) {
       try {
         const removedTasks = await emitRemoveTask(tasksArray);
         const responseIds = removedTasks.map((task) => task.id);
@@ -168,10 +173,9 @@ const useTaskStorage = () => {
   };
 
   return {
-    relation,
+    relation: relationRef.current,
     tasks,
     setTasks,
-    setRelation,
     loading: loading.current,
     refresh,
     editTask,

@@ -1,3 +1,4 @@
+28.12.25 1h refactorointi
 26.12.25 3h Uudelleen järjestämisen toiminnallisuuden parantaminen ja tuotteen poistaminen listasta liuttamalla sitä sivulle
 18.12.25 3h backendin kanssa jaettujen tyypitysten käyttö. Toisen käyttäjän uudelleen järjestyksen päivitys näytölle broadcastin avulla jos sama lista on avattu missä muokkaus on tapahtunut  
 6.12.25 1h eslinterin ja prettierin conffaus ja virheilmoitusten korjaaminen
@@ -25,4 +26,4 @@
 18.1.25 3h listojen pysyväis tallennus ja muokkaus
 7.1.25 3h ohjelman alustus ja tehtävä listan luominen
 7.1.25 1h tehtävän muokkaus modal näkymän toiminta, modaalin avaamisen yhteydessä näppäimistö aukeaa ja ohjelmisto fokusoituu tekstikenttään
-79h
+83h
