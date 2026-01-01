@@ -1,4 +1,1 @@
-../backend/**
-../.git/**
-../node_modules/**
-../*.md
+node_modules
