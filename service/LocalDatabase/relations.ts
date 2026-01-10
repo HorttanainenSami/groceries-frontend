@@ -8,18 +8,30 @@ export type CreateTasksType = {
   name: string;
 };
 
-export const createLocalRelation = async ({ name }: CreateTasksType) => {
+export const createLocalRelation = async ({
+  name,
+}: CreateTasksType): Promise<LocalRelationType> => {
   console.log('[DB] createLocalRelation');
   try {
     const date = new Date().toISOString();
+    const id = Crypto.randomUUID();
     const db = await getDatabaseSingleton();
-    const result = await db.runAsync(
+
+    await db.runAsync(
       'INSERT INTO task_relations (id, name, created_at, relation_location, last_modified) VALUES (?, ?, ?, ?, ?)',
-      [Crypto.randomUUID(), name, date, 'Local', date]
+      [id, name, date, 'Local', date]
     );
-    console.log(result.changes);
+
+    return {
+      id,
+      name,
+      created_at: date,
+      relation_location: 'Local',
+      last_modified: date,
+    };
   } catch (e) {
     console.log('sql error occurred', e);
+    throw e;
   }
 };
 export const changeRelationName = async (
@@ -103,8 +115,8 @@ export const storeServerRelation = async ({ relation, txQuery }: StoreServerRela
   console.log('[DB] storeServerRelation');
   const db = txQuery ? txQuery : await getDatabaseSingleton();
   await db.runAsync(
-    `INSERT INTO task_relations (id, name, created_at, relation_location, last_modified, shared_with_id, shared_with_name, shared_with_email)
-     VALUES (?, ?, ?, 'Server', ?, ?, ?, ?)`,
+    `INSERT INTO task_relations (id, name, created_at, relation_location, last_modified, shared_with_id, shared_with_name, shared_with_email,permission)
+     VALUES (?, ?, ?, 'Server', ?, ?, ?, ?, ?-x86_64)`,
     [
       relation.id,
       relation.name,
@@ -113,6 +125,7 @@ export const storeServerRelation = async ({ relation, txQuery }: StoreServerRela
       relation.shared_with[0]?.id,
       relation.shared_with[0]?.name,
       relation.shared_with[0]?.email,
+      relation.permission ?? null,
     ]
   );
 };

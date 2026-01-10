@@ -34,6 +34,7 @@ export default function RegisterScreen() {
   const onSubmit = async (credentials: RegisterType) => {
     try {
       await signup(credentials);
+      addAlert({ message: 'Tili luotu onnistuneesti', type: 'success' });
       router.navigate('/signin');
     } catch (e) {
       console.error('Registration error:', e);

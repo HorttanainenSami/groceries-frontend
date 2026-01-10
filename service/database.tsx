@@ -1,10 +1,4 @@
-import {
-  ErrorResponseSchema,
-  SearchUserSchema,
-  SearchUserType,
-  LoginType,
-  RegisterType,
-} from '@/types';
+import { SearchUserSchema, SearchUserType, LoginType, RegisterType } from '@/types';
 import {
   ServerRelationType,
   ServerRelationSchema,
@@ -18,39 +12,38 @@ import { PendingOperation } from '@groceries/shared_types';
 import z from 'zod';
 
 const getApiUrl = () => {
-  // In EAS builds, use the API_URL from eas.json
-  if (process.env.API_URL) {
-    return process.env.API_URL;
+  // Expo go
+  if (Constants.experienceUrl) {
+    const host = Constants.experienceUrl.split(':')[1].replace('//', '');
+    return `http://${host}:3003`;
   }
 
-  // In expo dev mode, use the dev server IP
-  if (Constants.experienceUrl) {
-    return `http:${Constants.experienceUrl.split(':')[1]}:3003`;
+  //Expo dev build
+  const debuggerHost = Constants.expoConfig?.hostUri;
+  console.log(debuggerHost);
+  if (debuggerHost) {
+    const host = debuggerHost.replace('"', '');
+    return `http://${host}:3003`;
   }
+
+  //EAS Build
+  if (process.env.EXPO_PUBLIC_API_URL) {
+    return process.env.EXPO_PUBLIC_API_URL;
+  }
+
+  // fallback
   return 'http://localhost:3003';
 };
 
 export const uri = getApiUrl();
-
+console.log(uri);
 export const loginAPI = async (credentials: LoginType) => {
-  try {
-    console.log(credentials);
-    const url = uri + '/login';
-    const response = await getAxiosInstance().post(url, credentials);
-    console.log('response ', response);
-    const parsedResponse = loginReponseSchema.safeParse(response.data);
-    if (parsedResponse.success) return parsedResponse.data;
-    throw new Error('Something went wrong with response');
-  } catch (e) {
-    console.log('loginAPI catch', e);
-    const parsedError = ErrorResponseSchema.safeParse(e);
-    if (parsedError.success) {
-      console.log('parsed error');
-    } else {
-      console.log('error occurred', parsedError.data);
-    }
-    throw e;
-  }
+  console.log(credentials);
+  const url = uri + '/login';
+  const response = await getAxiosInstance().post(url, credentials);
+  const parsedResponse = loginReponseSchema.safeParse(response.data);
+  if (parsedResponse.success) return parsedResponse.data;
+  throw new Error('Something went wrong with response');
 };
 
 export const signupAPI = async (credentials: RegisterType) => {

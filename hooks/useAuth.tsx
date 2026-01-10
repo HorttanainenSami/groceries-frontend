@@ -59,18 +59,20 @@ const useAuth = () => {
       return true;
     } catch (e) {
       if (isAxiosError(e)) {
-        console.log('axios error');
-        addAlert({ message: e.response?.data.error || '', type: 'error' });
+        console.log(JSON.stringify(e, null, 2));
+        if (e.status === 401) {
+          addAlert({ message: 'Incorrect email and/or password', type: 'error' });
+        } else {
+          addAlert({ message: 'Error connecting to server, try again later', type: 'error' });
+        }
       } else {
         const parsedError = ErrorResponseSchema.safeParse(e);
         if (parsedError.success) {
-          console.log('parsed error');
           addAlert({ message: parsedError.data.error, type: 'error' });
         } else {
           console.log('error occurred');
           addAlert({ message: 'An unexpected error occurred', type: 'error' });
         }
-        throw e;
       }
     }
   };
@@ -96,6 +98,7 @@ const useAuth = () => {
           console.log('error occurred');
           addAlert({ message: 'An unexpected error occurred', type: 'error' });
         }
+        addAlert({ message: JSON.stringify(e), type: 'error' });
         throw e;
       }
     }

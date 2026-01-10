@@ -1,0 +1,16 @@
+appId: com.imasami.groceries
+---
+# Test: User can login successfully
+- launchApp
+# Dismiss dev menu if it appears
+- pressKey: Back
+- assertVisible: Kirjaudu sisään
+- tapOn: Sähköposti
+- inputText: test@example.com
+- tapOn: Salasana
+- inputText: password123
+- tapOn: Kirjaudu
+- assertVisible: 'Ruokalistat'
+- tapOn: User
+- assertVisible: Käyttäjä
+- tapOn: Kirjaudu ulos

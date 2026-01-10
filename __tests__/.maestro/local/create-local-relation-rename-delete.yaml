@@ -1,0 +1,50 @@
+appId: com.imasami.groceries
+---
+- launchApp
+# login
+- assertVisible: Kirjaudu sisään
+- tapOn: Sähköposti
+- inputText: test@example.com
+- tapOn: Salasana
+- inputText: password123
+- tapOn: Kirjaudu
+- assertVisible:
+    text: Ruokalistat
+    index: 0
+# /login
+
+# create relation
+- tapOn:
+    point: 86%,85%
+- tapOn: Listan nimi
+- inputText: Testi lista
+- tapOn: 
+- assertVisible: Testi lista
+
+# /create realtion
+
+# create items to list
+- tapOn: Testi lista
+- assertVisible: Testi lista
+- tapOn: +
+- tapOn: Lisää tehtävä
+- inputText: item 1
+- tapOn: 
+- tapOn: +
+- tapOn: Lisää tehtävä
+- inputText: item 2
+- tapOn: 
+- assertVisible: Item 1
+- assertVisible: Item 2
+# /create items to list
+# delete relation
+- longPressOn: Testi lista
+- tapOn: 
+- assertVisible: Lista poistettu onnistuneesti!
+# delete relation
+
+# logout
+- tapOn: User
+- assertVisible: Käyttäjä
+- tapOn: Kirjaudu ulos
+# /logout

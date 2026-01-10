@@ -4,7 +4,9 @@ import * as Crypto from 'expo-crypto';
 import { TaskType } from '@groceries/shared_types';
 import { SQLiteDatabase } from 'expo-sqlite';
 
-export const createTasks = async (task: TaskType): Promise<TaskType | null> => {
+export const createTasks = async (
+  task: Pick<TaskType, 'task' | 'task_relations_id' | 'order_idx'>
+): Promise<TaskType | null> => {
   console.log('[DB] createTasks');
   try {
     const db = await getDatabaseSingleton();

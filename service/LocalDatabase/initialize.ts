@@ -51,13 +51,39 @@ export const initDb = async () => {
 
 let databaseInstance: SQLiteDatabase | null = null;
 
+// Determine database name based on environment
+const getDatabaseName = () => {
+  const dbName = process.env.EXPO_PUBLIC_DB_NAME || 'todo';
+  console.log(`Using database: ${dbName}`);
+  return dbName;
+};
+
 export const getDatabaseSingleton = async (): Promise<SQLiteDatabase> => {
   // Check if openDatabaseAsync is defined (i.e., provider is available)
   if (typeof openDatabaseAsync !== 'function') {
     throw new Error('Database provider is not available.');
   }
   if (!databaseInstance) {
-    databaseInstance = await openDatabaseAsync('todo');
+    databaseInstance = await openDatabaseAsync(getDatabaseName());
   }
   return databaseInstance;
+};
+
+// For testing: reset database instance
+export const resetDatabaseInstance = () => {
+  databaseInstance = null;
+};
+
+// For testing: clear all data
+export const clearTestDatabase = async () => {
+  const dbName = process.env.EXPO_PUBLIC_DB_NAME || 'todo';
+  if (dbName !== 'todo-test') {
+    throw new Error('clearTestDatabase can only be called in test environment');
+  }
+  const db = await getDatabaseSingleton();
+  await db.execAsync(`
+    DELETE FROM tasks;
+    DELETE FROM task_relations;
+    DELETE FROM pending_operations;
+  `);
 };
