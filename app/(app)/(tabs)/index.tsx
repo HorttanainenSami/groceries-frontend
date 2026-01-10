@@ -125,7 +125,7 @@ export default function Index() {
 
       <FlatList
         data={sortedRelations}
-        refreshing={loading}
+        refreshing={loading.current}
         contentContainerStyle={{ flexGrow: 1 }}
         ListEmptyComponent={
           <View style={styles.emptyState}>

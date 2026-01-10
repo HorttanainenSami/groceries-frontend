@@ -1,17 +1,21 @@
 import { getDatabaseSingleton } from './initialize';
 import * as Crypto from 'expo-crypto';
-import { LocalRelationType } from '@groceries/shared_types';
+import { LocalRelationType, RelationType, ServerRelationType } from '@groceries/shared_types';
+import { TaskRelationRow } from './types';
+import { SQLiteDatabase } from 'expo-sqlite';
 
 export type CreateTasksType = {
   name: string;
 };
 
-export const createTasksRelations = async ({ name }: CreateTasksType) => {
+export const createLocalRelation = async ({ name }: CreateTasksType) => {
+  console.log('[DB] createLocalRelation');
   try {
+    const date = new Date().toISOString();
     const db = await getDatabaseSingleton();
     const result = await db.runAsync(
-      'INSERT INTO task_relations (id, name, created_at, relation_location) VALUES (?, ?, ?, ?)',
-      [Crypto.randomUUID(), name, new Date().toISOString(), 'Local']
+      'INSERT INTO task_relations (id, name, created_at, relation_location, last_modified) VALUES (?, ?, ?, ?, ?)',
+      [Crypto.randomUUID(), name, date, 'Local', date]
     );
     console.log(result.changes);
   } catch (e) {
@@ -22,11 +26,13 @@ export const changeRelationName = async (
   id: string,
   newName: string
 ): Promise<LocalRelationType | null> => {
+  console.log('[DB] changeRelationName');
   try {
     const db = await getDatabaseSingleton();
     const result = await db.getFirstAsync<LocalRelationType>(
-      'UPDATE task_relations SET name = ? WHERE id=? RETURNING *',
+      'UPDATE task_relations SET name = ?, last_modified=? WHERE id=? RETURNING *',
       newName,
+      new Date().toISOString(),
       id
     );
     if (!result) {
@@ -44,11 +50,26 @@ export const changeRelationName = async (
   }
 };
 
-export const getTaskRelations = async (): Promise<LocalRelationType[]> => {
+export const getTaskRelations = async (): Promise<RelationType[]> => {
+  console.log('[DB] getTaskRelations');
   try {
     const db = await getDatabaseSingleton();
-    const result = await db.getAllAsync<LocalRelationType>('SELECT * FROM task_relations;');
-    return result;
+    const result = await db.getAllAsync<TaskRelationRow>('SELECT * FROM task_relations;');
+    return result.map((relation) => {
+      if (relation.relation_location === 'Server') {
+        const {
+          shared_with_email: email,
+          shared_with_id: id,
+          shared_with_name: name,
+          ...rest
+        } = relation;
+
+        return { ...rest, shared_with: [{ name, id, email }] };
+      } else {
+        const { id, name, created_at, relation_location, last_modified } = relation;
+        return { id, name, created_at, relation_location, last_modified };
+      }
+    });
   } catch (e) {
     console.log('error occurred', e);
     return [];
@@ -56,8 +77,9 @@ export const getTaskRelations = async (): Promise<LocalRelationType[]> => {
 };
 
 export const deleteRelationWithTasks = async (
-  relations: LocalRelationType[]
+  relations: RelationType[] | Pick<RelationType, 'id'>[]
 ): Promise<[boolean, string][]> => {
+  console.log('[DB] deleteRelationWithTasks');
   try {
     const db = await getDatabaseSingleton();
     await db.withTransactionAsync(async () => {
@@ -71,4 +93,45 @@ export const deleteRelationWithTasks = async (
     console.log('error occurred', e);
     return relations.map(({ id }) => [false, id]);
   }
+};
+
+type StoreServerRelationProps = {
+  relation: ServerRelationType;
+  txQuery?: SQLiteDatabase;
+};
+export const storeServerRelation = async ({ relation, txQuery }: StoreServerRelationProps) => {
+  console.log('[DB] storeServerRelation');
+  const db = txQuery ? txQuery : await getDatabaseSingleton();
+  await db.runAsync(
+    `INSERT INTO task_relations (id, name, created_at, relation_location, last_modified, shared_with_id, shared_with_name, shared_with_email)
+     VALUES (?, ?, ?, 'Server', ?, ?, ?, ?)`,
+    [
+      relation.id,
+      relation.name,
+      relation.created_at,
+      relation.last_modified,
+      relation.shared_with[0]?.id,
+      relation.shared_with[0]?.name,
+      relation.shared_with[0]?.email,
+    ]
+  );
+};
+
+export const deleteAllServerRelations = async (txQuery?: SQLiteDatabase) => {
+  console.log('[DB] deleteAllServerRelations');
+  const db = txQuery ? txQuery : await getDatabaseSingleton();
+  await db.runAsync('DELETE FROM task_relations WHERE relation_location = ?', ['Server']);
+};
+
+export const replaceServerRelations = async (serverRelations: ServerRelationType[]) => {
+  console.log('[DB] replaceServerRelations');
+  const db = await getDatabaseSingleton();
+
+  await db.withTransactionAsync(async () => {
+    await deleteAllServerRelations(db);
+
+    for (const relation of serverRelations) {
+      await storeServerRelation({ relation, txQuery: db });
+    }
+  });
 };

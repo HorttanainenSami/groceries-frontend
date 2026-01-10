@@ -2,87 +2,147 @@ import { useRelationContext } from '@/contexts/RelationContext';
 import useRelationsSocket from './useRelationsSocket';
 import {
   changeRelationName,
-  createTasksRelations,
+  createLocalRelation,
   deleteRelationWithTasks,
+  getDatabaseSingleton,
   getTaskRelations,
+  insertCachedTask,
+  replaceServerRelations,
+  storeServerRelation,
 } from '@/service/LocalDatabase';
 
 import React from 'react';
 import {
   ClientToServerRelatiosShare,
   LocalRelationType,
+  RelationType,
   ServerRelationType,
   ServerRelationWithTasksType,
 } from '@groceries/shared_types';
+import { useSyncContext } from '@/contexts/SyncContext';
 
 const useRelationStorage = () => {
   const { relations, setRelations } = useRelationContext();
-
-  const [loading, setLoading] = React.useState(false);
+  const loading = React.useRef(false);
+  const isMounted = React.useRef(true);
 
   const handleChangeNameBroadcast = React.useCallback(
-    (broadcastedRelation: ServerRelationType) => {
+    async (broadcastedRelation: ServerRelationType) => {
+      loading.current = true;
       setRelations((prev) =>
         prev.map((rel) => (rel.id === broadcastedRelation.id ? broadcastedRelation : rel))
       );
+      loading.current = false;
+      await changeRelationName(broadcastedRelation.id, broadcastedRelation.name);
     },
     [setRelations]
   );
 
   const handleDeleteBroadcast = React.useCallback(
-    (deletedRelations: [boolean, string][]) => {
+    async (deletedRelations: [boolean, string][]) => {
+      loading.current = true;
       setRelations((prev) => {
         const filtered = prev.filter((r) => !deletedRelations.map((r) => r[1]).includes(r.id));
         return filtered;
       });
+      loading.current = false;
+      await deleteRelationWithTasks(
+        deletedRelations
+          .filter((i) => i[0])
+          .map((i) => ({
+            id: i[1],
+          }))
+      );
     },
     [setRelations]
   );
 
   const handleShareBroadcast = React.useCallback(
-    (t: ServerRelationWithTasksType[]) => {
+    async (t: ServerRelationWithTasksType[]) => {
+      console.log('performing transaction in hadnleShare');
       setRelations((prev) => [...prev, ...t]);
+      loading.current = true;
+      const db = await getDatabaseSingleton();
+      loading.current = false;
+
+      await Promise.all(
+        t.map(async (relation) => {
+          const { tasks, ...rest } = relation;
+          // Store relation
+          await storeServerRelation({ relation: rest, txQuery: db });
+          // Store all tasks for relation
+          if (tasks.length > 0) {
+            await insertCachedTask(tasks, db);
+          }
+        })
+      );
     },
     [setRelations]
   );
 
-  const { emitChangeRelationName, emitDeleteRelation, emitGetRelations, emitShareWithUser } =
-    useRelationsSocket({
-      onChangeName: handleChangeNameBroadcast,
-      onDelete: handleDeleteBroadcast,
-      onShare: handleShareBroadcast,
-    });
+  const { addToQueue, pendingOperations } = useSyncContext();
+  const { emitGetRelations, emitShareWithUser, connected } = useRelationsSocket({
+    onChangeName: handleChangeNameBroadcast,
+    onDelete: handleDeleteBroadcast,
+    onShare: handleShareBroadcast,
+  });
+
+  React.useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  // Fetch from server when socket connects
+  React.useEffect(() => {
+    if (connected && isMounted.current && !loading.current) {
+      getRelations();
+    }
+  }, [connected]);
 
   const getRelations = async () => {
-    setLoading(true);
+    if (loading.current) return;
+
+    loading.current = true;
     try {
-      const [local, server] = await Promise.all([getTaskRelations(), emitGetRelations()]);
-      setRelations([...local, ...server]);
+      const cached = await getTaskRelations();
+      setRelations([...cached]);
+      // update cached storage
+      if (connected && pendingOperations.length === 0 && isMounted.current) {
+        const server = await emitGetRelations();
+        await replaceServerRelations(server);
+        const newCachedReleations = await getTaskRelations();
+        setRelations([...newCachedReleations]);
+      }
     } catch (error) {
       console.error('Error getting relations:', error);
+      loading.current = false;
     } finally {
-      setLoading(false);
+      loading.current = false;
     }
   };
   const refresh = async () => getRelations();
 
   const addRelationLocal = async (name: string) => {
-    await createTasksRelations({ name });
+    await createLocalRelation({ name });
     refresh();
   };
-  const removeRelations = async (relations: (LocalRelationType | ServerRelationType)[]) => {
-    const local = relations.filter((i) => i.relation_location === 'Local');
-    const server = relations.filter((i) => i.relation_location === 'Server');
-    const removeAll = await Promise.all([
-      deleteRelationWithTasks(local),
-      emitDeleteRelation(server),
-    ]);
-    const response = [...removeAll[0], ...removeAll[1]];
-    const removed = response.filter(([res]) => res === true).map(([, id]) => id);
-    const remainingRelations = relations.filter((r) => !removed.includes(r.id));
-    setRelations(remainingRelations);
-    return response;
+  const removeRelations = async (relations: RelationType[]) => {
+    try {
+      const server = relations.filter((i) => i.relation_location === 'Server');
+      const removeAll = await deleteRelationWithTasks(relations);
+      if (server.length > 0) {
+        server.map((i) => addToQueue({ type: 'relation-delete', data: i }));
+      }
+      const removed = removeAll.filter(([res]) => res === true).map(([, id]) => id);
+      setRelations((prev) => prev.filter((r) => !removed.includes(r.id)));
+      return removeAll;
+    } catch (e) {
+      console.log(e);
+      throw e;
+    }
   };
+
   const editRelationsName = async (
     id: string,
     newName: string
@@ -92,17 +152,16 @@ const useRelationStorage = () => {
       console.error('Relation not found for id:', id);
       return null;
     }
-
-    console.log('Attempting to change relation name in DB for id:', id);
-    const db =
-      relation.relation_location === 'Local'
-        ? await changeRelationName(id, newName)
-        : await emitChangeRelationName({ id, name: newName });
-
-    console.log('Response from changeRelationName (db):', db);
+    const db = await changeRelationName(id, newName);
     if (!db) {
       console.error('Failed to change relation name in DB for id:', id);
       return null;
+    }
+    if (relation.relation_location === 'Server') {
+      addToQueue({
+        type: 'relation-edit',
+        data: { ...relation, name: newName },
+      });
     }
     const updatedRelations = relations.map((r) => (r.id === id ? { ...r, name: db.name } : r));
     setRelations(updatedRelations);
@@ -115,6 +174,7 @@ const useRelationStorage = () => {
     user_shared_with,
   }: ClientToServerRelatiosShare) => {
     try {
+      if (!connected) return;
       const serverResponse = await emitShareWithUser({
         user_shared_with,
         task_relations,

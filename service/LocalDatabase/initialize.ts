@@ -8,14 +8,22 @@ export const initDb = async () => {
   DROP TABLE IF EXISTS tasks;
   DROP TABLE IF EXISTS task_relations;
   `);
+
   */
   await db.execAsync(`
   PRAGMA journal_mode = WAL;
+  PRAGMA busy_timeout = 5000;
   CREATE TABLE IF NOT EXISTS task_relations (
     id UUID PRIMARY KEY NOT NULL,
     name TEXT NOT NULL,
     created_at TEXT NOT NULL,
-    relation_location TEXT CHECK(relation_location IN ('Local', 'Server'))
+    relation_location TEXT CHECK(relation_location IN ('Local', 'Server')),
+    shared_with_name TEXT,
+    shared_with_email TEXT,
+    shared_with_id UUID,
+    permission TEXT CHECK(permission IN ('owner', 'edit')),
+    last_modified TEXT,
+    synced TEXT CHECK(synced IN ('synced', 'pending'))
   );`);
   await db.execAsync(`
   CREATE TABLE IF NOT EXISTS tasks (
@@ -26,7 +34,18 @@ export const initDb = async () => {
     completed_by UUID,
     task_relations_id UUID,
     order_idx INTEGER DEFAULT NULL,
+    last_modified TEXT,
+    synced TEXT CHECK(synced IN ('synced', 'pending')),
     FOREIGN KEY (task_relations_id) REFERENCES task_relations(id) ON DELETE CASCADE
+  );`);
+  await db.execAsync(`
+  CREATE TABLE IF NOT EXISTS pending_operations (
+    id UUID PRIMARY KEY NOT NULL,
+    type TEXT NOT NULL,
+    data TEXT NOT NULL,
+    timestamp TEXT NOT NULL,
+    retry_count INTEGER DEFAULT 0,
+    status TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'syncing', 'failed'))
   );`);
 };
 

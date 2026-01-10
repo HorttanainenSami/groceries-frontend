@@ -1,3 +1,7 @@
+7.1.26 2h Bugien korjaus ja välimuistin päivitys kun lokaalisti luodut operaatiot ot synkronoitu serverille
+2.1.26 3h SyncContextin luominen odottavien operaatioiden tallentamiseen ja synkronointiin kun yhteys saadaan luotua
+2.1.26 1h 30min cache first arkkitehtuuri taskeille
+1.1.26 3h Offline-first synkronointi: server-datan välimuistitus SQLite:en ja cache-first arkkitehtuuri listoille
 28.12.25 1h refactorointi
 26.12.25 3h Uudelleen järjestämisen toiminnallisuuden parantaminen ja tuotteen poistaminen listasta liuttamalla sitä sivulle
 18.12.25 3h backendin kanssa jaettujen tyypitysten käyttö. Toisen käyttäjän uudelleen järjestyksen päivitys näytölle broadcastin avulla jos sama lista on avattu missä muokkaus on tapahtunut  

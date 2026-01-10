@@ -14,6 +14,8 @@ import {
 import { getAxiosInstance } from '@/service/AxiosInstance';
 
 import Constants from 'expo-constants';
+import { PendingOperation } from '@groceries/shared_types';
+import z from 'zod';
 
 const getApiUrl = () => {
   // In EAS builds, use the API_URL from eas.json
@@ -111,4 +113,15 @@ export const getServerRelations = async (): Promise<ServerRelationType[]> => {
     console.log(e);
     return [];
   }
+};
+const syncOperationsResultParse = z.object({
+  success: z.object({ id: z.string().uuid() }).array(),
+  failed: z.object({ id: z.string().uuid(), reason: z.string() }).array(),
+});
+export const sendSyncOperationsBatch = async (op: PendingOperation[]) => {
+  const syncUrl = uri + '/sync/batch';
+  const response = await getAxiosInstance().post(syncUrl, op);
+  const parsedResponse = syncOperationsResultParse.parse(response.data);
+  console.log('sendSyncOpreationsBatch', JSON.stringify(parsedResponse, null, 2));
+  return parsedResponse;
 };

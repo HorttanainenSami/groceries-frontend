@@ -7,15 +7,18 @@ import {
   reorderTasks,
 } from '@/service/LocalDatabase';
 import { TaskType } from '@groceries/shared_types';
+import { randomUUID } from 'expo-crypto';
+type AddTaskToDbProps = Omit<TaskType, 'id'> & { id?: string };
 const useLocalTasks = () => {
   const refresh = async (id: string) => {
     const result = await getTasksById(id);
+
     return result;
   };
-
-  const addTaskToDb = async (newTask: Omit<TaskType, 'id'>): Promise<TaskType> => {
+  const addTaskToDb = async (newTask: AddTaskToDbProps): Promise<TaskType> => {
     console.log('newTask', newTask);
-    const response = await createTasks(newTask);
+
+    const response = await createTasks({ id: randomUUID(), ...newTask });
     if (!response) throw new Error('Failed to create task');
     return response;
   };

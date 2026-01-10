@@ -12,7 +12,7 @@ type UseRelationSocketProps = {
   onShare?: (relation: ServerRelationWithTasksType[]) => void;
 };
 const useRelationsSocket = (props?: UseRelationSocketProps) => {
-  const { socket } = useSocketContext();
+  const { socket, connected } = useSocketContext();
 
   useEffect(() => {
     const handleRelationNameChange = (payload: ServerRelationType) => {
@@ -40,7 +40,6 @@ const useRelationsSocket = (props?: UseRelationSocketProps) => {
   const emitGetRelations = async () => {
     return new Promise<ServerRelationType[]>((resolve, reject) => {
       socket.emit('relations:get_relations', (response) => {
-        console.log(response);
         if (response.success) {
           resolve(response.data);
         } else {
@@ -90,6 +89,7 @@ const useRelationsSocket = (props?: UseRelationSocketProps) => {
     emitChangeRelationName,
     emitDeleteRelation,
     emitShareWithUser,
+    connected,
   };
 };
 

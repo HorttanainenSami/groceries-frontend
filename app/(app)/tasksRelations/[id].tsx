@@ -5,8 +5,6 @@ import TaskEditModal from '@/components/TaskEditModal';
 import { useLayoutEffect, useState } from 'react';
 import { useLocalSearchParams, useNavigation } from 'expo-router';
 import useTaskStorage from '@/hooks/useTaskStorage';
-import useRelationStorage from '@/hooks/useRelationStorage';
-import RelationCreateModal from '@/components/RelationCreateModal';
 import React from 'react';
 import DraggableFlatList, {
   DragEndParams,
@@ -17,6 +15,7 @@ import { TaskType } from '@groceries/shared_types';
 import SwipeableItem, { useSwipeableItemParams } from 'react-native-swipeable-item';
 import * as Haptics from 'expo-haptics';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { useRelationContext } from '@/contexts/RelationContext';
 
 export default function Index() {
   const [isEditModalVisible, setEditModalVisible] = useState<TaskType | null>(null);
@@ -26,21 +25,15 @@ export default function Index() {
   const id = String(params.id);
   const { removeTask, toggleTask, tasks, editTask, loading, refresh, storeTask, reorderTasks } =
     useTaskStorage();
-  const { relations, editRelationsName } = useRelationStorage();
+  const { relations } = useRelationContext();
   const navigation = useNavigation();
-  const [editRelationNameModalVisible, setEditRelationNameModalVisible] = useState(false);
 
   useLayoutEffect(() => {
     const initialRelation = relations.find((i) => i.id === id);
-    console.log('initialRelation', initialRelation);
     if (initialRelation) {
       refresh(initialRelation);
       navigation.setOptions({
-        headerTitle: () => (
-          <Pressable onPress={() => setEditRelationNameModalVisible(true)}>
-            <Text style={{ fontSize: 22 }}>{initialRelation.name}</Text>
-          </Pressable>
-        ),
+        headerTitle: () => <Text style={{ fontSize: 22 }}>{initialRelation.name}</Text>,
       });
     } else {
       navigation.setOptions({
@@ -60,17 +53,6 @@ export default function Index() {
       order_idx: 9999,
     };
     storeTask(newTask);
-  };
-  const handleRelationNameChange = async (newName: string) => {
-    console.log('handleRelationNameChange', newName, id);
-    const response = await editRelationsName(id, newName);
-    navigation.setOptions({
-      headerTitle: () => (
-        <Pressable onPress={() => setEditRelationNameModalVisible(true)}>
-          <Text style={{ fontSize: 22 }}>{response?.name}</Text>
-        </Pressable>
-      ),
-    });
   };
 
   const cleanEditTask = () => setEditModalVisible(null);
@@ -110,7 +92,6 @@ export default function Index() {
       </ScaleDecorator>
     );
   }, []);
-  const relation = relations.find((i) => i.id === id);
   return (
     <View style={styles.container}>
       <DraggableFlatList
@@ -135,13 +116,7 @@ export default function Index() {
         onDelete={(task) => removeTask(task)}
         task={isEditModalVisible}
       />
-      <RelationCreateModal
-        visible={editRelationNameModalVisible}
-        onClose={() => setEditRelationNameModalVisible(false)}
-        onAccept={handleRelationNameChange}
-        title="Muuta listan nimeä"
-        initialValue={relation?.name}
-      />
+
       <Pressable style={styles.fab} onPress={() => setCreateModalVisible(true)}>
         <Text style={styles.fabText}>+</Text>
       </Pressable>
