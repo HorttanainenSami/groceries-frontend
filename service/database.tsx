@@ -12,17 +12,18 @@ import { PendingOperation } from '@groceries/shared_types';
 import z from 'zod';
 
 const getApiUrl = () => {
-  // Expo go
   if (Constants.experienceUrl) {
+    // emulator
+    if (Constants.experienceUrl === 'exp://127.0.0.1:8082') {
+      return 'http://10.0.2.2:3003';
+    }
+    // Expo go
     const host = Constants.experienceUrl.split(':')[1].replace('//', '');
     return `http://${host}:3003`;
   }
-
-  //Expo dev build
-  const debuggerHost = Constants.expoConfig?.hostUri;
-  console.log(debuggerHost);
-  if (debuggerHost) {
-    const host = debuggerHost.replace('"', '');
+  // EAS DEV BUILD
+  if (Constants.expoConfig?.hostUri) {
+    const host = Constants.expoConfig.hostUri.split(':')[0].replace('//', '');
     return `http://${host}:3003`;
   }
 
@@ -32,11 +33,10 @@ const getApiUrl = () => {
   }
 
   // fallback
-  return 'http://localhost:3003';
+  return 'http://127.0.0.1:3003';
 };
 
 export const uri = getApiUrl();
-console.log(uri);
 export const loginAPI = async (credentials: LoginType) => {
   console.log(credentials);
   const url = uri + '/login';
