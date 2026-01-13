@@ -28,7 +28,7 @@ export const TaskContextProvider = ({ children }: PropsWithChildren) => {
     <TaskContext.Provider
       value={{
         relationRef,
-        tasks,
+        tasks: tasks.sort((a, b) => a.order_idx - b.order_idx),
         setTasks,
       }}
     >

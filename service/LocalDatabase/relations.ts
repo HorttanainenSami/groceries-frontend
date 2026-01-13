@@ -116,7 +116,7 @@ export const storeServerRelation = async ({ relation, txQuery }: StoreServerRela
   const db = txQuery ? txQuery : await getDatabaseSingleton();
   await db.runAsync(
     `INSERT INTO task_relations (id, name, created_at, relation_location, last_modified, shared_with_id, shared_with_name, shared_with_email,permission)
-     VALUES (?, ?, ?, 'Server', ?, ?, ?, ?, ?-x86_64)`,
+     VALUES (?, ?, ?, 'Server', ?, ?, ?, ?, ?)`,
     [
       relation.id,
       relation.name,

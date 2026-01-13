@@ -24,9 +24,10 @@ const useTaskStorage = () => {
   const handleTaskCreatedBroadcast = React.useCallback(
     async (task: TaskType) => {
       setTasks((prev) => [...prev, task]);
+      console.log('hello from broadcast', task);
       await insertCachedTask([task]);
     },
-    [setTasks]
+    [setTasks, localTasks]
   );
 
   const handleTaskEditedBroadcast = React.useCallback(
@@ -39,8 +40,8 @@ const useTaskStorage = () => {
 
   const handleTaskRemovedBroadcast = React.useCallback(
     async (tasks: TaskType[]) => {
-      const removedIds = tasks.map((t) => t.id);
-      setTasks((prev) => prev.filter((t) => !removedIds.includes(t.id)));
+      const removedIds = new Set(tasks.map((t) => t.id));
+      setTasks((prev) => prev.filter((t) => !removedIds.has(t.id)));
       await localTasks.removeTaskFromDb(tasks);
     },
     [setTasks, localTasks]
@@ -49,7 +50,7 @@ const useTaskStorage = () => {
   const handleTaskReorderedBroadcast = React.useCallback(
     async (tasks: TaskType[]) => {
       const taskMap = new Map(tasks.map((t) => [t.id, t]));
-      setTasks((prev) => prev.map((t) => taskMap.get(t.id) ?? t));
+      setTasks((prev) => [...prev.map((t) => taskMap.get(t.id) ?? t)]);
       await localTasks.reorderTasksInDb(tasks);
     },
     [setTasks, localTasks]
@@ -181,7 +182,7 @@ const useTaskStorage = () => {
     setTasks((prev) => prev.filter((task) => !responseIds.includes(task.id)));
 
     if (!isLocal(relationRef.current)) {
-      addToQueue({ type: 'task-delete', data: response });
+      response.map((task) => addToQueue({ type: 'task-delete', data: task }));
     }
   };
 
