@@ -18,7 +18,7 @@ export const addPendingOperation = async (operation: InsertPendingOperation): Pr
   await db.runAsync(
     `INSERT INTO pending_operations
      (id, type, data, timestamp, retry_count, status)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?)`,
     [
       operation.id,
       operation.type,

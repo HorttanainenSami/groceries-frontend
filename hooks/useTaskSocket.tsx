@@ -3,7 +3,7 @@ import { useSocketContext } from '@/contexts/SocketContext';
 import { ServerRelationWithTasksType, TaskType } from '@groceries/shared_types';
 
 type UseTaskSocketProps = {
-  onTaskCreated?: (task: TaskType) => void;
+  onTaskCreated?: (task: TaskType[]) => void;
   onTaskEdited?: (task: TaskType) => void;
   onTaskRemoved?: (tasks: TaskType[]) => void;
   onTaskReordered?: (tasks: TaskType[]) => void;
@@ -15,7 +15,7 @@ const useTaskSocket = (props?: UseTaskSocketProps) => {
   useEffect(() => {
     if (!socket) return;
 
-    const handleTaskCreated = (payload: { data: TaskType }) => {
+    const handleTaskCreated = (payload: { data: TaskType[] }) => {
       console.log('task:create broadcast received', payload.data);
       props?.onTaskCreated?.(payload.data);
     };
@@ -30,7 +30,7 @@ const useTaskSocket = (props?: UseTaskSocketProps) => {
       props?.onTaskRemoved?.(payload.remove_tasks);
     };
     const handleTaskReordered = (payload: { reordered_tasks: TaskType[] }) => {
-      console.log('task:reodred_broadcast_recieved', payload.reordered_tasks);
+      console.log('task:reordered_broadcast_recieved', payload.reordered_tasks);
       props?.onTaskReordered?.(payload.reordered_tasks);
     };
 
@@ -86,7 +86,7 @@ const useTaskSocket = (props?: UseTaskSocketProps) => {
   };
   const emitReorderTask = async (tasks: TaskType[]) => {
     return new Promise<TaskType[]>((resolve, reject) => {
-      socket.emit('task:reorder', { reodred_tasks: tasks }, (response) => {
+      socket.emit('task:reorder', { reordered_tasks: tasks }, (response) => {
         console.log('task:reordered', response);
         if (response.success) {
           resolve(response.data);

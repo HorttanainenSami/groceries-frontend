@@ -115,6 +115,7 @@ export const insertCachedTask = async (
 ): Promise<TaskType[] | null> => {
   console.log('[DB] insertCachedTask');
   try {
+    if (taskData.length === 0) return null;
     const db = txQuery || (await getDatabaseSingleton());
     const dynamicValues = taskData.map(() => '(?, ?, ?, ?, ?, ?, ?, ?)').join(', ');
     const dynamicParameters = taskData.flatMap(

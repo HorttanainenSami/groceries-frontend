@@ -57,7 +57,7 @@ export const SyncContextProvider = ({ children }: React.PropsWithChildren) => {
     if (connected && !isSyncing && pendingOperations.length > 0) {
       syncAll();
     }
-  }, [connected, pendingOperations.length]);
+  }, [connected, pendingOperations.length, isSyncing]);
 
   const fetchPendingQueue = async () => {
     const operations = await getPendingOperations();
@@ -102,9 +102,6 @@ export const SyncContextProvider = ({ children }: React.PropsWithChildren) => {
 
       // Refresh que from db
       await fetchPendingQueue();
-      setLastTimeSynced(new Date().toISOString());
-
-      setLastTimeSynced(new Date().toISOString());
     } catch (error) {
       console.error('Batch sync failed:', error);
       // Schedule automatic retry for failed batch operations
@@ -121,6 +118,8 @@ export const SyncContextProvider = ({ children }: React.PropsWithChildren) => {
       }
     } finally {
       setIsSyncing(false);
+      console.log('last time synced updated');
+      setLastTimeSynced(new Date().toISOString());
     }
   };
   return (

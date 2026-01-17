@@ -19,8 +19,8 @@ const useRelationsSocket = (props?: UseRelationSocketProps) => {
       props?.onChangeName?.(payload);
     };
 
-    const handleRelationDelete = (relations: [boolean, string][]) => {
-      props?.onDelete?.(relations);
+    const handleRelationDelete = (payload: [boolean, string][]) => {
+      props?.onDelete?.(payload);
     };
     const handleRelationShare = (relation: ServerRelationWithTasksType[]) => {
       props?.onShare?.(relation);

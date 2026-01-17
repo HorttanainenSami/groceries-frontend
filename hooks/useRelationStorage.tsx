@@ -88,6 +88,7 @@ const useRelationStorage = () => {
   });
 
   React.useEffect(() => {
+    isMounted.current = true;
     return () => {
       isMounted.current = false;
     };

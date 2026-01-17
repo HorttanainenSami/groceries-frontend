@@ -12,20 +12,21 @@ const useTaskStorage = () => {
   const loading = React.useRef<boolean>(false);
   const { user } = useAuth();
   const localTasks = useLocalTasks();
-  const { addToQueue } = useSyncContext();
+  const { addToQueue, lastTimeSynced } = useSyncContext();
   const isMounted = useRef(false);
 
   useEffect(() => {
+    isMounted.current = true;
     return () => {
       isMounted.current = false;
     };
   }, []);
 
   const handleTaskCreatedBroadcast = React.useCallback(
-    async (task: TaskType) => {
-      setTasks((prev) => [...prev, task]);
-      console.log('hello from broadcast', task);
-      await insertCachedTask([task]);
+    async (tasks: TaskType[]) => {
+      setTasks((prev) => [...prev, ...tasks]);
+      console.log('hello from broadcast', tasks);
+      await insertCachedTask(tasks);
     },
     [setTasks, localTasks]
   );
@@ -67,9 +68,10 @@ const useTaskStorage = () => {
   useEffect(() => {
     // perforrm refresh if connected and mounted
     if (connected && isMounted.current && relationRef.current) {
+      console.log('refreshing');
       refresh(relationRef.current);
     }
-  }, [connected]);
+  }, [connected, lastTimeSynced]);
 
   const refresh = async (relation: RelationType) => {
     if (loading.current) return;

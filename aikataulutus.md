@@ -1,3 +1,4 @@
+17.1.26 2h Bugien korjaus synkronointi toiminnallisuudessa
 7.1.26 2h Bugien korjaus ja välimuistin päivitys kun lokaalisti luodut operaatiot ot synkronoitu serverille
 2.1.26 3h SyncContextin luominen odottavien operaatioiden tallentamiseen ja synkronointiin kun yhteys saadaan luotua
 2.1.26 1h 30min cache first arkkitehtuuri taskeille
