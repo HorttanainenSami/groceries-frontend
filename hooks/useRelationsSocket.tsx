@@ -1,7 +1,6 @@
 import { useSocketContext } from '@/contexts/SocketContext';
 import {
   ServerRelationType,
-  ClientToServerRelatiosChangeName,
   ClientToServerRelatiosShare,
   ServerRelationWithTasksType,
 } from '@groceries/shared_types';
@@ -49,30 +48,6 @@ const useRelationsSocket = (props?: UseRelationSocketProps) => {
     });
   };
 
-  const emitChangeRelationName = async (payload: ClientToServerRelatiosChangeName) => {
-    return new Promise<ServerRelationType>((resolve, reject) => {
-      socket.emit('relations:change_name', payload, (response) => {
-        if (response.success) {
-          resolve(response.data);
-        } else {
-          reject(new Error(response.error));
-        }
-      });
-    });
-  };
-
-  const emitDeleteRelation = async (id: ServerRelationType[] | ServerRelationType) => {
-    return new Promise<[boolean, string][]>((resolve, reject) => {
-      socket.emit('relations:delete', id, (response) => {
-        if (response.success) {
-          resolve(response.data);
-        } else {
-          reject(new Error(response.error));
-        }
-      });
-    });
-  };
-
   const emitShareWithUser = async (payload: ClientToServerRelatiosShare) => {
     return new Promise<ServerRelationWithTasksType[]>((resolve, reject) => {
       socket.emit('relations:share', payload, (response) => {
@@ -86,8 +61,6 @@ const useRelationsSocket = (props?: UseRelationSocketProps) => {
   };
   return {
     emitGetRelations,
-    emitChangeRelationName,
-    emitDeleteRelation,
     emitShareWithUser,
     connected,
   };
