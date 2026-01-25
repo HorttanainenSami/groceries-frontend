@@ -1,3 +1,4 @@
+25.1.26 0.5h Käyttämättömien socket crud toimintojen poisto
 17.1.26 2h Bugien korjaus synkronointi toiminnallisuudessa
 7.1.26 2h Bugien korjaus ja välimuistin päivitys kun lokaalisti luodut operaatiot ot synkronoitu serverille
 2.1.26 3h SyncContextin luominen odottavien operaatioiden tallentamiseen ja synkronointiin kun yhteys saadaan luotua
@@ -31,4 +32,4 @@
 18.1.25 3h listojen pysyväis tallennus ja muokkaus
 7.1.25 3h ohjelman alustus ja tehtävä listan luominen
 7.1.25 1h tehtävän muokkaus modal näkymän toiminta, modaalin avaamisen yhteydessä näppäimistö aukeaa ja ohjelmisto fokusoituu tekstikenttään
-83h
+95h

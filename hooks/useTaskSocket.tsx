@@ -16,21 +16,17 @@ const useTaskSocket = (props?: UseTaskSocketProps) => {
     if (!socket) return;
 
     const handleTaskCreated = (payload: { data: TaskType[] }) => {
-      console.log('task:create broadcast received', payload.data);
       props?.onTaskCreated?.(payload.data);
     };
 
     const handleTaskEdited = (payload: { edited_task: TaskType }) => {
-      console.log('task:edit broadcast received', payload);
       props?.onTaskEdited?.(payload.edited_task);
     };
 
     const handleTaskRemoved = (payload: { remove_tasks: TaskType[] }) => {
-      console.log('task:remove broadcast received', payload.remove_tasks);
       props?.onTaskRemoved?.(payload.remove_tasks);
     };
     const handleTaskReordered = (payload: { reordered_tasks: TaskType[] }) => {
-      console.log('task:reordered_broadcast_recieved', payload.reordered_tasks);
       props?.onTaskReordered?.(payload.reordered_tasks);
     };
 
@@ -59,63 +55,8 @@ const useTaskSocket = (props?: UseTaskSocketProps) => {
     });
   };
 
-  const emitCreateTask = async (task: TaskType) => {
-    return new Promise<TaskType | TaskType[]>((resolve, reject) => {
-      socket.emit('task:create', { new_task: task }, (response) => {
-        console.log('task:created', response);
-        if (response.success) {
-          resolve(response.data);
-        } else {
-          reject(new Error(response.error));
-        }
-      });
-    });
-  };
-
-  const emitEditTask = async (task: TaskType) => {
-    return new Promise<TaskType>((resolve, reject) => {
-      socket.emit('task:edit', { edited_task: task }, (response) => {
-        console.log('task:edited', response);
-        if (response.success) {
-          resolve(response.data);
-        } else {
-          reject(new Error(response.error));
-        }
-      });
-    });
-  };
-  const emitReorderTask = async (tasks: TaskType[]) => {
-    return new Promise<TaskType[]>((resolve, reject) => {
-      socket.emit('task:reorder', { reordered_tasks: tasks }, (response) => {
-        console.log('task:reordered', response);
-        if (response.success) {
-          resolve(response.data);
-        } else {
-          reject(new Error(response.error));
-        }
-      });
-    });
-  };
-
-  const emitRemoveTask = async (tasks: TaskType[]) => {
-    return new Promise<TaskType[]>((resolve, reject) => {
-      socket.emit('task:remove', { remove_tasks: tasks }, (response) => {
-        console.log('task:removed', response);
-        if (response.success) {
-          resolve(response.data);
-        } else {
-          reject(new Error(response.error));
-        }
-      });
-    });
-  };
-
   return {
     emitJoinTaskRoom,
-    emitCreateTask,
-    emitEditTask,
-    emitRemoveTask,
-    emitReorderTask,
     connected,
   };
 };
