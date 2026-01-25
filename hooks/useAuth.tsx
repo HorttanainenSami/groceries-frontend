@@ -28,7 +28,6 @@ const useAuth = () => {
     const expiredJwtToken = getAxiosInstance().interceptors.response.use(
       (response) => response,
       (error: AxiosError) => {
-        console.log('error', error);
         if (error.response?.status === 401) {
           logout();
         }
