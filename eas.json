@@ -4,13 +4,13 @@
       "node": "22.12.0"
     },
     "development": {
-      "developmentClient": true,
       "distribution": "internal",
       "android": {
         "buildType": "apk"
       },
       "env": {
-        "NODE_ENV": "development",
+        "DB_NAME": "todo",
+
         "API_URL": "http://5.61.90.231"
       }
     },
@@ -20,7 +20,7 @@
         "buildType": "apk"
       },
       "env": {
-        "NODE_ENV": "production",
+        "DB_NAME": "todo",
         "API_URL": "http://5.61.90.231"
       }
     },
@@ -29,7 +29,7 @@
         "buildType": "apk"
       },
       "env": {
-        "NODE_ENV": "production",
+        "DB_NAME": "todo",
         "API_URL": "http://5.61.90.231"
       }
     }

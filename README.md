@@ -1,50 +1,150 @@
-# Welcome to your Expo app 👋
+# Ostoslista Frontend
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Ohjelmisto totetutettu Fullstack open kurssin projektityönä.
 
-## Get started
+Ostoslista mobiiliapplikaatio
 
-1. Install dependencies
+## Motivaatio
 
-   ```bash
-   npm install
-   ```
+Vaimon kanssa ostoslistojen säätäminen turhautti kun välillä ostoslista tulee joko:
 
-2. Start the app
+- viestinä
+- paperillisena
+- paperillisena ja viestinä perästä lisäyksistä
+- Whatsapissa ostokset ripoteltuna viestien sekaan
+- Whatsapissa kuva paperillisesta ostoslistasta
+- Whatsapissa kuva paperillisesta ostoslistasta + viestinä lisäyksiä
 
-   ```bash
-    npx expo start
-   ```
+Tämän johdosta kotona tuli useammin kuin muutaman kerran "Ainiin se unohtu" -tilanteita.
 
-In the output, you'll find options to open the app in a
+Päätin luoda projektina ostoslistan jota voidaan käyttää lokaalisti ja jakaa tarpeentullen toisen käyttäjän kanssa.
+Myös reaaliaikainen muokkaaminen tuli projektin aikana tarpeelliseksi. Mielenkiinnosta halusin toteuttaa myös offline first sync toiminnallisuuden.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Toiminnallisuudet
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+- Lokaali pysyväistallennus
+- Serverin pysyväistallennus Nodejs + Postgres
+- Käyttäjän autentikointi (JWT tokenilla)
+- offline first sync
+- Jaettavat ostoslistat reaaliaikaisella päivityksellä (Socket.io)
+- Käyttäjän syötteen validointi (Zod)
+- TypeScript
+- Jaetut tyypitykset [@groceries/shared_types](https://github.com/HorttanainenSami/groceries-shared-types)
 
-## Get a fresh project
+## Projektiin käytetty aika
 
-When you're ready, run:
+| Käytetty aika |                                                                                                                      |
+| :------------ | -------------------------------------------------------------------------------------------------------------------: |
+| 97.5 h        |      [Frontendin työaikakirjaus](https://github.com/HorttanainenSami/groceries-frontend/blob/master/aikataulutus.md) |
+| 94.5 h        | [Backendin työaikakirjaus](https://github.com/HorttanainenSami/groceries-backend/blob/master/ty%C3%B6tuntikuvaus.md) |
+| 192 h         |                                                                                                             Yhteensä |
 
-```bash
-npm run reset-project
+## Esivaatimukset
+
+Käynnistäminen
+
+- expo go [v53 sdk](https://expo.dev/go?sdkVersion=53&platform=android&device=true)
+- npm
+- Node.js (v18+)
+
+Testaus
+
+- Maestro CLI
+- [Backend](https://github.com/HorttanainenSami/groceries-backend) käynnissä
+
+## Stack
+
+- React native
+- Expo
+- Socket.io
+- JWT token
+- Expo-sqlite
+- Axios
+- Typescript
+- Zod
+
+## Synkronointi
+
+<img src="https://github.com/HorttanainenSami/groceries-backend/blob/master/images/sync-work-flow.png?raw=true" alt="Alt Text" width="400" height="600">
+
+## Konfliktien hallinta
+
+Käyttäjä tekee muutoksia tuote_1:seen käyttäjä_2:n kanssa jaettuun ostoslistaan.
+Käyttäjä on offline tilassa joten muutokset tallentuu vain käyttäjän laitteeseen.
+
+<img src="https://github.com/HorttanainenSami/groceries-backend/blob/master/images/user_makes_changes_offline.png?raw=true" alt="Alt Text" width="400" height="250">
+
+Tämän jälkeen Käyttäjä_2 tekee muutoksia myös tuote_1:seen. Käyttäjä_2 on verkossa joten serveri päivittyy
+
+<img src="https://github.com/HorttanainenSami/groceries-backend/blob/master/images/colloborator_makes_changes_to_server.png?raw=true" alt="Alt Text" width="400" height="600">
+
+Käyttäjä pääsee taas verkkoon, joten muutokset synkronoituu serverille. Aiheutuu konflikti.
+
+<img src="https://github.com/HorttanainenSami/groceries-backend/blob/master/images/user_syncs_to_backend_LLW_conflict.png?raw=true" alt="Alt Text" width="400" height="700">
+
+Serveri käyttää LLW periaatetta konfliktien hallintaan. Eli konfliktitilanteessa viimeiseksi muokattu (last_modified) voittaa.
+Yllä mainitussa tilanteessa Käyttäjän muutos perutaan ja serveri palauttaa pilveen tallennetun uudemman tuotteen käyttäjälle joka korvaa laitteella olevan tuotteen.
+
+## Konfliktien reunatapaukset
+
+Listassa rajatapaukset mitkä tuottavat onnistuneen tilanteen kun muokattava kohde on poistettu
+
+|         | Lista poistettu | Tuote poistettu |
+| :------ | :-------------: | :-------------: |
+| Create  |                 |                 |
+| Edit    |                 |                 |
+| Delete  |                 |       ✅        |
+| Toggle  |                 |                 |
+| Reorder |                 |                 |
+
+## Alustus
+
+---
+
+1. Luo .env.dev tiedosto
+
+```
+EXPO_PUBLIC_DB_NAME=todo
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+2. lataa riippuvuudet projektille `npm i`
 
-## Learn more
+3. `npm start` avaa projektin
 
-To learn more about developing your project with Expo, look at the following resources:
+## Testaus
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Frontendissä on E2E testit [Maestrolla](https://maestro.dev/). Maestro tukee pilvessä suoritettavia rinnakkain suoritettavia testejä mutta ne maksavat joten käytössä on lokaalisti suoritettavat E2E testaukset Maestro CLI:illä.
 
-## Join the community
+### Testauksen vaatimukset
 
-Join our community of developers creating universal apps.
+**Maestro CLI:**
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- Asenna: `curl -Ls "https://get.maestro.mobile.dev" | bash`
+
+**Fyysinen Android-laite:**
+
+- USB-yhteys tietokoneeseen
+- Kehittäjäasetukset päällä (Settings → About → Build number 7x)
+- USB-vianmääritys päällä (Developer options → USB debugging)
+- ADB tunnistaa laitteen (`adb devices`)
+
+**Emulaattori:**
+
+- Android Studio asennettuna
+- Vähintään yksi AVD luotu (Android Studio → Device Manager)
+- Emulaattori käynnissä ennen testejä
+
+### Backendin käynnistäminen
+
+1. Pidä huoli että Docker on käynnissä
+2. Käynnistä testitietokanta Dockerissa `npm run test-sql` -komennolla
+
+### Testauksien käynnistys
+
+`npm run test:E2E`
+
+## Linkkejä
+
+- [Työtuntikuvaus](https://github.com/HorttanainenSami/groceries-frontend/blob/master/aikataulutus.md)
+- [Backend](https://github.com/HorttanainenSami/groceries-backend)
+- [@groceries/shared_types](https://github.com/HorttanainenSami/groceries-shared-types)
