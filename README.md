@@ -43,7 +43,8 @@ Myös reaaliaikainen muokkaaminen tuli projektin aikana tarpeelliseksi. Mielenki
 
 Käynnistäminen
 
-- expo go [v53 sdk](https://expo.dev/go?sdkVersion=53&platform=android&device=true)
+- expo go HUOM PROJEKTI VAATII [v53 sdk](https://expo.dev/go?sdkVersion=53&platform=android&device=true) VERSION EXPO GO:STA
+- Expo cli
 - npm
 - Node.js (v18+)
 
@@ -110,6 +111,7 @@ EXPO_PUBLIC_DB_NAME=todo
 2. lataa riippuvuudet projektille `npm i`
 
 3. `npm start` avaa projektin
+4. Yhdistä expo go 
 
 ## Testaus
 
