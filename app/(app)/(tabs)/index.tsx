@@ -2,7 +2,7 @@ import { StyleSheet, Pressable, FlatList, Text, View } from 'react-native';
 import { useEffect, useState } from 'react';
 import { useRouter, useNavigation } from 'expo-router';
 import IconButton from '@/components/IconButton';
-import { getTasksById } from '@/service/LocalDatabase';
+import { taskDAO } from '@/service/LocalDatabase';
 import { SearchUserType } from '@/types';
 import ShareRelationsWithUser from '@/components/ShareRelationsWithUsersModal';
 import CheckboxWithText from '@/components/CheckboxWithText';
@@ -84,7 +84,7 @@ export default function Index() {
       const relationsWithTasks = await Promise.all(
         selectedRelations.map(async (relation) => ({
           ...relation,
-          tasks: await getTasksById(relation.id),
+          tasks: await taskDAO.getById(relation.id),
         }))
       );
       await shareRelation({ user_shared_with: user.id, task_relations: relationsWithTasks });

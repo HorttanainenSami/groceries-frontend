@@ -5,9 +5,11 @@ import {
   addPendingOperation,
   getPendingOperations,
   removePendingOperation,
+  taskDAO,
+  relationsDAO,
 } from '@/service/LocalDatabase';
 import { PendingOperation } from '@groceries/shared_types';
-import { sendSyncOperationsBatch } from '@/service/database';
+import { sendSyncOperationsBatch } from '@/service/serverAPI';
 
 type SyncContextType = {
   addToQueue: (op: Omit<PendingOperation, 'id' | 'timestamp' | 'retryCount'>) => void;
@@ -30,7 +32,7 @@ export const useSyncContext = () => {
 export const SyncContextProvider = ({ children }: React.PropsWithChildren) => {
   const [lastTimeSynced, setLastTimeSynced] = React.useState<string | null>(null);
   const [pendingOperations, setPendingOperations] = React.useState<PendingOperation[]>([]);
-  const [isSyncing, setIsSyncing] = React.useState(false);
+  const isSyncing = React.useRef(false);
   const { connected } = useSocketContext();
   const retryTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -54,7 +56,7 @@ export const SyncContextProvider = ({ children }: React.PropsWithChildren) => {
   }, []);
   //Sync all when connected
   React.useEffect(() => {
-    if (connected && !isSyncing && pendingOperations.length > 0) {
+    if (connected && !isSyncing.current && pendingOperations.length > 0) {
       syncAll();
     }
   }, [connected, pendingOperations.length, isSyncing]);
@@ -75,10 +77,10 @@ export const SyncContextProvider = ({ children }: React.PropsWithChildren) => {
   };
 
   const syncAll = async () => {
-    if (isSyncing || !connected || pendingOperations.length === 0) {
+    if (isSyncing.current || !connected || pendingOperations.length === 0) {
       return;
     }
-    setIsSyncing(true);
+    isSyncing.current = true;
 
     try {
       // Push opertaions to server
@@ -86,19 +88,41 @@ export const SyncContextProvider = ({ children }: React.PropsWithChildren) => {
 
       const { success, failed } = result;
 
+      const pendingOpsMap = new Map(pendingOperations.map((op) => [op.id, op]));
+
+      // Handle all failed that returned server item (LWW conflict resolution)
+      const failedLWWTask = failed
+        .filter((i) => i.type === 'task')
+        .map((failed) => taskDAO.updateCached(failed.serverTask));
+      const failedLWWRelation = failed
+        .filter((i) => i.type === 'relation')
+        .map((failed) => relationsDAO.updateCached([failed.serverRelations]));
+
+      // Handle operations that failed because relation was deleted on server
+      const relationDeletedReasons = ['Relation deleted', 'Relation already deleted from server'];
+      const relationDeletedPromises = failed
+        .filter((i) => i.type === 'simple' && relationDeletedReasons.includes(i.reason))
+        .map((i) => {
+          const op = pendingOpsMap.get(i.id);
+          if (!op) return null;
+          // Get relation ID based on operation type
+          if (op.type.startsWith('task-')) {
+            return (op.data as { task_relations_id: string }).task_relations_id;
+          } else if (op.type.startsWith('relation-')) {
+            return (op.data as { id: string }).id;
+          }
+          return null;
+        })
+        .filter((id): id is string => id !== null) // filter undefined and null
+        .map((relationId) => relationsDAO.moveFromCachedToLocal(relationId));
+
+      await Promise.all([...failedLWWTask, ...failedLWWRelation, ...relationDeletedPromises]);
+
       // Remove ops from db
       await Promise.all([
-        success.map((id) => removePendingOperation(id.id)),
-        failed.map((id) => removePendingOperation(id.id)),
+        ...success.map((op) => removePendingOperation(op.id)),
+        ...failed.map((op) => removePendingOperation(op.id)),
       ]);
-
-      // Notify user if any operation were not successful
-      if (failed.length > 0) {
-        console.warn(
-          `${failed.length} operations failed to sync after 5 retries and were discarded`
-        );
-        // TODO: Show toast/notification to user
-      }
 
       // Refresh que from db
       await fetchPendingQueue();
@@ -117,14 +141,20 @@ export const SyncContextProvider = ({ children }: React.PropsWithChildren) => {
         }, 10000);
       }
     } finally {
-      setIsSyncing(false);
+      isSyncing.current = false;
       console.log('last time synced updated');
       setLastTimeSynced(new Date().toISOString());
     }
   };
   return (
     <SyncContext.Provider
-      value={{ isSyncing, lastTimeSynced, pendingOperations, addToQueue, syncAll }}
+      value={{
+        isSyncing: isSyncing.current,
+        lastTimeSynced,
+        pendingOperations,
+        addToQueue,
+        syncAll,
+      }}
     >
       {children}
     </SyncContext.Provider>

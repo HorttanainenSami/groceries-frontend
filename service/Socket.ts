@@ -1,5 +1,5 @@
 import { io } from 'socket.io-client';
-import { uri } from '@/service/database';
+import { uri } from '@/service/serverAPI';
 import { SocketClientType } from '@groceries/shared_types';
 let socket: SocketClientType | null = null;
 

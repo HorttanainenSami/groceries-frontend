@@ -1,15 +1,6 @@
 import { useRelationContext } from '@/contexts/RelationContext';
 import useRelationsSocket from './useRelationsSocket';
-import {
-  changeRelationName,
-  createLocalRelation,
-  deleteRelationWithTasks,
-  getDatabaseSingleton,
-  getTaskRelations,
-  insertCachedTask,
-  replaceServerRelations,
-  storeServerRelation,
-} from '@/service/LocalDatabase';
+import { relationsDAO, getDatabaseSingleton, taskDAO } from '@/service/LocalDatabase';
 
 import React from 'react';
 import {
@@ -25,6 +16,7 @@ const useRelationStorage = () => {
   const { relations, setRelations } = useRelationContext();
   const loading = React.useRef(false);
   const isMounted = React.useRef(true);
+  const { addToQueue, pendingOperations, isSyncing, lastTimeSynced } = useSyncContext();
 
   const handleChangeNameBroadcast = React.useCallback(
     async (broadcastedRelation: ServerRelationType) => {
@@ -33,7 +25,7 @@ const useRelationStorage = () => {
         prev.map((rel) => (rel.id === broadcastedRelation.id ? broadcastedRelation : rel))
       );
       loading.current = false;
-      await changeRelationName(broadcastedRelation.id, broadcastedRelation.name);
+      await relationsDAO.updateName(broadcastedRelation.id, broadcastedRelation.name);
     },
     [setRelations]
   );
@@ -46,13 +38,12 @@ const useRelationStorage = () => {
         return filtered;
       });
       loading.current = false;
-      await deleteRelationWithTasks(
-        deletedRelations
-          .filter((i) => i[0])
-          .map((i) => ({
-            id: i[1],
-          }))
-      );
+      const deletedIds = deletedRelations
+        .filter((i) => i[0])
+        .map((i) => ({
+          id: i[1],
+        }));
+      relationsDAO.delete(deletedIds);
     },
     [setRelations]
   );
@@ -69,10 +60,10 @@ const useRelationStorage = () => {
         t.map(async (relation) => {
           const { tasks, ...rest } = relation;
           // Store relation
-          await storeServerRelation({ relation: rest, txQuery: db });
+          await relationsDAO.insertCached({ relation: rest, txQuery: db });
           // Store all tasks for relation
           if (tasks.length > 0) {
-            await insertCachedTask(tasks, db);
+            await taskDAO.insertCached(tasks, db);
           }
         })
       );
@@ -80,7 +71,6 @@ const useRelationStorage = () => {
     [setRelations]
   );
 
-  const { addToQueue, pendingOperations } = useSyncContext();
   const { emitGetRelations, emitShareWithUser, connected } = useRelationsSocket({
     onChangeName: handleChangeNameBroadcast,
     onDelete: handleDeleteBroadcast,
@@ -96,23 +86,23 @@ const useRelationStorage = () => {
 
   // Fetch from server when socket connects
   React.useEffect(() => {
-    if (connected && isMounted.current && !loading.current) {
+    if (connected && isMounted.current && !loading.current && !isSyncing) {
       getRelations();
     }
-  }, [connected]);
+  }, [connected, lastTimeSynced]);
 
   const getRelations = async () => {
     if (loading.current) return;
 
     loading.current = true;
     try {
-      const cached = await getTaskRelations();
+      const cached = await relationsDAO.getAll();
       setRelations([...cached]);
       // update cached storage
       if (connected && pendingOperations.length === 0 && isMounted.current) {
         const server = await emitGetRelations();
-        await replaceServerRelations(server);
-        const newCachedReleations = await getTaskRelations();
+        await relationsDAO.replaceAllCached(server);
+        const newCachedReleations = await relationsDAO.getAll();
         setRelations([...newCachedReleations]);
       }
     } catch (error) {
@@ -125,13 +115,13 @@ const useRelationStorage = () => {
   const refresh = async () => getRelations();
 
   const addRelationLocal = async (name: string) => {
-    await createLocalRelation({ name });
+    await relationsDAO.create({ name });
     refresh();
   };
   const removeRelations = async (relations: RelationType[]) => {
     try {
       const server = relations.filter((i) => i.relation_location === 'Server');
-      const removeAll = await deleteRelationWithTasks(relations);
+      const removeAll = await relationsDAO.delete(relations);
       if (server.length > 0) {
         server.map((i) => addToQueue({ type: 'relation-delete', data: i }));
       }
@@ -153,7 +143,7 @@ const useRelationStorage = () => {
       console.error('Relation not found for id:', id);
       return null;
     }
-    const db = await changeRelationName(id, newName);
+    const db = await relationsDAO.updateName(id, newName);
     if (!db) {
       console.error('Failed to change relation name in DB for id:', id);
       return null;
@@ -186,8 +176,7 @@ const useRelationStorage = () => {
         (i) => i.relation_location === 'Local'
       ) as LocalRelationType[];
 
-      const deleted =
-        localRelations.length === 0 ? [] : await deleteRelationWithTasks(localRelations);
+      const deleted = localRelations.length === 0 ? [] : await relationsDAO.delete(localRelations);
 
       const successfulDeletes = deleted
         .filter((result) => result[0] === true)

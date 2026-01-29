@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Pressable, View, Text, StyleSheet, FlatList } from 'react-native';
 import Modal from './Modal';
-import { searchUsers } from '@/service/database';
+import { searchUsers } from '@/service/serverAPI';
 import CheckboxWithText from './CheckboxWithText';
 import { SearchUserType } from '@/types';
 import useAlert from '@/hooks/useAlert';

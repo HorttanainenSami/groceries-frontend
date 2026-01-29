@@ -58,8 +58,8 @@
     "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
-    "@groceries/shared_types": "github:HorttanainenSami/groceries-shared-types#master",
     "@babel/core": "^7.25.2",
+    "@groceries/shared_types": "github:HorttanainenSami/groceries-shared-types#master",
     "@react-native/typescript-config": "^0.83.1",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/react": "^16.3.0",

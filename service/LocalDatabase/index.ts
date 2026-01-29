@@ -1,5 +1,5 @@
 export * from './initialize';
-export * from './tasks';
-export * from './relations';
+export * from './tasksDAO';
+export * from './relationsDAO';
 export * from './pendingOperations';
 export * from './types';

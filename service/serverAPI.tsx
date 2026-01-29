@@ -4,41 +4,39 @@ import {
   ServerRelationSchema,
   loginReponseSchema,
   registerResponseSchema,
+  SyncBatchResponseSchema,
 } from '@groceries/shared_types';
 import { getAxiosInstance } from '@/service/AxiosInstance';
 
 import Constants from 'expo-constants';
 import { PendingOperation } from '@groceries/shared_types';
-import z from 'zod';
 
 const getApiUrl = () => {
-  if (Constants.experienceUrl) {
-    // emulator
-    if (Constants.experienceUrl === 'exp://127.0.0.1:8082') {
-      return 'http://10.0.2.2:3003';
-    }
-    // Expo go
-    const host = Constants.experienceUrl.split(':')[1].replace('//', '');
-    return `http://${host}:3003`;
-  }
-  // EAS DEV BUILD
-  if (Constants.expoConfig?.hostUri) {
-    const host = Constants.expoConfig.hostUri.split(':')[0].replace('//', '');
-    return `http://${host}:3003`;
-  }
-
-  //EAS Build
+  // EAS Build - use env variable
   if (process.env.EXPO_PUBLIC_API_URL) {
     return process.env.EXPO_PUBLIC_API_URL;
   }
 
-  // fallback
-  return 'http://127.0.0.1:3003';
+  // Dev: get host from Expo config
+  const hostUri = Constants.expoConfig?.hostUri;
+  if (hostUri) {
+    const host = hostUri.split(':')[0];
+    // Android emulator uses 10.0.2.2 to reach host machine
+    if (host === 'localhost' || host === '127.0.0.1') {
+      return 'http://10.0.2.2:3003';
+    }
+    // Physical device - use the actual dev machine IP
+    return `http://${host}:3003`;
+  }
+
+  // fallback for Android emulator
+  return 'http://10.0.2.2:3003';
 };
 
 export const uri = getApiUrl();
 export const loginAPI = async (credentials: LoginType) => {
   console.log(credentials);
+  console.log(uri);
   const url = uri + '/login';
   const response = await getAxiosInstance().post(url, credentials);
   const parsedResponse = loginReponseSchema.safeParse(response.data);
@@ -107,14 +105,11 @@ export const getServerRelations = async (): Promise<ServerRelationType[]> => {
     return [];
   }
 };
-const syncOperationsResultParse = z.object({
-  success: z.object({ id: z.string().uuid() }).array(),
-  failed: z.object({ id: z.string().uuid(), reason: z.string() }).array(),
-});
+
 export const sendSyncOperationsBatch = async (op: PendingOperation[]) => {
   const syncUrl = uri + '/sync/batch';
   const response = await getAxiosInstance().post(syncUrl, op);
-  const parsedResponse = syncOperationsResultParse.parse(response.data);
+  const parsedResponse = SyncBatchResponseSchema.parse(response.data);
   console.log('sendSyncOpreationsBatch', JSON.stringify(parsedResponse, null, 2));
   return parsedResponse;
 };

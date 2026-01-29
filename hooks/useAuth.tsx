@@ -3,7 +3,7 @@ import { LoginType, RegisterType } from '@/types';
 import useStorage from '@/hooks/useAsyncStorage';
 import { ErrorResponseSchema } from '../types';
 import useAlert from '@/hooks/useAlert';
-import { loginAPI, signupAPI } from '@/service/database';
+import { loginAPI, signupAPI } from '@/service/serverAPI';
 import { isAxiosError, AxiosError } from 'axios';
 import { getAxiosInstance } from '@/service/AxiosInstance';
 import { useAuthContext } from '@/contexts/AuthenticationContext';

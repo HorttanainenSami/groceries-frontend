@@ -5,14 +5,14 @@ import React, { useEffect, useRef } from 'react';
 import { useTaskContext } from '@/contexts/taskContext';
 import { RelationType, TaskType } from '@groceries/shared_types';
 import { useSyncContext } from '@/contexts/SyncContext';
-import { insertCachedTask, replaceCachedTasks } from '@/service/LocalDatabase';
+import { taskDAO } from '@/service/LocalDatabase';
 
 const useTaskStorage = () => {
   const { relationRef, setTasks, tasks } = useTaskContext();
   const loading = React.useRef<boolean>(false);
   const { user } = useAuth();
   const localTasks = useLocalTasks();
-  const { addToQueue, lastTimeSynced } = useSyncContext();
+  const { addToQueue, lastTimeSynced, isSyncing } = useSyncContext();
   const isMounted = useRef(false);
 
   useEffect(() => {
@@ -26,7 +26,7 @@ const useTaskStorage = () => {
     async (tasks: TaskType[]) => {
       setTasks((prev) => [...prev, ...tasks]);
       console.log('hello from broadcast', tasks);
-      await insertCachedTask(tasks);
+      await taskDAO.insertCached(tasks);
     },
     [setTasks, localTasks]
   );
@@ -90,7 +90,7 @@ const useTaskStorage = () => {
 
       const response = await emitJoinTaskRoom(relation.id);
 
-      await replaceCachedTasks(response.tasks, relationRef.current.id);
+      await taskDAO.replaceAllCached(response.tasks, relationRef.current.id);
       const updated = await localTasks.refresh(relation.id);
       setTasks(updated);
     } catch (error) {
@@ -199,6 +199,7 @@ const useTaskStorage = () => {
     toggleTask,
     removeTask,
     reorderTasks,
+    isSyncing,
   };
 };
 
