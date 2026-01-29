@@ -22,8 +22,7 @@ export const initDb = async () => {
     shared_with_email TEXT,
     shared_with_id UUID,
     permission TEXT CHECK(permission IN ('owner', 'edit')),
-    last_modified TEXT,
-    synced TEXT CHECK(synced IN ('synced', 'pending'))
+    last_modified TEXT
   );`);
   await db.execAsync(`
   CREATE TABLE IF NOT EXISTS tasks (
@@ -35,7 +34,6 @@ export const initDb = async () => {
     task_relations_id UUID,
     order_idx INTEGER DEFAULT NULL,
     last_modified TEXT,
-    synced TEXT CHECK(synced IN ('synced', 'pending')),
     FOREIGN KEY (task_relations_id) REFERENCES task_relations(id) ON DELETE CASCADE
   );`);
   await db.execAsync(`
@@ -44,8 +42,7 @@ export const initDb = async () => {
     type TEXT NOT NULL,
     data TEXT NOT NULL,
     timestamp TEXT NOT NULL,
-    retry_count INTEGER DEFAULT 0,
-    status TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'syncing', 'failed'))
+    retry_count INTEGER DEFAULT 0
   );`);
 };
 

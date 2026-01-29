@@ -59,10 +59,10 @@ export const SocketProvider = ({ children }: React.PropsWithChildren) => {
     };
 
     const connectErrorHandler = async (err: Error) => {
-      console.error('Connection error');
+      console.log('Connection error');
       setConnected(false);
       if (err.message === 'Invalid token' || err.message === 'jwt expired') {
-        console.error('Invalid token, logging out');
+        console.log('Invalid token, logging out');
         logout();
       } else {
         const timer = setTimeout(() => {

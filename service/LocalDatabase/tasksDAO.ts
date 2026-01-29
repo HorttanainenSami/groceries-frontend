@@ -18,7 +18,7 @@ class TaskDAO {
       const date = new Date().toISOString();
       const result = await db.getFirstAsync<TaskType>(
         'INSERT INTO tasks (id, task, created_at, task_relations_id, last_modified, order_idx ) VALUES (?, ?, ?, ?, ?, ?) RETURNING *;',
-        [Crypto.randomUUID(), task.task, date, task.task_relations_id, date, task.order_idx]
+        [Crypto.randomUUID(), task.task, date, task.task_relations_id, date, task.order_idx ?? 9]
       );
       console.log(result);
       return result;
@@ -99,7 +99,7 @@ class TaskDAO {
       for (const { order_idx, id } of tasks) {
         await db.runAsync(
           'UPDATE tasks SET order_idx = ?, last_modified=? WHERE id=? RETURNING *',
-          order_idx || null,
+          order_idx ?? 99,
           new Date().toISOString(),
           id
         );
@@ -134,7 +134,7 @@ class TaskDAO {
           completed_at,
           completed_by,
           task_relations_id,
-          order_idx,
+          order_idx ?? 99,
           last_modified,
         ]
       );
@@ -195,7 +195,7 @@ class TaskDAO {
           serverTask.completed_at,
           serverTask.completed_by,
           serverTask.task_relations_id,
-          serverTask.order_idx,
+          serverTask.order_idx ?? 99,
           serverTask.last_modified,
         ]
       );
