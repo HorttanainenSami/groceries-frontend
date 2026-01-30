@@ -43,7 +43,8 @@
       "typedRoutes": true
     },
     "extra": {
-      "apiUrl": "http://5.61.90.231/",
+      "DB_NAME": "todo",
+      "API_URL": "http://5.61.90.231",
       "router": {},
       "eas": {
         "projectId": "0ef84abf-20b1-4c3b-80ee-d192f35ac00e"

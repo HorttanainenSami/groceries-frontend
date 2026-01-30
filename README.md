@@ -84,7 +84,10 @@ Käyttäjä pääsee taas verkkoon, joten muutokset synkronoituu serverille. Aih
 <img src="https://github.com/HorttanainenSami/groceries-backend/blob/master/images/user_syncs_to_backend_LLW_conflict.png?raw=true" alt="Alt Text" width="400" height="700">
 
 Serveri käyttää LLW periaatetta konfliktien hallintaan. Eli konfliktitilanteessa viimeiseksi muokattu (last_modified) voittaa.
-Yllä mainitussa tilanteessa Käyttäjän muutos perutaan ja serveri palauttaa pilveen tallennetun uudemman tuotteen käyttäjälle joka korvaa laitteella olevan tuotteen.
+Yllä esitetyssä tilanteessa Käyttäjän muutos perutaan ja serveri palauttaa pilveen tallennetun uudemman tuotteen käyttäjälle joka korvaa laitteella olevan tuotteen.
+
+Myös tilanteessa missä käyttäjä on muokannut listaa offline tilassa ja toinen käyttäjä poistaa kyseisen listan serveriltä.
+Yhteyden muodostettua syntyy konflikti ja client korjaa tilanteen tallentamalla listan omaan laitteeseensa ettei käyttäjän offline tilassa tehdyt muutoket häviä
 
 ## Konfliktien reunatapaukset
 
@@ -111,7 +114,7 @@ EXPO_PUBLIC_DB_NAME=todo
 2. lataa riippuvuudet projektille `npm i`
 
 3. `npm start` avaa projektin
-4. Yhdistä expo go 
+4. Yhdistä expo go
 
 ## Testaus
 

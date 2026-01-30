@@ -13,6 +13,15 @@ import { PendingOperation } from '@groceries/shared_types';
 
 const getApiUrl = () => {
   // EAS Build - use env variable
+
+  console.log(Constants.expoConfig?.extra);
+  if (Constants.expoConfig?.extra?.apiUrl) {
+    return Constants.expoConfig?.extra?.apiUrl;
+  }
+  if (Constants.expoConfig?.extra?.API_URL) {
+    return Constants.expoConfig?.extra?.API_URL;
+  }
+
   if (process.env.EXPO_PUBLIC_API_URL) {
     return process.env.EXPO_PUBLIC_API_URL;
   }
