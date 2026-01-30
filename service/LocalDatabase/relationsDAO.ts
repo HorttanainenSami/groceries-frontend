@@ -1,7 +1,12 @@
 import { getDatabaseSingleton } from './initialize';
 import * as Crypto from 'expo-crypto';
-import { LocalRelationType, RelationType, ServerRelationType } from '@groceries/shared_types';
-import { TaskRelationRow } from './types';
+import {
+  LocalRelationType,
+  RelationSchema,
+  RelationType,
+  ServerRelationType,
+} from '@groceries/shared_types';
+import { TaskRelationRow, TaskRelationRowSchema, toSqlParams } from './types';
 import { SQLiteDatabase } from 'expo-sqlite';
 
 export type CreateTasksType = {
@@ -62,12 +67,52 @@ class RelationsDAO {
       throw e; // Re-throw the error for further handling if needed
     }
   };
+  get = async (relationId: string): Promise<RelationType | null> => {
+    console.log('[relationsDAO] get ', relationId);
+    const db = await getDatabaseSingleton();
+    const a = await db.getFirstAsync<TaskRelationRow>('select * from task_relations WHERE id=?;', [
+      relationId,
+    ]);
+    if (!a) return null;
+    return TaskRelationRowSchema.parse(a);
+  };
+
+  update = async (relation: RelationType): Promise<RelationType | null> => {
+    console.log('[relationsDAO] update');
+    try {
+      // Validate input
+      const validated = RelationSchema.parse(relation);
+
+      const db = await getDatabaseSingleton();
+      const date = new Date().toISOString();
+      const params = toSqlParams(validated, date);
+
+      const result = await db.getFirstAsync<TaskRelationRow>(
+        `UPDATE task_relations 
+       SET name = ?, created_at = ?, relation_location = ?,
+           shared_with_name = ?, shared_with_email = ?, shared_with_id = ?,
+           permission = ?, last_modified = ?
+       WHERE id = ? 
+       RETURNING *`,
+        params
+      );
+
+      if (!result) return null;
+
+      // Transform and validate output
+      return TaskRelationRowSchema.parse(result);
+    } catch (e) {
+      console.log('error occurred', e);
+      throw e;
+    }
+  };
 
   getAll = async (): Promise<RelationType[]> => {
     console.log('[relationsDAO] getAll');
     try {
       const db = await getDatabaseSingleton();
       const result = await db.getAllAsync<TaskRelationRow>('SELECT * FROM task_relations;');
+      console.log(JSON.stringify(result, null, 2));
       return result.map((relation) => {
         if (relation.relation_location === 'Server') {
           const {
@@ -76,7 +121,6 @@ class RelationsDAO {
             shared_with_name: name,
             ...rest
           } = relation;
-
           return { ...rest, shared_with: [{ name, id, email }] };
         } else {
           const { id, name, created_at, relation_location, last_modified } = relation;
@@ -109,7 +153,7 @@ class RelationsDAO {
   };
   /// Used only to store server relation to local device
   insertCached = async ({ relation, txQuery }: StoreServerRelationProps) => {
-    console.log('[relationsDAO] insertCached');
+    console.log('[relationsDAO] insertCached ', relation.id);
     const db = txQuery ? txQuery : await getDatabaseSingleton();
     await db.runAsync(
       `INSERT INTO task_relations (id, name, created_at, relation_location, last_modified, shared_with_id, shared_with_name, shared_with_email,permission)
@@ -174,15 +218,16 @@ class RelationsDAO {
   };
 
   moveFromCachedToLocal = async (relationId: string) => {
-    console.log('[relationsDAO] moveFromCachedToLocal');
+    console.log('[relationsDAO] moveFromCachedToLocal ', relationId);
     const db = await getDatabaseSingleton();
-
+    const a = await db.getAllAsync('select * from task_relations;');
+    console.log(a);
     await db.runAsync(
       `UPDATE task_relations
          SET relation_location = 'Local',
-             shared_with_id = ?, shared_with_name = ?, shared_with_email = ?, permission = ?
+             shared_with_id = NULL, shared_with_name = NULL, shared_with_email = NULL, permission = 'owner'
          WHERE id = ?`,
-      [null, null, null, 'owner', relationId]
+      [relationId]
     );
   };
 }

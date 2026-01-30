@@ -81,14 +81,19 @@ export default function Index() {
 
   const shareRelationsWithUsers = async (user: SearchUserType) => {
     try {
+      console.log('shareRelationWithUsers');
       const relationsWithTasks = await Promise.all(
         selectedRelations.map(async (relation) => ({
           ...relation,
           tasks: await taskDAO.getById(relation.id),
         }))
       );
-      await shareRelation({ user_shared_with: user.id, task_relations: relationsWithTasks });
-      addAlert({ message: 'Jaettu onnistuneesti!', type: 'success' });
+      const response = await shareRelation({
+        user_shared_with: user.id,
+        task_relations: relationsWithTasks,
+      });
+      console.log('server response: ', response);
+      if (response) addAlert({ message: 'Jaettu onnistuneesti!', type: 'success' });
     } catch (e) {
       console.log('error occurred', e);
       addAlert({ message: (e as Error).message, type: 'error' });

@@ -1,8 +1,8 @@
 import { useRelationContext } from '@/contexts/RelationContext';
 import useRelationsSocket from './useRelationsSocket';
 import { relationsDAO, getDatabaseSingleton, taskDAO } from '@/service/LocalDatabase';
-
-import React from 'react';
+import { useFocusEffect } from 'expo-router';
+import React, { useCallback } from 'react';
 import {
   ClientToServerRelatiosShare,
   LocalRelationType,
@@ -15,16 +15,21 @@ import { useSyncContext } from '@/contexts/SyncContext';
 const useRelationStorage = () => {
   const { relations, setRelations } = useRelationContext();
   const loading = React.useRef(false);
-  const isMounted = React.useRef(true);
+  const [isFocused, setisFocused] = React.useState(true);
   const { addToQueue, pendingOperations, isSyncing, lastTimeSynced } = useSyncContext();
-
+  useFocusEffect(
+    useCallback(() => {
+      setisFocused(true);
+      return () => {
+        setisFocused(false);
+      };
+    }, [])
+  );
   const handleChangeNameBroadcast = React.useCallback(
     async (broadcastedRelation: ServerRelationType) => {
-      loading.current = true;
       setRelations((prev) =>
         prev.map((rel) => (rel.id === broadcastedRelation.id ? broadcastedRelation : rel))
       );
-      loading.current = false;
       await relationsDAO.updateName(broadcastedRelation.id, broadcastedRelation.name);
     },
     [setRelations]
@@ -32,30 +37,25 @@ const useRelationStorage = () => {
 
   const handleDeleteBroadcast = React.useCallback(
     async (deletedRelations: [boolean, string][]) => {
-      loading.current = true;
       setRelations((prev) => {
         const filtered = prev.filter((r) => !deletedRelations.map((r) => r[1]).includes(r.id));
         return filtered;
       });
-      loading.current = false;
       const deletedIds = deletedRelations
         .filter((i) => i[0])
         .map((i) => ({
           id: i[1],
         }));
-      relationsDAO.delete(deletedIds);
+      await relationsDAO.delete(deletedIds);
     },
     [setRelations]
   );
 
   const handleShareBroadcast = React.useCallback(
     async (t: ServerRelationWithTasksType[]) => {
-      console.log('performing transaction in hadnleShare');
+      console.log('performing transaction in handleShare');
       setRelations((prev) => [...prev, ...t]);
-      loading.current = true;
       const db = await getDatabaseSingleton();
-      loading.current = false;
-
       await Promise.all(
         t.map(async (relation) => {
           const { tasks, ...rest } = relation;
@@ -77,37 +77,30 @@ const useRelationStorage = () => {
     onShare: handleShareBroadcast,
   });
 
-  React.useEffect(() => {
-    isMounted.current = true;
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
-
   // Fetch from server when socket connects
   React.useEffect(() => {
-    if (connected && isMounted.current && !loading.current && !isSyncing) {
+    console.log('relation refresh effect');
+    if (isFocused) {
       getRelations();
     }
-  }, [connected, lastTimeSynced]);
+  }, [connected, lastTimeSynced, isFocused]);
 
   const getRelations = async () => {
     if (loading.current) return;
+    console.log('relation refresh');
 
     loading.current = true;
     try {
+      // update cached storage
+      if (connected && pendingOperations.length === 0 && !isSyncing) {
+        const server = await emitGetRelations();
+        console.log(JSON.stringify(server, null, 2));
+        await relationsDAO.replaceAllCached(server);
+      }
       const cached = await relationsDAO.getAll();
       setRelations([...cached]);
-      // update cached storage
-      if (connected && pendingOperations.length === 0 && isMounted.current) {
-        const server = await emitGetRelations();
-        await relationsDAO.replaceAllCached(server);
-        const newCachedReleations = await relationsDAO.getAll();
-        setRelations([...newCachedReleations]);
-      }
     } catch (error) {
       console.error('Error getting relations:', error);
-      loading.current = false;
     } finally {
       loading.current = false;
     }
@@ -115,8 +108,8 @@ const useRelationStorage = () => {
   const refresh = async () => getRelations();
 
   const addRelationLocal = async (name: string) => {
-    await relationsDAO.create({ name });
-    refresh();
+    const newRelation = await relationsDAO.create({ name });
+    setRelations((prev) => [newRelation, ...prev]);
   };
   const removeRelations = async (relations: RelationType[]) => {
     try {
@@ -164,34 +157,25 @@ const useRelationStorage = () => {
     task_relations,
     user_shared_with,
   }: ClientToServerRelatiosShare) => {
+    if (loading.current || !connected) return false;
+
+    loading.current = true;
     try {
-      if (!connected) return;
       const serverResponse = await emitShareWithUser({
         user_shared_with,
         task_relations,
       });
-
-      const relations = Array.isArray(task_relations) ? task_relations : [task_relations];
-      const localRelations = relations.filter(
-        (i) => i.relation_location === 'Local'
-      ) as LocalRelationType[];
-
-      const deleted = localRelations.length === 0 ? [] : await relationsDAO.delete(localRelations);
-
-      const successfulDeletes = deleted
-        .filter((result) => result[0] === true)
-        .map((result) => result[1]);
-
-      setRelations((prev) => {
-        const removed = prev.filter((i) => !successfulDeletes.includes(i.id));
-        return [...removed, ...serverResponse];
-      });
+      const serverResponseMap = new Map(serverResponse.map((r) => [r.id, r]));
+      await Promise.all(serverResponse.map((r) => relationsDAO.update(r)));
+      setRelations((prev) =>
+        prev.map((relation) => serverResponseMap.get(relation.id) ?? relation)
+      );
+      return true;
     } catch (e) {
       console.log('error occurred', e);
-      if (e instanceof Error) {
-        console.log('error occurred', e);
-      }
       throw e;
+    } finally {
+      loading.current = false;
     }
   };
   return {

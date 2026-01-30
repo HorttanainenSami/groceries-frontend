@@ -29,7 +29,9 @@ const ShareRelationsWithUsersModal = ({
 
   useEffect(() => {
     const getUsers = setTimeout(async () => {
+      if (!visible) return;
       if (!user) return;
+      console.log('get users refetch');
       try {
         const response = await searchUsers(query, tab === 'friends');
         setUsers(response.filter((u) => u.id !== user.id));
@@ -41,7 +43,7 @@ const ShareRelationsWithUsersModal = ({
       }
     }, 300);
     return () => clearTimeout(getUsers);
-  }, [query, tab]);
+  }, [query, tab, visible]);
 
   const handleAccept = () => {
     if (selectedUser) onAccept(selectedUser);

@@ -17,15 +17,14 @@ export const addPendingOperation = async (operation: InsertPendingOperation): Pr
 
   await db.runAsync(
     `INSERT INTO pending_operations
-     (id, type, data, timestamp, retry_count, status)
-     VALUES (?, ?, ?, ?, ?, ?)`,
+     (id, type, data, timestamp, retry_count)
+     VALUES (?, ?, ?, ?, ?)`,
     [
       operation.id,
       operation.type,
       JSON.stringify(operation.data),
       operation.timestamp,
       operation.retry_count ?? 0,
-      operation.status ?? 'pending',
     ]
   );
 
@@ -36,7 +35,7 @@ export const getPendingOperations = async (): Promise<PendingOperation[]> => {
   console.log('[DB] getPendingOperations');
   const db = await getDatabaseSingleton();
   const rows = await db.getAllAsync<PendingOperationRow>(
-    'SELECT * FROM pending_operations WHERE status = ? ORDER BY timestamp ASC',
+    'SELECT * FROM pending_operations ORDER BY timestamp ASC',
     ['pending']
   );
 

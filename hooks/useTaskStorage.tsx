@@ -1,26 +1,29 @@
-import useLocalTasks from '@/hooks/useLocalTasks';
 import useAuth from '@/hooks/useAuth';
 import useTaskSocket from '@/hooks/useTaskSocket';
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { useTaskContext } from '@/contexts/taskContext';
 import { RelationType, TaskType } from '@groceries/shared_types';
 import { useSyncContext } from '@/contexts/SyncContext';
 import { taskDAO } from '@/service/LocalDatabase';
+import { useFocusEffect } from 'expo-router';
+import { relationsDAO } from '@/service/LocalDatabase';
+import { randomUUID } from 'expo-crypto';
 
 const useTaskStorage = () => {
   const { relationRef, setTasks, tasks } = useTaskContext();
   const loading = React.useRef<boolean>(false);
   const { user } = useAuth();
-  const localTasks = useLocalTasks();
-  const { addToQueue, lastTimeSynced, isSyncing } = useSyncContext();
+  const { addToQueue, lastTimeSynced, isSyncing, pendingOperations } = useSyncContext();
   const isMounted = useRef(false);
 
-  useEffect(() => {
-    isMounted.current = true;
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      isMounted.current = true;
+      return () => {
+        isMounted.current = false;
+      };
+    }, [])
+  );
 
   const handleTaskCreatedBroadcast = React.useCallback(
     async (tasks: TaskType[]) => {
@@ -28,33 +31,34 @@ const useTaskStorage = () => {
       console.log('hello from broadcast', tasks);
       await taskDAO.insertCached(tasks);
     },
-    [setTasks, localTasks]
+    [setTasks]
   );
 
   const handleTaskEditedBroadcast = React.useCallback(
     async (task: TaskType) => {
       setTasks((prev) => prev.map((t) => (t.id === task.id ? task : t)));
-      await localTasks.editTaskToDb(task);
+      await taskDAO.update({ id: task.id, task: task.task });
     },
-    [setTasks, localTasks]
+    [setTasks]
   );
 
   const handleTaskRemovedBroadcast = React.useCallback(
     async (tasks: TaskType[]) => {
       const removedIds = new Set(tasks.map((t) => t.id));
       setTasks((prev) => prev.filter((t) => !removedIds.has(t.id)));
-      await localTasks.removeTaskFromDb(tasks);
+      const promises = tasks.map(({ id }) => taskDAO.remove(id));
+      await Promise.all(promises);
     },
-    [setTasks, localTasks]
+    [setTasks]
   );
 
   const handleTaskReorderedBroadcast = React.useCallback(
     async (tasks: TaskType[]) => {
       const taskMap = new Map(tasks.map((t) => [t.id, t]));
       setTasks((prev) => [...prev.map((t) => taskMap.get(t.id) ?? t)]);
-      await localTasks.reorderTasksInDb(tasks);
+      await taskDAO.reorder(tasks);
     },
-    [setTasks, localTasks]
+    [setTasks]
   );
 
   const { emitJoinTaskRoom, connected } = useTaskSocket({
@@ -67,9 +71,19 @@ const useTaskStorage = () => {
 
   useEffect(() => {
     // perforrm refresh if connected and mounted
-    if (connected && isMounted.current && relationRef.current) {
-      console.log('refreshing');
-      refresh(relationRef.current);
+    const relation = relationRef.current;
+    if (
+      connected &&
+      isMounted.current &&
+      relation &&
+      !isSyncing &&
+      pendingOperations.length === 0
+    ) {
+      (async () => {
+        const freshRelation = await relationsDAO.get(relation.id);
+        if (!freshRelation) return;
+        refresh(freshRelation);
+      })();
     }
   }, [connected, lastTimeSynced]);
 
@@ -80,18 +94,19 @@ const useTaskStorage = () => {
     try {
       relationRef.current = relation;
       //fetch tasks from cache
-      const refreshedTasks = await localTasks.refresh(relation.id);
-      setTasks(refreshedTasks);
+      const refreshedTasks = await taskDAO.getById(relation.id);
 
       if (isLocal(relation) || !connected) {
         loading.current = false;
+        setTasks(refreshedTasks);
+
         return;
       }
 
       const response = await emitJoinTaskRoom(relation.id);
 
       await taskDAO.replaceAllCached(response.tasks, relationRef.current.id);
-      const updated = await localTasks.refresh(relation.id);
+      const updated = await taskDAO.getById(relation.id);
       setTasks(updated);
     } catch (error) {
       console.error('Failed to refresh tasks:', error);
@@ -115,7 +130,7 @@ const useTaskStorage = () => {
       }
 
       setTasks(reorderedTasks);
-      await localTasks.reorderTasksInDb(tasksOrderModified);
+      await taskDAO.reorder(tasksOrderModified);
 
       if (!isLocal(relationRef.current)) {
         if (tasksOrderModified.length !== 0) {
@@ -129,7 +144,8 @@ const useTaskStorage = () => {
   const editTask = async (newTask: TaskType) => {
     if (relationRef.current === null) return;
     //cache
-    const editedTask = await localTasks.editTaskToDb(newTask);
+    const editedTask = await taskDAO.update({ id: newTask.id, task: newTask.task });
+    if (!editedTask) return;
     setTasks((prev) => prev.map((task) => (task.id === editedTask.id ? editedTask : task)));
     //que if in server
     if (!isLocal(relationRef.current)) {
@@ -141,11 +157,13 @@ const useTaskStorage = () => {
     if (relationRef.current === null) return;
     const initNewTask = {
       ...newTask,
+      id: randomUUID(),
       task_relations_id: relationRef.current.id,
       last_modified: new Date().toISOString(),
     };
     //cache
-    const storedTask = await localTasks.addTaskToDb(initNewTask);
+    const storedTask = await taskDAO.create(initNewTask);
+    if (!storedTask) return;
     setTasks((prev) => [...prev, storedTask]);
     //que
     if (!isLocal(relationRef.current)) {
@@ -169,7 +187,11 @@ const useTaskStorage = () => {
           completed_by: user.id,
         };
     setTasks((prev) => prev.map((t) => (t.id === task.id ? initToggledTask : t)));
-    const toggledTask = await localTasks.toggleTaskInDb(initToggledTask);
+    const toggledTask = await taskDAO.toggle({
+      id: initToggledTask.id,
+      completed_at: initToggledTask.completed_at,
+      completed_by: initToggledTask.completed_by,
+    });
 
     if (!isLocal(relationRef.current)) {
       addToQueue({ type: 'task-toggle', data: toggledTask });
@@ -179,12 +201,15 @@ const useTaskStorage = () => {
     if (!relationRef.current) return;
     const tasksArray = Array.isArray(task) ? task : [task];
 
-    const response = await localTasks.removeTaskFromDb(tasksArray);
-    const responseIds = response.map((task) => task.id);
+    const promises = tasksArray.map(({ id }) => taskDAO.remove(id));
+    const response = await Promise.all(promises);
+    const responseIds = response.filter((i) => i !== null).map((task) => task.id);
     setTasks((prev) => prev.filter((task) => !responseIds.includes(task.id)));
 
     if (!isLocal(relationRef.current)) {
-      response.map((task) => addToQueue({ type: 'task-delete', data: task }));
+      response
+        .filter((i) => i !== null)
+        .map((task) => addToQueue({ type: 'task-delete', data: task }));
     }
   };
 

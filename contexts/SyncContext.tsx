@@ -108,6 +108,8 @@ export const SyncContextProvider = ({ children }: React.PropsWithChildren) => {
           // Get relation ID based on operation type
           if (op.type.startsWith('task-')) {
             return (op.data as { task_relations_id: string }).task_relations_id;
+          } else if (op.type.startsWith('relation-delete')) {
+            return null;
           } else if (op.type.startsWith('relation-')) {
             return (op.data as { id: string }).id;
           }
@@ -115,8 +117,8 @@ export const SyncContextProvider = ({ children }: React.PropsWithChildren) => {
         })
         .filter((id): id is string => id !== null) // filter undefined and null
         .map((relationId) => relationsDAO.moveFromCachedToLocal(relationId));
-
-      await Promise.all([...failedLWWTask, ...failedLWWRelation, ...relationDeletedPromises]);
+      await Promise.all(relationDeletedPromises);
+      await Promise.all([...failedLWWTask, ...failedLWWRelation]);
 
       // Remove ops from db
       await Promise.all([

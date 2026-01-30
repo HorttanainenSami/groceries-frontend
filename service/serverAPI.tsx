@@ -34,8 +34,6 @@ const getApiUrl = () => {
     if (host === 'localhost' || host === '127.0.0.1') {
       return 'http://10.0.2.2:3003';
     }
-    // Physical device - use the actual dev machine IP
-    return `http://${host}:3003`;
   }
 
   // fallback for Android emulator
@@ -87,7 +85,6 @@ export const searchUsers = async (
       name: searchParams,
       friends: friends ? 'true' : undefined,
     });
-    console.log('url', url);
     const response = await getAxiosInstance().get(url);
     const parsedResponse = SearchUserSchema.array().parse(response.data);
     return parsedResponse;
@@ -116,9 +113,14 @@ export const getServerRelations = async (): Promise<ServerRelationType[]> => {
 };
 
 export const sendSyncOperationsBatch = async (op: PendingOperation[]) => {
-  const syncUrl = uri + '/sync/batch';
-  const response = await getAxiosInstance().post(syncUrl, op);
-  const parsedResponse = SyncBatchResponseSchema.parse(response.data);
-  console.log('sendSyncOpreationsBatch', JSON.stringify(parsedResponse, null, 2));
-  return parsedResponse;
+  try {
+    const syncUrl = uri + '/sync/batch';
+    const response = await getAxiosInstance().post(syncUrl, op);
+    console.log(JSON.stringify(response.data, null, 2));
+    const parsedResponse = SyncBatchResponseSchema.parse(response.data);
+    return parsedResponse;
+  } catch (e) {
+    console.log(e);
+    throw e;
+  }
 };

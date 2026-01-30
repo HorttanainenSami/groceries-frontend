@@ -1,4 +1,9 @@
-import { PendingOperation, PendingType } from '@groceries/shared_types';
+import {
+  PendingOperation,
+  PendingType,
+  RelationSchema,
+  RelationType,
+} from '@groceries/shared_types';
 
 export type TaskRelationRow = TaskRelationLocalRow | TaskRelationServerRow;
 export type TaskRelationLocalRow = {
@@ -11,7 +16,6 @@ export type TaskRelationLocalRow = {
   shared_with_email: null;
   shared_with_id: null;
   permission: null;
-  synced: null;
 };
 export type TaskRelationServerRow = {
   id: string;
@@ -23,7 +27,6 @@ export type TaskRelationServerRow = {
   shared_with_id: string;
   last_modified: string;
   permission: 'owner' | 'edit';
-  synced: 'synced' | 'pending';
 };
 
 export type TaskRow = {
@@ -35,7 +38,6 @@ export type TaskRow = {
   task_relations_id: string;
   order_idx: number | null;
   last_modified: string;
-  synced: 'synced' | 'pending' | null;
 };
 
 export type PendingOperationRow = {
@@ -44,7 +46,6 @@ export type PendingOperationRow = {
   data: string; // JSON stringified data
   timestamp: string;
   retry_count: number;
-  status: 'pending' | 'failed';
 };
 
 export type InsertTaskRelation = Omit<TaskRelationRow, 'id' | 'created_at'> & {
@@ -57,7 +58,70 @@ export type InsertTask = Omit<TaskRow, 'id' | 'created_at'> & {
   created_at?: string;
 };
 
-export type InsertPendingOperation = Omit<PendingOperation, 'retry_count' | 'status'> & {
+export type InsertPendingOperation = Omit<PendingOperation, 'retry_count'> & {
   retry_count?: number;
-  status?: 'pending' | 'failed';
 };
+import { z } from 'zod';
+
+export const toSqlParams = (relation: RelationType, date: string) => {
+  if (relation.relation_location === 'Server') {
+    const sharedWith = relation.shared_with?.[0] ?? null;
+    return [
+      relation.name,
+      relation.created_at,
+      'Server',
+      sharedWith?.name ?? null,
+      sharedWith?.email ?? null,
+      sharedWith?.id ?? null,
+      relation.permission,
+      date,
+      relation.id,
+    ];
+  }
+  return [
+    relation.name,
+    relation.created_at,
+    'Local',
+    null,
+    null,
+    null,
+    'owner',
+    date,
+    relation.id,
+  ];
+};
+
+export const TaskRelationRowSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    created_at: z.string(),
+    last_modified: z.string().nullable(),
+    relation_location: z.enum(['Local', 'Server']),
+    shared_with_id: z.string().nullable(),
+    shared_with_name: z.string().nullable(),
+    shared_with_email: z.string().nullable(),
+    permission: z.enum(['owner', 'edit']).nullable(),
+  })
+  .transform((row): z.infer<typeof RelationSchema> => {
+    if (row.relation_location === 'Server') {
+      return {
+        id: row.id,
+        name: row.name,
+        created_at: row.created_at,
+        last_modified: row.last_modified!,
+        relation_location: 'Server',
+        permission: row.permission!,
+        shared_with: row.shared_with_id
+          ? [{ id: row.shared_with_id, name: row.shared_with_name!, email: row.shared_with_email! }]
+          : null,
+      };
+    }
+    return {
+      id: row.id,
+      name: row.name,
+      created_at: row.created_at,
+      last_modified: row.last_modified!,
+      relation_location: 'Local',
+    };
+  });
