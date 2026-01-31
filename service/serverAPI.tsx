@@ -12,38 +12,23 @@ import Constants from 'expo-constants';
 import { PendingOperation } from '@groceries/shared_types';
 
 const getApiUrl = () => {
-  // EAS Build - use env variable
-
-  console.log(Constants.expoConfig?.extra);
-  if (Constants.expoConfig?.extra?.apiUrl) {
-    return Constants.expoConfig?.extra?.apiUrl;
-  }
-  if (Constants.expoConfig?.extra?.API_URL) {
-    return Constants.expoConfig?.extra?.API_URL;
-  }
-
+  // use env variable from eas.json / .env.local works for eas build
   if (process.env.EXPO_PUBLIC_API_URL) {
     return process.env.EXPO_PUBLIC_API_URL;
   }
-
-  // Dev: get host from Expo config
-  const hostUri = Constants.expoConfig?.hostUri;
-  if (hostUri) {
-    const host = hostUri.split(':')[0];
-    // Android emulator uses 10.0.2.2 to reach host machine
-    if (host === 'localhost' || host === '127.0.0.1') {
-      return 'http://10.0.2.2:3003';
-    }
+  if (Constants.deviceName?.startsWith('sdk-')) {
+    // for Android emulator with local hosted server
+    return 'http://10.0.2.2:3003';
+  } else {
+    //device
+    const hostUri = Constants.expoConfig?.hostUri;
+    return hostUri ? `http://${hostUri.split(':')[0]}:3003` : 'http://localhost:3003';
   }
-
-  // fallback for Android emulator
-  return 'http://10.0.2.2:3003';
 };
 
 export const uri = getApiUrl();
+console.log(uri);
 export const loginAPI = async (credentials: LoginType) => {
-  console.log(credentials);
-  console.log(uri);
   const url = uri + '/login';
   const response = await getAxiosInstance().post(url, credentials);
   const parsedResponse = loginReponseSchema.safeParse(response.data);
