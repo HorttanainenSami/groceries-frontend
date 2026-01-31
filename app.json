@@ -8,7 +8,9 @@
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "platforms": ["android"],
+    "platforms": [
+      "android"
+    ],
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
@@ -17,7 +19,6 @@
       "softwareKeyboardLayoutMode": "pan",
       "package": "com.imasami.groceries"
     },
-
     "plugins": [
       "expo-router",
       [
@@ -43,12 +44,13 @@
       "typedRoutes": true
     },
     "extra": {
-      "DB_NAME": "todo",
-      "API_URL": "http://5.61.90.231",
       "router": {},
       "eas": {
         "projectId": "0ef84abf-20b1-4c3b-80ee-d192f35ac00e"
       }
+    },
+    "ios": {
+      "bundleIdentifier": "com.imasami.groceries"
     }
   }
 }
