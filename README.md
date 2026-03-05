@@ -4,6 +4,12 @@ Ohjelmisto totetutettu Fullstack open kurssin projektityönä.
 
 Ostoslista mobiiliapplikaatio
 
+# Expo go linkki
+
+HUOM PROJEKTI VAATII [v53 sdk](https://expo.dev/go?sdkVersion=53&platform=android&device=true) VERSION EXPO GO:STA
+
+[Expo go appi](https://expo.dev/preview/update?message=demo&updateRuntimeVersion=1.0.0&createdAt=2026-02-04T14%3A34%3A00.917Z&slug=exp&projectId=0ef84abf-20b1-4c3b-80ee-d192f35ac00e&group=6742ce86-5b00-4ec0-ba7b-86f246928430)
+
 ## Motivaatio
 
 Vaimon kanssa ostoslistojen säätäminen turhautti kun välillä ostoslista tulee joko:
