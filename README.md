@@ -30,7 +30,7 @@ Myös reaaliaikainen muokkaaminen tuli projektin aikana tarpeelliseksi. Mielenki
 
 - Lokaali pysyväistallennus
 - Serverin pysyväistallennus Nodejs + Postgres
-- Käyttäjän autentikointi (JWT tokenilla)
+- Käyttäjän autentikointi (JWT tokenilla). [(Access- ja refresh token) Tokenin automaattinen uudelleen](./readme/Token_lifecycle.md) päivittäminen refresh tokenilla
 - offline first sync
 - Jaettavat ostoslistat reaaliaikaisella päivityksellä (Socket.io)
 - Käyttäjän syötteen validointi (Zod)
