@@ -3,7 +3,7 @@ import { LoginType, RegisterType } from '@/types';
 import useStorage from '@/hooks/useAsyncStorage';
 import { ErrorResponseSchema } from '../types';
 import useAlert from '@/hooks/useAlert';
-import { loginAPI, signupAPI } from '@/service/serverAPI';
+import { loginAPI, refreshToken, signupAPI, TokenError } from '@/service/serverAPI';
 import { isAxiosError, AxiosError } from 'axios';
 import { getAxiosInstance } from '@/service/AxiosInstance';
 import { useAuthContext } from '@/contexts/AuthenticationContext';
@@ -17,7 +17,7 @@ const useAuth = () => {
     const tokenBearer = getAxiosInstance().interceptors.request.use(
       (config) => {
         if (user) {
-          config.headers['Authorization'] = `Bearer ${user.token}`;
+          config.headers['Authorization'] = `Bearer ${user.accessToken}`;
         }
         return config;
       },
@@ -27,8 +27,27 @@ const useAuth = () => {
     );
     const expiredJwtToken = getAxiosInstance().interceptors.response.use(
       (response) => response,
-      (error: AxiosError) => {
+      async (error: AxiosError) => {
         if (error.response?.status === 401) {
+          const data = error.response.data as { error?: string };
+          if (data.error === 'token_expired' && user) {
+            // refresh token
+            try {
+              const response = await refreshToken({ refreshToken: user.refreshToken });
+              setUser(response);
+              storeUserInStorage(response);
+              // requery
+              const config = error.config!;
+              config.headers['Authorization'] = `Bearer ${response.accessToken}`;
+              return getAxiosInstance()(config);
+            } catch (e) {
+              if (e instanceof TokenError) {
+                // refresh token is expired/invoked
+                logout();
+              }
+              return Promise.reject(error);
+            }
+          }
           logout();
         }
         return Promise.reject(error);

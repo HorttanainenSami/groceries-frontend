@@ -5,11 +5,13 @@ import {
   loginReponseSchema,
   registerResponseSchema,
   SyncBatchResponseSchema,
+  LoginResponseType,
 } from '@groceries/shared_types';
 import { getAxiosInstance } from '@/service/AxiosInstance';
 
 import Constants from 'expo-constants';
 import { PendingOperation } from '@groceries/shared_types';
+import { isAxiosError } from 'axios';
 
 const getApiUrl = () => {
   // use env variable from eas.json / .env.local works for eas build
@@ -106,6 +108,29 @@ export const sendSyncOperationsBatch = async (op: PendingOperation[]) => {
     return parsedResponse;
   } catch (e) {
     console.log(e);
+    throw e;
+  }
+};
+
+export class TokenError extends Error {
+  constructor(errorText: string) {
+    super(errorText);
+    this.name = 'TokenError';
+  }
+}
+export const refreshToken = async (
+  refreshToken: Pick<LoginResponseType, 'refreshToken'>
+): Promise<LoginResponseType> => {
+  try {
+    const refreshUrl = uri + '/refresh';
+    const response = await getAxiosInstance().post<LoginResponseType>(refreshUrl, refreshToken);
+    return response.data;
+  } catch (e) {
+    if (isAxiosError(e)) {
+      if (e.status === 403) {
+        throw new TokenError('Refresh token expired');
+      }
+    }
     throw e;
   }
 };

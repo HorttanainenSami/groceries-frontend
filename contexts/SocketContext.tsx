@@ -3,6 +3,7 @@ import { socketSingleton } from '@/service/Socket';
 import useAuth from '@/hooks/useAuth';
 import { SocketClientType } from '@groceries/shared_types';
 import { Socket } from 'socket.io-client';
+import { refreshToken } from '@/service/serverAPI';
 
 type SocketContextProps = {
   socket: SocketClientType;
@@ -36,7 +37,7 @@ export const SocketProvider = ({ children }: React.PropsWithChildren) => {
   }, [socket]);
 
   React.useEffect(() => {
-    socket.auth = { token: user?.token };
+    socket.auth = { token: user?.accessToken };
     if (!socket.connected) {
       socket.connect();
     }
@@ -44,7 +45,7 @@ export const SocketProvider = ({ children }: React.PropsWithChildren) => {
     return () => {
       socket.disconnect();
     };
-  }, [user?.token, socket]);
+  }, [user?.accessToken, socket]);
 
   React.useEffect(() => {
     const connectHandler = () => {
@@ -62,8 +63,12 @@ export const SocketProvider = ({ children }: React.PropsWithChildren) => {
       console.log('Connection error');
       setConnected(false);
       if (err.message === 'Invalid token' || err.message === 'jwt expired') {
-        console.log('Invalid token, logging out');
-        logout();
+        console.log('Invalid token, trying to refresh token');
+        if (user?.refreshToken) {
+          await refreshToken({ refreshToken: user.refreshToken });
+        } else {
+          logout();
+        }
       } else {
         const timer = setTimeout(() => {
           socket.connect();
