@@ -1,14 +1,6 @@
 import { TaskType } from '@groceries/shared_types';
 import z from 'zod';
 
-export const LoginResponseSchema = z.object({
-  email: z.string().email(),
-  id: z.string().uuid(),
-  token: z.string(),
-});
-
-export type LoginResponse = z.infer<typeof LoginResponseSchema>;
-
 export const ErrorResponseSchema = z.object({
   error: z.string(),
 });

@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { LoginResponse } from '@/types';
+import { LoginResponseType } from '@groceries/shared_types';
 
 const useStorage = () => {
   const getUserFromStorage = async () => {
@@ -10,7 +10,7 @@ const useStorage = () => {
       console.log(e);
     }
   };
-  const storeUserInStorage = async (user: LoginResponse) => {
+  const storeUserInStorage = async (user: LoginResponseType) => {
     try {
       await AsyncStorage.setItem('user', JSON.stringify(user));
     } catch (e) {

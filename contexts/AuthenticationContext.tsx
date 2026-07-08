@@ -1,17 +1,17 @@
 import { useContext, createContext, useState } from 'react';
-import { LoginResponse } from '../types';
+import { LoginResponseType } from '@groceries/shared_types';
 
 type AuthContextProps = {
-  user: LoginResponse | undefined;
-  setUser: React.Dispatch<React.SetStateAction<LoginResponse | undefined>>;
+  user: LoginResponseType | undefined;
+  setUser: React.Dispatch<React.SetStateAction<LoginResponseType | undefined>>;
 };
-const AuthContext = createContext<AuthContextProps>({
+export const AuthContext = createContext<AuthContextProps>({
   user: undefined,
   setUser: () => {},
 });
 
 export const AuthContextProvider = ({ children }: React.PropsWithChildren) => {
-  const [user, setUser] = useState<LoginResponse>();
+  const [user, setUser] = useState<LoginResponseType>();
 
   return <AuthContext.Provider value={{ user, setUser }}>{children}</AuthContext.Provider>;
 };
